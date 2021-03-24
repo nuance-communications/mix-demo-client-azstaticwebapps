@@ -1,0 +1,19 @@
+.chat-panel {
+	position: fixed;
+	bottom: 25px;
+	right: 25px;
+}
+#cy {
+  width: 1200px;
+  height: 800px;
+  display: block;
+}
+#messagesHnd {
+	transition: 1s ease-in-out all;
+}
+.carousel-control-next-icon, 
+.carousel-control-prev-icon {
+    color: white;
+    background-color: rgba(0,0,0,0.5);
+    border-radius: 100px;
+}
