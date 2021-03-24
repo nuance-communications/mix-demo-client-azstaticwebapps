@@ -1,0 +1,50 @@
+{
+  "name": "mix-demo-client",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sample demo client with a Python Az Func backend, and Gatsby+React frontend.",
+  "author": "nirvana.tikku@nuance.com",
+  "keywords": [
+    "gatsby",
+    "react",
+    "nuance mix",
+    "dlgaas",
+    "conversational ai",
+    "azure",
+    "azure static web apps",
+    "azure functions"
+  ],
+  "scripts": {
+    "develop": "gatsby develop",
+    "start": "gatsby develop",
+    "build": "gatsby build --json",
+    "serve": "gatsby serve",
+    "clean": "gatsby clean"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.34",
+    "@fortawesome/free-solid-svg-icons": "^5.15.2",
+    "@fortawesome/react-fontawesome": "^0.1.14",
+    "@loadable/component": "^5.14.1",
+    "@mdx-js/mdx": "^1.6.22",
+    "@mdx-js/react": "^1.6.22",
+    "@popperjs/core": "^2.6.0",
+    "axios": "^0.21.1",
+    "bootstrap": "^5.0.0-beta2",
+    "cytoscape": "^3.18.0",
+    "cytoscape-dagre": "^2.3.2",
+    "gatsby": "^2.26.1",
+    "gatsby-plugin-create-client-paths": "^2.10.0",
+    "gatsby-plugin-manifest": "^2.12.0",
+    "gatsby-plugin-mdx": "^1.10.0",
+    "gatsby-source-filesystem": "^2.11.0",
+    "moment": "^2.29.1",
+    "query-string": "^6.14.1",
+    "react": "^16.13.1",
+    "react-bootstrap": "^1.5.0",
+    "react-datepicker": "^3.6.0",
+    "react-dom": "^16.13.1",
+    "react-json-view": "^1.21.1",
+    "react-safe-html": "^0.6.1"
+  }
+}
