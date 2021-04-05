@@ -706,7 +706,7 @@ export default class DLGaaS extends BaseClass {
               rawResponses={this.state.rawResponses}
             />
           </div>
-          <div className=`col-3 float-end`>
+          <div className={`col-3 float-end`}>
               <ChatPanel
                 onExecute={this.execute.bind(this)}
                 rawResponses={this.state.rawResponses}
