@@ -321,7 +321,8 @@ export class LogEventsTable extends React.Component {
   constructor(){
     super()
     this.state = {
-      filterTypes: []
+      filterTypes: [],
+      eventsReversed: false
     }
   }
 
@@ -376,7 +377,7 @@ export class LogEventsTable extends React.Component {
         const vTxt = []
         val.visual.forEach(v => vTxt.push(v.text))
         ret = (<div>
-          <strong className="badge bg-primary text-white text-start">{val.visual.length ? vTxt.join(' ') : ''}</strong>
+          <strong className="badge bg-primary text-white text-start text-wrap">{val.visual.length ? vTxt.join(' ') : ''}</strong>
           <br/><span className="badge bg-light text-dark text-start">nlg={val.nlg.length}, visual={val.visual.length}, audio={val.audio.length}</span>
           </div>)
         break
@@ -442,6 +443,12 @@ export class LogEventsTable extends React.Component {
       case 'error':
         ret = (<span className="badge bg-light text-danger text-start text-wrap"><strong>{val.name}</strong>: {val.message}</span>)
         break
+      case 'transfer-initiated':
+        ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>{val.id}</strong><br/><pre className="">{JSON.stringify(val.data, null, 2)}</pre></span>)
+        break
+      case 'transfer-completed':
+        ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>returnCode={val.returnCode}</strong><br/>returnMessage={val.returnMessage}<br/><pre className="">data={JSON.stringify(val.data, null, 2)}</pre></span>)
+        break
       default:
         ret = (<span className="badge bg-light text-dark text-start">{JSON.stringify(val)}</span>)
         break 
@@ -451,19 +458,23 @@ export class LogEventsTable extends React.Component {
 
   renderEventsTable(events){
     const ret = []
-    events.forEach((evt, idx) => {
+    let e = events
+    if(this.state.eventsReversed){
+      e = e.reverse()
+    }
+    e.forEach((evt, idx) => {
       evt.value.data.events.forEach(niiEvt => {
         if(this.state.filterTypes.indexOf(niiEvt.name) > -1){
           return
         }
-        let badgeBg = START_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-dark text-white' : 
-                      MESSAGE_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-primary text-white' : 
-                      INPUT_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-success text-white' : 
-                      TRANSFER_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-warning text-dark' : 
-                      DATA_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-warning text-dark' : 
-                      END_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-danger text-white' : 
-                      ERROR_EVENTS.indexOf(niiEvt.name) > -1 ? 'bg-danger text-white' : 
-                      'bg-dark text-white'
+        let badgeBg = START_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-dark text-white' : 
+                      MESSAGE_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-primary text-primary' : 
+                      INPUT_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-success text-success' : 
+                      TRANSFER_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-warning text-dark' : 
+                      DATA_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-warning text-dark' : 
+                      END_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-danger text-danger' : 
+                      ERROR_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-danger text-danger' : 
+                      'bg-light text-dark'
         ret.push(
           <tr key={'event-'+idx} className={niiEvt.name === 'session-start' ? 'bg-dark' : ''}>
             <td><span className={`badge ` + badgeBg}>{evt.value.data.seqid}</span></td>
@@ -477,9 +488,9 @@ export class LogEventsTable extends React.Component {
     return (
       <div className="table-responsive">
         <table className="table table-sm table-hover">
-          <thead>
+          <thead className="">
             <tr>
-              <th style={{'width': '5%'}}>SeqID</th>
+              <th style={{'width': '5%'}}><a href='#' onClick={this.toggleAllEventsSeqId.bind(this)}>SeqID</a></th>
               <th style={{'width': '10%'}}>Timestamp</th>
               <th style={{'width': '10%'}}>Event</th>
               <th style={{'width': '75%'}}>Details</th>
@@ -507,6 +518,12 @@ export class LogEventsTable extends React.Component {
         filterTypes: this.state.filterTypes
       })
     }
+  }
+
+  toggleAllEventsSeqId(){
+    this.setState({
+      eventsReversed: !this.state.eventsReversed
+    })
   }
 
   toggleAllFilters(){
