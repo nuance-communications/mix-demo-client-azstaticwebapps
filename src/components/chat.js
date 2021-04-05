@@ -91,7 +91,7 @@ const MinMaxToggle = ({ toggle }) => {
     toggle(!minimized)
   }
   return (
-    <Button variant="link" className="badge bg-white text-primary float-end fw-light text-decoration-none" onClick={handleClick}>
+    <Button variant="link" className="badge bg-white text-primary float-end fw-light text-decoration-none expand-collapse-button" onClick={handleClick}>
       { minimized ? 'expand' : 'collapse' }
     </Button>
   )
@@ -441,14 +441,16 @@ export default class ChatPanel extends React.Component {
             }
             // USER SELECTABLE
             resMessages.push(
-              <dd key={idx} className="rounded rounded-3 text-primary bg-white p-2 text-end">
-                <sup>{res.request.user_input.selected_item.id}</sup> {res.request.user_input.selected_item.value}
+              <dd key={idx} className="d-flex justify-content-end">
+                <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">
+                  <sub><em className="text-light">{res.request.user_input.selected_item.id}</em></sub> {res.request.user_input.selected_item.value}
+                </div>
               </dd>)
           } else {
             // USER MESSAGE
             resMessages.push(
-              <dd key={idx} className="rounded rounded-3 text-primary bg-white p-2 text-end">
-                {res.request.user_input.user_text}
+              <dd key={idx} className="d-flex justify-content-end">
+                <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">{res.request.user_input.user_text}</div>
               </dd>
             )
           }
@@ -463,8 +465,10 @@ export default class ChatPanel extends React.Component {
             msgs.forEach((m,idx2) => {
               m.visual.forEach((_m, idx3) => {
                 resMessages.push(
-                  <dd key={idx+'-msg-'+idx2+'-'+idx3} className="rounded rounded-3 bg-light text-dark p-2">
-                    <ReactSafeHtml html={_m.text} components={components} />
+                  <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
+                    <div className="rounded rounded-3 bg-light msg text-dark p-2">
+                      <ReactSafeHtml html={_m.text} components={components} />
+                    </div>
                   </dd>
                 )
               })
@@ -495,22 +499,22 @@ export default class ChatPanel extends React.Component {
                 }
               }
             }
-            resMessages.push(<dd key={'qa-'+idx} className="rounded rounded-3 bg-light text-dark p-2">{cardMsgs}</dd>)
+            resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
           }
           // DATA ACTION
           const daAction = res.response.payload.daAction
           if(daAction){
-            resMessages.push(<dd key={'da-'+idx} className="badge w-100 rounded rounded-3 bg-light text-secondary p-2">{daAction.id}</dd>)
+            resMessages.push(<dd key={'da-'+idx}><div className="badge w-100 rounded rounded-3 bg-light msg text-secondary p-2">{daAction.id}</div></dd>)
           }
           // ESCALATE ACTION
           const escalationAction = res.response.payload.escalationAction
           if(escalationAction){
-            resMessages.push(<dd key={'esc-'+idx} className="badge rounded rounded-3 bg-warning text-dark p-2">{escalationAction.id}</dd>)
+            resMessages.push(<dd key={'esc-'+idx}><div className="badge rounded rounded-3 bg-warning text-dark p-2">{escalationAction.id}</div></dd>)
           }
           // END ACTION
           const endAction = res.response.payload.endAction
           if(endAction){
-            resMessages.push(<dd key={'end-'+idx} className="badge rounded rounded-3 bg-danger text-dark p-2">{endAction.id}</dd>)
+            resMessages.push(<dd key={'end-'+idx}><div className="badge rounded rounded-3 bg-danger text-dark p-2">{endAction.id}</div></dd>)
           }
         }
         messages = [resMessages, ...messages]
@@ -547,20 +551,22 @@ export default class ChatPanel extends React.Component {
 
   render() {
     return (<div className="chat-panel border rounded border-light border-2">
-      <div className={'card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
+      <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
         style={{
-          'width': this.props.width,
-          'height': (this.state.minimized ? '40px' : this.props.height),
+          'width': (this.state.minimized ? 'auto' : this.props.width),
+          'height': (this.state.minimized ? '56px' : this.props.height),
           'overflow': 'hidden'
         }}>
         <div className={'card-header ' + (this.state.minimized ? 'bg-dark text-white' : '')}>
-          <FontAwesomeIcon icon={faComments}/> Chat
-          { this.props.active ? (
-            <CountdownTimer
-              sessionTimeout={this.props.sessionTimeout}
-              timeoutRemaining={this.state.timeoutRemaining}/>
-          ) : '' }
-          <MinMaxToggle toggle={this.minMax.bind(this)}/>
+          <div className="card-header-bg">
+            <FontAwesomeIcon icon={faComments}/> Chat
+            { this.props.active ? (
+              <CountdownTimer
+                sessionTimeout={this.props.sessionTimeout}
+                timeoutRemaining={this.state.timeoutRemaining}/>
+            ) : '' }
+            <MinMaxToggle toggle={this.minMax.bind(this)}/>
+          </div>
         </div>
         <div className="card-body" style={chatPanelContainerStyles}>
           <div className="row" style={{height: '100%'}}>
@@ -569,7 +575,7 @@ export default class ChatPanel extends React.Component {
             </dl>
           </div>
         </div>
-        <div className="card-footer px-0 py-0">
+        <div className="card-footer px-2 pb-2 border-0">
           <form className="form" onSubmit={
               (evt) => {
                 evt.preventDefault();
