@@ -307,7 +307,7 @@ For Interactivity (aka selectables):
 
 ### Rich Text Modality
 
-Note: Rich Text markup in messages with elements containing classes from [Bootstrap](https://getbootstrap.com/docs/5.0/getting-started/introduction/) will be rendered in this client. See `chat.js` to see the allowed DOM elements and attributes.
+Note: when using Rich Text markup in messages, if elements contains classes from [Bootstrap](https://getbootstrap.com/docs/5.0/getting-started/introduction/) they will be rendered accordingly in this client. See `chat.js` to see the allowed DOM elements and attributes.
 
 ### Stub Images for Carousels with Selectables
 
