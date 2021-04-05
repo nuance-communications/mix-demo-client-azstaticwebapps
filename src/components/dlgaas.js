@@ -594,7 +594,7 @@ export default class DLGaaS extends BaseClass {
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mt-1 mb-2"><strong>:(</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
-            <div className="col-5 offset-md-1">
+            <div className="col-5 offset-md-1 bg-light rounded-3 px-4 py-4">
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
                 <h4 className="w-100">Configuration</h4>
                 <p>
@@ -617,15 +617,24 @@ export default class DLGaaS extends BaseClass {
                   <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
                 </div>
                 <div className="form-group mt-3">
-                  <button className="btn btn-primary float-end" type="submit">
+                  <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
                     Start Session
                   </button>
                 </div>
               </form>
             </div>
-            <div className="col-5">
+            <div className="col-6 bg-light rounded-3 px-4 py-4">
                 <div className="form-floating">
-                  <h4>Start Data</h4>
+                  <h4 className="mb-2">
+                    Start Data
+                  </h4>
+                  { navigator.geolocation ? (
+                      <div className="d-flex w-100 pb-3">
+                        <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
+                          { this.state.fetchingLocation ? 'Getting location...' : 'Add Client Location' }
+                        </button>
+                      </div>
+                    ) : ('') }
                   <ReactJson
                     key={'json-startData'}
                     src={this.state.startData}
@@ -639,14 +648,7 @@ export default class DLGaaS extends BaseClass {
                     onAdd={(add) => { this.onEditStartData('add', add); }}
                     onDelete={(del) => { this.onEditStartData('delete', del); }}>
                   </ReactJson>
-                  <br/>
-                  { navigator.geolocation ? (
-                    <div>
-                      <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
-                        { this.state.fetchingLocation ? 'Getting location...' : 'Add Location to Start Data' }
-                      </button>
-                    </div>
-                  ) : ('') }
+                  
                 </div>
             </div>
           </div>
@@ -695,17 +697,17 @@ export default class DLGaaS extends BaseClass {
               rawResponses={this.state.rawResponses}
             />
           </div>
-          <div className="col-3 float-end">
-            <ChatPanel
-              onExecute={this.execute.bind(this)}
-              rawResponses={this.state.rawResponses}
-              autoScrollChatPanel={this.state.autoScrollChatPanel}
-              width={350}
-              height={window.innerHeight-250}
-              sessionTimeout={this.state.sessionTimeout}
-              active={this.state.isSessionActive}
-              onSessionTimeoutEnded={this.stop.bind(this)}
-              position={`bottom-right`} />
+          <div className=`col-3 float-end`>
+              <ChatPanel
+                onExecute={this.execute.bind(this)}
+                rawResponses={this.state.rawResponses}
+                autoScrollChatPanel={this.state.autoScrollChatPanel}
+                width={365}
+                height={window.innerHeight-250}
+                sessionTimeout={this.state.sessionTimeout}
+                active={this.state.isSessionActive}
+                onSessionTimeoutEnded={this.stop.bind(this)}
+                position={`bottom-right`} />
           </div>
         </div>
       </div>
