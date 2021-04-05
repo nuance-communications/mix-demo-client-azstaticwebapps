@@ -1,7 +1,49 @@
 .chat-panel {
-	position: fixed;
-	bottom: 25px;
-	right: 25px;
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+}
+.chat-panel > .card > .card-header {
+  height: 56px;
+  padding: 15px 18px 20px 18px;
+  position:relative;
+  /*overflow:hidden;*/
+  color: #222;
+  border-radius: 6px 6px 0px 0px;
+}
+.chat-panel > .card > .card-header:not(.bg-dark) { 
+  background: #f5f8fa !important;   
+}
+.chat-panel > .card > .card-header.bg-dark .badge.bg-dark { 
+  background: rgb(52,182,199) !important;
+}
+.chat-panel > .card-body {
+  margin: 0px 8px;
+}
+.chat-panel > .card-header:not(.bg-dark) .card-header-bg {
+  /*background: blue;*/
+  /*height: 56px;*/
+}
+#messagesHnd .msg {
+/*  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 1em;*/
+}
+#messagesHnd .msg .rounded {
+  border-radius: 10px!important;
+  line-height: 20px;
+}
+#messagesHnd .bg-light.msg {
+  background: #f5f8fa;
+  color: #414141;
+}
+#messagesHnd .bg-white.msg {
+  /*background: rgb(24,88,133) !important; */
+  background: rgb(52,182,199) !important; 
+  color: white !important;
+}
+#messagesHnd dd {
+  font-size: 15px;
 }
 #cy {
   width: 1200px;
@@ -9,11 +51,20 @@
   display: block;
 }
 #messagesHnd {
-	transition: 1s ease-in-out all;
+  transition: 1s ease-in-out all;
 }
 .carousel-control-next-icon, 
 .carousel-control-prev-icon {
     color: white;
     background-color: rgba(0,0,0,0.5);
     border-radius: 100px;
+}
+input[name=textInput] {
+  height:46px;
+  font-size: 15px;
+}
+.expand-collapse-button {
+  position: relative;
+  top: -1px;
+  right: 4px;
 }
