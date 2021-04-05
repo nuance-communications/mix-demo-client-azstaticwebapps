@@ -203,7 +203,16 @@ export default class DLGaaS extends BaseClass {
       rawResponses: [],
       rawEvents: [],
       autoScrollChatPanel: true,
-      startData: {},
+      startData: {
+        userData: {
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          userGlobalID: null,
+          userChannelID: null,
+          userAuxiliaryID: null,
+          systemID: null,
+          location: null
+        }
+      },
       tokenError: '',
       isSessionActive: false,
       logConsumerGroup: null,
