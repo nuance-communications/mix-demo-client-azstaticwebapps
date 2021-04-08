@@ -18,6 +18,73 @@ export const CLIENT_DATA = {
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
 export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^\/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const LANG_EMOJIS = {
+    "en-us": "🇺🇸",
+    "ja-jp": "🇯🇵",
+    "de-de": "🇩🇪",
+    "en-gb": "🇬🇧",
+    "fr-fr": "🇫🇷",
+    "it-it": "🇮🇹",
+    "fr-ca": "🇨🇦(fr)",
+    "fr-be": "🇧🇪(fr)",
+    "es-es": "🇪🇸(es)",
+    "eu-es": "🇪🇺(es)",
+    "es-us": "🇲🇽(es)",
+    "es-mx": "🇲🇽(es)",
+    "nl-nl": "🇳🇱",
+    "nl-be": "🇳🇱(be)",
+    "en-au": "🇦🇺",
+    "en-es": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "en-sc": "🏴󠁧󠁢󠁳󠁣󠁴󠁿(en)",
+    "en-ie": "🇮🇪",
+    "id-id": "🇮🇩",
+    "hu-hu": "🇭🇺",
+    "en-za": "🇿🇦",
+    "el-gr": "🇬🇷",
+    "he-il": "🇮🇱",
+    "pl-pl": "🇵🇱",
+    "pt-br": "🇧🇷",
+    "sk-sk": "🇸🇰",
+    "ro-ro": "🇷🇴",
+    "ms-ms": "🇲🇾",
+    "bg-bg": "🇧🇬",
+    "hi-in": "🇮🇳",
+    "bh-in": "🇮🇳(bh)",
+    "bn-in": "🇮🇳(bn)",
+    "mr-in": "🇮🇳(mr)",
+    "ta-in": "🇮🇳(ta)",
+    "te-in": "🇮🇳(te)",
+    "kn-in": "🇮🇳(kn)",
+    "th-th": "🇹🇭",
+    "hr-hr": "🇭🇷",
+    "cs-cz": "🇨🇿",
+    "es-ar": "🇦🇷",
+    "ar-ww": "ar_WW",
+    "ru-ru": "🇷🇺",
+    "ca-es": "ca_ES",
+    "va-es": "va_ES",
+    "en-in": "🇮🇳(en)",
+    "pt-pt": "🇵🇹",
+    "da-dk": "🇩🇰",
+    "fi-fi": "🇫🇮",
+    "in-id": "🇮🇩",
+    "es-cl": "🇨🇱",
+    "es-co": "🇨🇴",
+    "ko-kr": "🇰🇷",
+    "uk-ua": "🇺🇦",
+    "ms-my": "🇲🇾",
+    "sv-se": "🇸🇪",
+    "vi-vn": "🇻🇳",
+    "cn-hk": "🇭🇰",
+    "yue-hk": "🇭🇰",
+    "no-no": "🇳🇴",
+    "nb-no": "🇳🇴(nb)",
+    "tr-tr": "🇹🇷",
+    "cmn-cn": "🇨🇳",
+    "zh-cn": "🇨🇳",
+    "cmn-tw": "🇹🇼",
+    "zh-tw": "🇹🇼"
+};
 
 export const STUB_SELECTABLE_IMAGES = {
   // 'entity':{
@@ -317,6 +384,11 @@ export class BaseClass extends React.Component {
           sessionId: tgt.value
         })
         break
+      case 'voice':
+        this.setState({
+          voice: tgt.value
+        })
+        break
       case 'contextTag':
         let lang6 = getLanguageCode(this.state.language)
         let newUrn = `urn:nuance-mix:tag:model/${tgt.value}/mix.nlu?=language=${lang6}`
@@ -357,6 +429,8 @@ export class BaseClass extends React.Component {
       navigate(`/app/${window.location.search}`)
     } else if (key === 'dlgaas'){
       navigate(`/app/dlg/${window.location.search}`)
+    } else if (key === 'ttsaas'){
+      navigate(`/app/tts/${window.location.search}`)
     }
   }
 
