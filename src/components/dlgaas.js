@@ -77,7 +77,7 @@ class ClientFetchHandlers {
       } else {
         navigator.geolocation.getCurrentPosition((pos) => {
           resolve({
-            'response':{
+            'response': {
               'returnCode': '0',
               'returnMessage': 'Returning coordinates from browser',
               'searchLatLng': {
@@ -196,7 +196,7 @@ export default class DLGaaS extends BaseClass {
       clientSecret: '',
       modelUrn: 'urn:nuance-mix:tag:model/REPLACE_ME/mix.dialog',
       accessToken: null,
-      sessionId: null,
+      sessionId: '',
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
@@ -226,6 +226,10 @@ export default class DLGaaS extends BaseClass {
     this.externalHandlers = new ExternalFetchHandlers()
   }
 
+  isStandalone(){
+    return false
+  }
+
   componentDidMount(){
     const params = this.initStateFromQueryParams([
       'clientId',
@@ -233,22 +237,29 @@ export default class DLGaaS extends BaseClass {
       'modelUrn',
       'channel',
       'language',
-      'sessionTimeout'
+      'sessionTimeout',
+      'sessionId'
     ])
     if(Object.keys(params).length){
       this.setState(params)
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
-    this.initStartData()
+    this.initStartData(() => {
+      if(this.isStandalone()){
+        this.initToken().then(() => {
+          this.go()
+        })
+      }
+    })
   }
 
-  initStartData(){
+  initStartData(after){
     const startDataLocalStorage = window.localStorage.getItem('startData')
     if(startDataLocalStorage){
       try{
         this.setState({
           startData: JSON.parse(startDataLocalStorage)
-        })
+        }, after)
       } catch (ex) {
         console.error(ex)
       }
@@ -257,9 +268,6 @@ export default class DLGaaS extends BaseClass {
 
   onUnmount = (e) => {
     try{
-      if(this.state.isSessionActive){
-        this.sessionStop()
-      }
       if(this.state.logConsumerName){
         this.destroyConsumer()
       }
@@ -276,24 +284,28 @@ export default class DLGaaS extends BaseClass {
 
   // DLGaaS API
 
-  async sessionStart(language, channel, sessionTimeout, startData) {
+  async sessionStart(language, channel, sessionTimeout, startData, sessionId) {
     // Second, the Session is Started
     await this.ensureTokenNotExpired()
+    let fullPayload = {
+      selector: {
+        language: language,
+        channel: channel,
+        library: 'default',
+      },
+      payload: {
+        data: startData
+      },
+      session_timeout_sec: sessionTimeout,
+      client_data: CLIENT_DATA,
+    }
+    if(sessionId){
+      fullPayload.session_id = sessionId
+    }
     return await this.request(`${ROOT_URL}/api/dlgaas-session-start`, {
       token: this.state.accessToken,
       modelUrn: this.state.modelUrn,
-      rawPayload: {
-        selector: {
-          language: language,
-          channel: channel,
-          library: 'default',
-        },
-        payload: {
-          data: startData
-        },
-        session_timeout_sec: sessionTimeout,
-        client_data: CLIENT_DATA,
-      }
+      rawPayload: fullPayload
     })
   }
 
@@ -349,35 +361,46 @@ export default class DLGaaS extends BaseClass {
   // App
 
   async start() {
-    // Starts a session
-    let res = await this.sessionStart(
-      this.state.language,
-      this.state.channel,
-      this.state.sessionTimeout,
-      this.state.startData
-    )
-    // Error
-    if(res.error){
-      console.warn(res)
+    if(this.state.sessionId && this.state.sessionId.length > 0){
       this.setState({
-        sessionId: null,
-        isSessionActive: false,
-        logConsumerName: null,
-        error: res.error.response.data.error
+        isSessionActive: true,
+        error: false,
+        autoScrollChatPanel: true
       })
-      return false
+    } else {
+      // Starts a session
+      let res = await this.sessionStart(
+        this.state.language,
+        this.state.channel,
+        this.state.sessionTimeout,
+        this.state.startData,
+        this.state.sessionId
+      )
+      // Error
+      if(res.error){
+        console.warn(res)
+        this.setState({
+          sessionId: null,
+          isSessionActive: false,
+          logConsumerName: null,
+          error: res.error.response.data.error
+        })
+        return false
+      }
+      // start session timeout
+      this.setState({
+        sessionId: res.response.payload.sessionId,
+        isSessionActive: true,
+        error: false,
+        autoScrollChatPanel: true
+      })
+      // Kick things off..
+      await this.execute('')
     }
-    // start session timeout
-    this.setState({
-      sessionId: res.response.payload.sessionId,
-      isSessionActive: true,
-      error: false,
-      autoScrollChatPanel: true
-    })
-    // Kick things off..
-    await this.execute('')
-    // Attach a Log Consumer
-    await this.startCapturingLogs()
+    if(!this.isStandalone()){
+      // Attach a Log Consumer
+      await this.startCapturingLogs()
+    }
     return true
   }
 
@@ -483,9 +506,9 @@ export default class DLGaaS extends BaseClass {
   async restart() {
     // Restart the client.
     this.setState({
-      sessionId: null,
       rawResponses: [],
       rawEvents: [],
+      sessionId: '',
     })
     if(this.state.logConsumerName){
       await this.destroyConsumer()
@@ -595,15 +618,19 @@ export default class DLGaaS extends BaseClass {
     })
   }
 
+  onToggleMinMax(minimized){
+    
+  }
+
   getConfigureSessionHtml(){
     return (
-      <div className="row">
-        <div className="col-10 offset-md-1">
+      <div className="">
+        <div className="col-12">
           <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mt-1 mb-2"><strong>:(</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
-            <div className="col-5 offset-md-1 bg-light rounded-3 px-4 py-4">
+            <div className={(this.isStandalone() ? `col-12` : `col-4 offset-md-1`) + ` bg-light rounded-3 px-4 py-4`}>
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
                 <h4 className="w-100">Configuration</h4>
                 <p>
@@ -614,25 +641,30 @@ export default class DLGaaS extends BaseClass {
                   <label htmlFor="modelUrn" className="form-label">Model URN</label>
                 </div>
                 <div className="form-floating">
-                  <input type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="language" className="form-label">Language</label>
                 </div>
                 <div className="form-floating">
-                  <input type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="channel" className="form-label">Channel</label>
                 </div>
                 <div className="form-floating">
                   <input type="number" className="form-control" name="sessionTimeout" value={this.state.sessionTimeout} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
                 </div>
+                <br/>
+                <div className="form-floating">
+                  <input type="text" className="form-control" name="sessionId" value={this.state.sessionId} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="sessionId" className="form-label">Session ID <span className='text-muted'>(optional)</span></label>
+                </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
-                    Start Session
+                    {this.state.sessionId.length ? 'Resume Session' : 'Start New Session'}
                   </button>
                 </div>
               </form>
             </div>
-            <div className="col-6 bg-light rounded-3 px-4 py-4">
+            <div className={(this.isStandalone() ? `col-12` : `col-6`) + ` bg-light rounded-3 px-4 py-4`}>
                 <div className="form-floating">
                   <h4 className="mb-2">
                     Start Data
@@ -680,7 +712,7 @@ export default class DLGaaS extends BaseClass {
             {` `}
           </div>
           <div className="col-4 text-right">
-            { this.state.isSessionActive ? (
+            { this.state.isSessionActive && this.state.sessionId.length > 0 ? (
                 <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stop(); evt.preventDefault(); }}>Stop Session</button>
               ) : (
                 <button className="btn btn-warning float-end mt-3" onClick={(evt) => {this.restart(); evt.preventDefault(); }}>New Session</button>
@@ -707,16 +739,17 @@ export default class DLGaaS extends BaseClass {
             />
           </div>
           <div className={`col-3 float-end`}>
-              <ChatPanel
-                onExecute={this.execute.bind(this)}
-                rawResponses={this.state.rawResponses}
-                autoScrollChatPanel={this.state.autoScrollChatPanel}
-                width={365}
-                height={window.innerHeight-250}
-                sessionTimeout={this.state.sessionTimeout}
-                active={this.state.isSessionActive}
-                onSessionTimeoutEnded={this.stop.bind(this)}
-                position={`bottom-right`} />
+            <ChatPanel
+              onExecute={this.execute.bind(this)}
+              rawResponses={this.state.rawResponses}
+              autoScrollChatPanel={this.state.autoScrollChatPanel}
+              width={365}
+              height={window.innerHeight-250}
+              sessionTimeout={this.state.sessionTimeout}
+              sessionId={this.state.sessionId}
+              active={this.state.isSessionActive}
+              onSessionTimeoutEnded={this.stop.bind(this)}
+              onToggleMinMax={this.onToggleMinMax.bind(this)}/>
           </div>
         </div>
       </div>
@@ -728,7 +761,7 @@ export default class DLGaaS extends BaseClass {
       <div className="row">
         {
           this.state.accessToken ? (
-          this.state.sessionId ?
+          this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
           this.getBotSessionHtml() :
           this.getConfigureSessionHtml()) :
           this.getAuthHtml()
