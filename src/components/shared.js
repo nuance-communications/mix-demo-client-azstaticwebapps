@@ -312,6 +312,11 @@ export class BaseClass extends React.Component {
           sessionTimeout: tgt.value
         })
         break
+      case 'sessionId':
+        this.setState({
+          sessionId: tgt.value
+        })
+        break
       case 'contextTag':
         let lang6 = getLanguageCode(this.state.language)
         let newUrn = `urn:nuance-mix:tag:model/${tgt.value}/mix.nlu?=language=${lang6}`
