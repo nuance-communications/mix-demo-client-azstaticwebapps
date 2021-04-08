@@ -29,7 +29,7 @@ const headingAccentStyles = {
   color: "rgb(41,180,197)",
 }
 
-class Layout extends React.Component {
+export default class Layout extends React.Component {
   render() {
     return (<Location>
       {({ location, navigate }) => (
@@ -49,4 +49,16 @@ class Layout extends React.Component {
   }
 }
 
-export default Layout
+export class StandaloneLayout extends React.Component {
+  render() {
+    return (<Location>
+      {({ location, navigate }) => (
+        <main style={{padding: "6px 10px"}}>
+          <div className="container standalone">
+            {this.props.children}
+          </div>
+        </main>
+      )}
+  </Location>)
+  }
+}
