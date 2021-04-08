@@ -16,9 +16,8 @@ import InputGroup from 'react-bootstrap/InputGroup'
 import FormControl from 'react-bootstrap/FormControl'
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faComments } from '@fortawesome/free-solid-svg-icons'
+import { faComments, faExternalLinkAlt, faWindowMinimize, faWindowMaximize } from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
 
@@ -91,8 +90,8 @@ const MinMaxToggle = ({ toggle }) => {
     toggle(!minimized)
   }
   return (
-    <Button variant="link" className="badge bg-white text-primary float-end fw-light text-decoration-none expand-collapse-button" onClick={handleClick}>
-      { minimized ? 'expand' : 'collapse' }
+    <Button variant="link" className="badge text-primary float-end fw-light text-decoration-none expand-collapse-button" onClick={handleClick}>
+      { minimized ? (<FontAwesomeIcon icon={faWindowMaximize}/>) : (<FontAwesomeIcon icon={faWindowMinimize}/>) }
     </Button>
   )
 }
@@ -547,10 +546,20 @@ export default class ChatPanel extends React.Component {
 
   minMax(minimized){
     this.setState({minimized: minimized})
+    this.props.onToggleMinMax(minimized)
+  }
+
+  launchPopup(){
+    const searchParams = new URLSearchParams(window.location.search.substring(1))
+    searchParams.set('sessionId', this.props.sessionId)
+
+    let url = `${window.location.origin}/chat/?${searchParams.toString()}`
+    let params = `width=350,height=600,menubar=false,toolbar=false,location=false,status=false,resiable=true,scrollbars=false`
+    window.open(url, 'mixchat', params)
   }
 
   render() {
-    return (<div className="chat-panel border rounded border-light border-2">
+    return (<div className={`chat-panel border rounded border-light border-2 ` + (this.state.minimized ? ' chat-panel-minimized ' : '')}>
       <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
         style={{
           'width': (this.state.minimized ? 'auto' : this.props.width),
@@ -559,7 +568,13 @@ export default class ChatPanel extends React.Component {
         }}>
         <div className={'card-header ' + (this.state.minimized ? 'bg-dark text-white' : '')}>
           <div className="card-header-bg">
-            <FontAwesomeIcon icon={faComments}/> Chat
+            <FontAwesomeIcon icon={faComments}/> Chat 
+            { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
+                <small>
+                  &nbsp;&nbsp;
+                  <a href="#" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></a>
+                </small>
+              ) : '' }
             { this.props.active ? (
               <CountdownTimer
                 sessionTimeout={this.props.sessionTimeout}
