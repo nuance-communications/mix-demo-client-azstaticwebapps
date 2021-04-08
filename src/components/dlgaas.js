@@ -586,6 +586,7 @@ export default class DLGaaS extends BaseClass {
                 serviceScope="dlg log" />
           </Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
+          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
         </Tabs>
       </div>
     )

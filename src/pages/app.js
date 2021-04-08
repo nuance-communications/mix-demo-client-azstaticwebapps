@@ -12,12 +12,14 @@ import Layout from "../components/layout"
 import Profile from "../components/profile"
 import DLGaaS from "../components/dlgaas"
 import NLUaaS from "../components/nluaas"
+import TTSaaS from "../components/ttsaas"
 
 
 const App = () => {
   return (
     <Layout>
       <Router basepath="/">
+        <TTSaaS path="/app/tts"/>
         <NLUaaS path="/app/nlu"/>
         <DLGaaS path="/app/dlg"/>
         <Profile path="/app"/>
