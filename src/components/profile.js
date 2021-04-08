@@ -17,7 +17,7 @@ const Tabs = loadable(() => import('react-bootstrap/Tabs'))
 const Tab = loadable(() => import('react-bootstrap/Tab'))
 const Button = loadable(() => import('react-bootstrap/Button'))
 
-function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout, channel, nluModelUrn, onChangeTextInput}){
+function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout, channel, nluModelUrn, sessionId, onChangeTextInput}){
 
   const save = () => {
     let params = new URLSearchParams()
@@ -28,6 +28,7 @@ function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout
     params.set('sessionTimeout', sessionTimeout)
     params.set('channel', channel)
     params.set('nluModelUrn', nluModelUrn)
+    params.set('sessionId', sessionId)
     window.location.search = params.toString()
   }
 
@@ -45,6 +46,7 @@ function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout
           <Form.Control name="clientSecret" type="password" value={clientSecret} placeholder="Enter Client Secret" onChange={onChangeTextInput} />
           <Form.Label>Client Secret</Form.Label>
         </Form.Group>
+        <hr/>
         <Form.Group className="form-floating">
           <Form.Control name="modelUrn" type="text" value={modelUrn} placeholder="Enter DLG URN" onChange={onChangeTextInput} />
           <Form.Label>DLG URN</Form.Label>
@@ -61,6 +63,11 @@ function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout
           <Form.Control name="channel" type="text" value={channel} placeholder="Enter DLG Channel" onChange={onChangeTextInput} />
           <Form.Label>DLG Channel</Form.Label>
         </Form.Group>
+        <Form.Group className="form-floating">
+          <Form.Control name="sessionId" type="text" value={sessionId} placeholder="Enter DLG Session ID" onChange={onChangeTextInput} />
+          <Form.Label>DLG Session ID <span className='text-muted'>(optional)</span></Form.Label>
+        </Form.Group>
+        <hr/>
         <Form.Group className="form-floating">
           <Form.Control name="nluModelUrn" type="text" value={nluModelUrn} placeholder="Enter NLU URN" onChange={onChangeTextInput} />
           <Form.Label>NLU URN</Form.Label>
@@ -86,6 +93,7 @@ export default class Profile extends BaseClass {
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
+      sessionId: ''
     }
     this.onChangeTextInput = this.onChangeTextInput.bind(this)
   }
@@ -98,7 +106,8 @@ export default class Profile extends BaseClass {
       'nluModelUrn',
       'channel', 
       'language', 
-      'sessionTimeout'
+      'sessionTimeout',
+      'sessionId',
     ]);
     if(Object.keys(params).length){
       this.setState(params)
@@ -123,7 +132,8 @@ export default class Profile extends BaseClass {
               onChangeTextInput={this.onChangeTextInput.bind(this)}
               channel={this.state.channel}
               language={this.state.language}
-              sessionTimeout={this.state.sessionTimeout} />
+              sessionTimeout={this.state.sessionTimeout} 
+              sessionId={this.state.sessionId}/>
           </Tab>
           <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
