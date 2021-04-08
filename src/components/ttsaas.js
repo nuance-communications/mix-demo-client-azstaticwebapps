@@ -246,7 +246,7 @@ export default class TTSaaS extends BaseClass {
     if(this.state.ssmlInput){
       input = {
         ssml: {
-          text: `<?xml version="1.0"?><speak xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US" version="1.0">${this.state.textInput}</speak>`
+          text: `<?xml version="1.0"?><speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0">${this.state.textInput}</speak>`
         }
       }
     }
