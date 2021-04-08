@@ -406,15 +406,15 @@ export class LogEventsTable extends React.Component {
       case 'question-router':
         let beliefHtml = []
         val.belief.forEach((belief, idx) => {
-          beliefHtml.push(<tr>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.name}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.value || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.literal || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.confidence || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.required || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.status || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.inputMode || '-'}</span></td>
-            <td key={'qr-belief-'+idx}><span className='badge badge-light text-dark'>{belief.confirmationMode || '-'}</span></td>
+          beliefHtml.push(<tr key={'qr-belief-'+idx}>
+            <td><span className='badge badge-light text-dark'>{belief.name}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.value || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.literal || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.confidence || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.required || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.status || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.inputMode || '-'}</span></td>
+            <td><span className='badge badge-light text-dark'>{belief.confirmationMode || '-'}</span></td>
           </tr>)
         })
         ret = (<div>
