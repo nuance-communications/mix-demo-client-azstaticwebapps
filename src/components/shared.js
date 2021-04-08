@@ -347,13 +347,14 @@ export class BaseClass extends React.Component {
 
 }
 
-export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope}) => {
+export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope, standalone}) => {
   return (
     <div>
       <h3 className="fw-bold mt-4">Authenticate</h3>
-      <div className="text-muted">
-        <small>Provide your Mix Application's <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/app-configs/?src=demo#client-id">Client Credentials</a>.</small>
-      </div>
+      { !standalone ? (
+        <div className="text-muted">
+          <small>Provide your Mix Application's <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/app-configs/?src=demo#client-id">Client Credentials</a>.</small>
+        </div>) : '' }
       <form className="" onSubmit={(evt) => {initToken(serviceScope); evt.preventDefault();}}>
         <div className="form-floating mt-3">
           <input type="text" className="form-control" name="clientId" value={clientId} onChange={onChangeTextInput} />
