@@ -26,8 +26,9 @@ config = {
 
     "base_url_dlgaas": osenv.get('base_url_dlgaas', "https://dlg.api.nuance.com/dlg/v1"),
     "base_url_nluaas": osenv.get('base_url_nluaas', "https://nlu.api.nuance.com/nlu/v1"),
+    "base_url_ttsaas": osenv.get('base_url_ttsaas', "https://tts.api.nuance.com/api/v1"),
     "base_url_logapi": osenv.get('base_url_logapi', "https://log.api.nuance.com"),
-    "oauth_scope": osenv.get('oauth_scope', "nlu dlg log"),
+    "oauth_scope": osenv.get('oauth_scope', "tts nlu dlg log"),
 }
 
 CLIENT_ID_REGEX = r"appID%3A(?P<topic>[^ $^%]*)(%3Ageo%3A)*(?P<geo>[^ $^%]*)?(%3AclientName%3A)*(?P<clientName>[^ $]*)?"
@@ -249,6 +250,28 @@ class NluaasApi(OAuthApi):
 
     def interpret(self, raw_payload):
         return self._post(f'runtime/interpret', raw_payload)
+
+
+class TtsaasApi(OAuthApi):
+
+    def __init__(self, config):
+        super()
+        self.init_from_config(config)
+        self.base_url_ttsaas = config.get("base_url_ttsaas")
+
+    @property
+    def base_url(self):
+        return self.base_url_ttsaas
+
+    """
+    Interface
+    """
+
+    def get_voices(self):
+        return self._get(f'voices')
+
+    def synthesize(self, raw_payload):
+        return self._post(f'synthesize', raw_payload)
 
 
 class DlgaasApi(OAuthApi):
