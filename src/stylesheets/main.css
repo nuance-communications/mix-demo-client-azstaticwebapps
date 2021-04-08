@@ -2,6 +2,20 @@
   position: fixed;
   bottom: 25px;
   right: 25px;
+  padding: 0;
+  margin: 0;
+}
+.standalone .chat-panel { 
+  position: absolute !important;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  /*top: 0;*/
+}
+.chat-panel.chat-panel-minimized {
+  height: 56px;
 }
 .chat-panel > .card > .card-header {
   height: 56px;
@@ -19,15 +33,6 @@
 }
 .chat-panel > .card-body {
   margin: 0px 8px;
-}
-.chat-panel > .card-header:not(.bg-dark) .card-header-bg {
-  /*background: blue;*/
-  /*height: 56px;*/
-}
-#messagesHnd .msg {
-/*  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  line-height: 1em;*/
 }
 #messagesHnd .msg .rounded {
   border-radius: 10px!important;
