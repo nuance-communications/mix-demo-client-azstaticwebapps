@@ -104,11 +104,16 @@ export class BaseClass extends React.Component {
 
   // OAuth Token
 
-  async getToken() {
+  getScope(){
+    return 'nlu tts dlg log'
+  }
+
+  async getToken(scope) {
     // First, the user must acquire a token.
     return await this.request(`${ROOT_URL}/api/oauth2-get-token`, {
       clientId: encodeURIComponent(this.state.clientId), 
-      clientSecret: this.state.clientSecret
+      clientSecret: this.state.clientSecret,
+      scope: scope || this.getScope()
     })
   }
 
@@ -116,14 +121,14 @@ export class BaseClass extends React.Component {
     const accessToken = this.state.accessToken
     const one_minute = 60 * 1000
     if((accessToken.expires_at * 1000) - Date.now() < one_minute){
-      return await this.initToken('dlg log')
+      return await this.initToken(this.getScope())
     }
     return false;
   }
 
-  async initToken(){
+  async initToken(scope){
     // Grabs the token
-    let res = await this.getToken()
+    let res = await this.getToken(scope)
     if(res.error){
       this.setState({
         tokenError: res.error.response ? res.error.response.data.error : JSON.stringify(res.error),
@@ -134,7 +139,12 @@ export class BaseClass extends React.Component {
       accessToken: res.response.token,
       tokenError: null,
     })
+    this.onTokenAcquired()
     return !!res
+  }
+
+  onTokenAcquired() {
+    // Do something
   }
 
   // Log API
