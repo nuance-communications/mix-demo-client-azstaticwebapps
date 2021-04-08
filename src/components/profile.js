@@ -137,6 +137,7 @@ export default class Profile extends BaseClass {
           </Tab>
           <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
+          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
         </Tabs>
       </div>
     )

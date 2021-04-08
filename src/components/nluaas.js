@@ -305,6 +305,7 @@ export default class NLUaaS extends BaseClass {
                 onChangeTextInput={this.onChangeTextInput.bind(this)}
                 serviceScope="nlu log" />
           </Tab>
+          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
         </Tabs>
       </div>
     );
