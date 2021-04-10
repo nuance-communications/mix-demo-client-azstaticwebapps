@@ -19,14 +19,17 @@
 
 This demo client offers a sample integration to [Nuance Mix](https://www.nuance.com/mix?src=demo)'s Conversational AI [Runtime Services](https://docs.mix.nuance.com/runtime-services/#runtime-apis-quick-reference), specifically
 * [Dialog (DLGaaS)](https://docs.mix.nuance.com/dialog-grpc/v1/)
-* [Natural Language Understanding (NLUaaS)](https://docs.mix.nuance.com/nlu-grpc/v1/) and the
-* [Log Events API](TODO)
+* [Natural Language Understanding (NLUaaS)](https://docs.mix.nuance.com/nlu-grpc/v1/?src=demo)
+* [Text to Speech (TTSaaS)](https://docs.mix.nuance.com/tts-grpc/v1/?src=demo) and the
+* [Runtime Event Log API](https://docs.mix.nuance.com/runtime-event-logs/?src=demo)
 
-The client uses the HTTP/1.1 transcoded (non-gRPC) APIs.
+The client uses the HTTP/1.1 transcoded version of the APIs (rather than the native HTTP/2 gRPC versions).
 
 The prime purpose of this tool is to assist in Bot development and troubleshooting, including offering controlled hosted availability using [Azure StaticWebApps](https://azure.microsoft.com/en-us/services/app-service/static/).
 
-[Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/) and Core Tools are used throughout the deployment lifecycle. For more information on how to leverage the client across various environments, see [networking options](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options), and be sure to [secure your functions](https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts). Monitoring is made available through [Application Insights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview).
+[Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/) with [Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local) are used throughout the development and deployment lifecycle.
+
+For more information on how to leverage the client across various environments, see [networking options](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options), and be sure to [secure your functions](https://docs.microsoft.com/en-us/azure/azure-functions/security-concepts). Monitoring is made available through [Application Insights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview).
 
 *Disclaimer: This sample client is not intended to illustrate a production-ready implementation; it is intended to aid development, demonstration, troubleshooting, and other such use cases.*
 
@@ -34,7 +37,7 @@ The prime purpose of this tool is to assist in Bot development and troubleshooti
 
 * [Gatsby](https://www.gatsbyjs.com), [React](https://reactjs.org) and [React-Bootstrap](https://react-bootstrap.github.io/) for the Client/Frontend
 * [Azure Functions Python](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-python) for the API
-   * Acts as a Proxy for Nuance Services, with Data Integrations for Mix.dialog/DLGaaS
+  * Acts as a Proxy for Nuance Services, with Data Integrations for Mix.dialog/DLGaaS
 
 ## Setup
 
@@ -44,7 +47,7 @@ Please see the [Exchanging data](https://docs.mix.nuance.com/data-access/?src=de
 
 Use Data Access nodes with the `client_fetch` configuration and write the integration layer locally with the **intention** of separate hosted Functions (through `external_fetch`). These Functions would be referenced and configured within Mix.dialog and Mix.dashboard respectively.
 
-![DevExample](./static/dev-example.png)
+![DevExample](./static/local-example.png)
 
 ### Intended Hosted Use
 
@@ -52,24 +55,26 @@ The following illustrates a scenario where the client is deployed to Azure, and
 
 This simplifies the client handling, deferring to the Functions themselves, and offers lifecycle controls within Mix.
 
-![ProdExample](./static/prod-example.png)
+![ProdExample](./static/hosted-example.png)
 
 ⚠️ There may be scenarios where `client_fetch` is appropriate; this has been set up such that `dlgaas.js` will invoke local `ClientFetchHandlers`.
 
 
 ## Functionality
 
-* [x] Bot engagements using Nuance Mix's [DLGaaS](https://docs.mix.nuance.com/dialog-grpac/v1/#dialog-as-a-service-grpc-api) **HTTP/1.1** API (not HTTP/2 gRPC)
+* [x] Bot engagements using Nuance Mix's [DLGaaS](https://docs.mix.nuance.com/dialog-grpac/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
   * Text-Only (no Streams, ie. ASR/TTS orchestration yet)
   * PRESENTATION LAYER: Rich UI through conventions
-  * DATA: Functions for development through Client Fetch, and when deployed, enables External Fetch usage 
+  * DATA: Functions for development through Client Fetch, and when deployed, enables External Fetch usage
   * DATA: Client Fetch handler for Location Data supplied in userData
   * DATA: Log Events, Filtering and Timeline Visualization
-* [x] Natural Language Understanding using [NLUaaS](https://docs.mix.nuance.com/nlu-grpc/v1/#nlu-as-a-service-grpc-api) **HTTP/1.1** API (not HTTP/2 gRPC)
-* [x] Event data using the [Log Events]() **HTTP/1.1** API
+* [x] Natural Language Understanding using [NLUaaS](https://docs.mix.nuance.com/nlu-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
+* [x] Text to Speech Synthesis using [TTSaaS](https://docs.mix.nuance.com/tts-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
+* [x] Event data using the [Log Events](https://docs.mix.nuance.com/runtime-event-logs/?src=demo) **HTTP/1.1** API
 
 ## Pre-Requisites
 
+* [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 * Node.js 14.3+ (Client Toolchain)
 * Python 3.7+ (Functions)
 
@@ -77,7 +82,7 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 
 ### Self-Signed Cert
 
-_Skip this if you already have a certificate_.
+_Skip this if you already have certificates_.
 
 ```bash
 brew install mkcert
@@ -162,8 +167,9 @@ Update the following environment variables to override the default values:
 export oauth_server_url="https://auth.crt.nuance.com/oauth2"
 export base_url_dlgaas="https://dlg.api.nuance.com/dlg/v1"
 export base_url_nluaas="https://nlu.api.nuance.com/nlu/v1"
+export base_url_ttsaas="https://tts.api.nuance.com/api/v1"
 export base_url_logapi="https://log.api.nuance.com"
-export oauth_scope="nlu dlg log"
+export oauth_scope="dlg nlu tts log"
 ```
 
 Note: When deployed, these can be set per deployment environment in the Azure Portal.
@@ -236,7 +242,7 @@ func start --useHttps --cert ../certificate.pfx --password "<REPLACE_ME>"
 
 By default, the Functions should be served on `https://localhost:7071`.
 
-##### Unsecurely
+##### Insecurely
 
 ```bash
 func start
@@ -270,7 +276,7 @@ npm run develop -- --https --cert-file localhost+2.pem --key-file localhost+2-ke
 By default, the webapp should be served on `https://localhost:8000` - launch this in your browser.
 
 
-##### Unsecurely
+##### Insecurely
 
 ⚠️ Location capabilities will not be usable (ie. navigation.geolocation).
 
