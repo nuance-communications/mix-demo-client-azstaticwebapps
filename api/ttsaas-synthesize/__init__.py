@@ -48,15 +48,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500
         )
 
-    if ret.get('error'):
-        return func.HttpResponse(
-            json.dumps({
-                "error": ret['error']
-            }),
-            mimetype='application/json',
-            status_code=400
-        )
-
     return func.HttpResponse(
         json.dumps({
             "payload": ret,

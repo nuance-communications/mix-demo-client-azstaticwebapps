@@ -13,9 +13,10 @@ import loadable from '@loadable/component'
 import Button from "react-bootstrap/Button"
 import Form from 'react-bootstrap/Form'
 
-import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
+
+import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -67,9 +68,9 @@ class SynthesisRequest {
 function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
   const [key, setKey] = useState('rendered_payload')
   let voicesHtml = []
-  voices.forEach(v => {
+  voices.forEach((v, idx) => {
     voicesHtml.push(
-      <tr className={'align-middle ' + (v.restricted ? 'bg-light text-danger' : '') + (v.sampleRateHz === 22050 ? '' : ' text-muted')}>
+      <tr key={idx} className={'align-middle ' + (v.restricted ? 'bg-light text-danger' : '') + (v.sampleRateHz === 22050 ? '' : ' text-muted')}>
         <td>{v.name}</td>
         <td>{v.language in LANG_EMOJIS ? LANG_EMOJIS[v.language] : v.language} {v.language}</td>
         <td>{v.model}</td>
@@ -92,9 +93,9 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
     </tr>
   )
   let clipsHtml = []
-  audioclips.forEach(clip => {
+  audioclips.forEach((clip, idx) => {
     clipsHtml.push(
-      <dd>
+      <dd key={idx}>
         <div className="card">
           <div className="card-header">
             <span className="float-start">{clip.getInput()}</span>
@@ -244,26 +245,30 @@ export default class TTSaaS extends BaseClass {
       }
     }
     if(this.state.ssmlInput){
+      let ssmlInput = this.state.textInput
+      if(!ssmlInput.startsWith('<speak')){
+        ssmlInput = `<speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0">${ssmlInput}</speak>`
+      } 
       input = {
         ssml: {
-          text: `<?xml version="1.0"?><speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0">${this.state.textInput}</speak>`
+          text: `<?xml version="1.0"?>${ssmlInput}`
         }
       }
     }
     const payload = {
-      "voice": this.state.voice, 
-      "audio_params": { 
-        "volume_percentage": 80, 
-        "audio_chunk_duration_ms": 2000,
-        "audio_format": {
-          "ogg_opus": {
-            "sample_rate_hz": "24000"
+      voice: this.state.voice, 
+      audio_params: { 
+        volume_percentage: 80, 
+        audio_chunk_duration_ms: 2000,
+        audio_format: {
+          ogg_opus: {
+            sample_rate_hz: 24000
           }
         }
       }, 
-      "input": input, 
-      "event_params": { 
-        "send_log_events": true 
+      input: input, 
+      event_params: { 
+        send_log_events: true 
       },
       client_data: CLIENT_DATA,
     }
@@ -276,14 +281,14 @@ export default class TTSaaS extends BaseClass {
       processing: ProcessingState.IN_FLIGHT
     })
     let res = await this.synthesize(payload)
-    // console.log(res)
-    if(res.error){
+    rawResponses.unshift(res);
+    if(res.response?.payload.status.code !== 200){
       this.setState({
-        error: res.error,
+        rawResponses: rawResponses,
+        error: res.response.payload.status.details,
         processing: ProcessingState.IDLE,
       })
     } else {
-      rawResponses.unshift(res);
       synthesizedAudioClips.unshift(
         new SynthesisRequest(payload, res))
       this.setState({
@@ -297,9 +302,9 @@ export default class TTSaaS extends BaseClass {
   }
 
   playAudio(audio) {
-      let audioclipRaw = "data:audio/ogg;base64," + audio
-      this.audioSink.src = audioclipRaw;
-      this.audioSink.play();    
+    let audioclipRaw = "data:audio/ogg;base64," + audio
+    this.audioSink.src = audioclipRaw;
+    this.audioSink.play();    
   }
 
   parseResponse(res){
@@ -335,13 +340,13 @@ export default class TTSaaS extends BaseClass {
   getVoicesSelectOptions() {
     let voiceOptions = []
     let lastLang = null
-    this.state.voices.forEach(v => {
+    this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
         if(lastLang != v.language){
-          voiceOptions.push(<optgroup label={v.language}></optgroup>)
+          voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
           lastLang = v.language
         }
-        voiceOptions.push(<option value={v.name} selected={this.state.voice.name === v.name}>{v.name}</option>)
+        voiceOptions.push(<option key={'option-'+idx} value={v.name}>{v.name}</option>)
       }
     })
     return voiceOptions
@@ -404,7 +409,7 @@ export default class TTSaaS extends BaseClass {
                     <Form.Check label={`SSML`} className="align-middle my-3" type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}></Form.Check>
                   </Form.Group>
                   <Form.Group style={{'width': '15%'}} className="form-floating">
-                    <Form.Control name="voice" as="select" defaultValue={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
+                    <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
                       { voiceOptions }
                     </Form.Control>
                     <Form.Label htmlFor="voice">Voice</Form.Label>
@@ -414,7 +419,7 @@ export default class TTSaaS extends BaseClass {
                 </div>
                 { this.state.error ? (
                   <div className="badge bg-danger text-white w-100 text-wrap mt-2">
-                    {JSON.stringify(this.state.error.response.data.error)}
+                    {JSON.stringify(this.state.error)}
                   </div>
                 ) : ('') }
               </form>
