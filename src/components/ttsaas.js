@@ -71,7 +71,7 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
     voicesHtml.push(
       <tr className={'align-middle ' + (v.restricted ? 'bg-light text-danger' : '') + (v.sampleRateHz === 22050 ? '' : ' text-muted')}>
         <td>{v.name}</td>
-        <td>{v.language in LANG_EMOJIS ? LANG_EMOJIS[v.language] : v.language} {v.languageTlw}</td>
+        <td>{v.language in LANG_EMOJIS ? LANG_EMOJIS[v.language] : v.language} {v.language}</td>
         <td>{v.model}</td>
         <td>{v.gender}</td>
         <td>{v.version}</td>
