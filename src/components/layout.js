@@ -34,7 +34,7 @@ export default class Layout extends React.Component {
     return (<Location>
       {({ location, navigate }) => (
         <main style={pageStyles}>
-          <title>Nuance Mix AI Powered ChatBots</title>
+          <title>Nuance Mix Demo Client</title>
           <h1 style={headingStyles} className="text-center display-4">
               <Link to={`/`+location.search} className="text-decoration-none text-dark">
                 Nuance <span style={headingAccentStyles}>Mix</span>
