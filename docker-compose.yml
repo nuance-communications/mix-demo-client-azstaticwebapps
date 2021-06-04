@@ -1,0 +1,40 @@
+---
+    version: '3.5'
+    
+    services:
+        app:
+            build:
+                context: .
+                dockerfile: Dockerfile
+            container_name: gatsby-frontend
+            volumes:
+                - "./src:/app/src"
+                - "./gatsby-config.js:/app/gatsby-config.js"
+                - "./localhost+2.pem:/app/localhost+2.pem"
+                - "./localhost+2-key.pem:/app/localhost+2-key.pem"
+            ports:
+                - "8000:8000"
+                - "8001:8001"
+            environment:
+                NODE_ENV: development
+            env_file:
+                - ./.env
+            command: npm run develop -- -H 0.0.0.0 --https --cert-file localhost+2.pem --key-file localhost+2-key.pem
+    
+        sidecar:
+            build:
+                context: .
+                dockerfile: api/Dockerfile
+            container_name: az-functions
+            depends_on:
+                - app
+            ports:
+                - "7071:7071"
+            volumes:
+                - "./api:/home/site/wwwroot/api"
+                - "./certificate.pfx:/home/site/wwwroot/certificate.pfx"
+                - "./.password:/home/site/wwwroot/.password"
+            env_file:
+                - ./.env
+            working_dir: /home/site/wwwroot/api
+            command: func host start --cors * --useHttps --cert ../certificate.pfx --password ../.password
