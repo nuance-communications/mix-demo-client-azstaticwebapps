@@ -38,6 +38,9 @@ class ExternalFetchHandlers {
   Server_Asset_Price = () => {
     return 'api/finance-api-asset-price'
   }
+  Server_Asset_Purchase = () => {
+    return 'api/finance-api-asset-purchase'
+  }
 
   // iSendEmail
   Server_Send_Email = () => {
