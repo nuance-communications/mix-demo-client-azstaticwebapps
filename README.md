@@ -77,13 +77,15 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 * [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 * Node.js 14.3+ (Client Toolchain)
 * Python 3.7+ (Functions)
-
+* Docker Compose (Local development)
+  
 ## Quick Start 🚀
 
 ### Self-Signed Cert
 
 _Skip this if you already have certificates_.
 
+#### For macOS users
 ```bash
 brew install mkcert
 
@@ -92,8 +94,47 @@ mkcert -install
 
 openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
 ```
+#### For Windows users
+Download pre-build [mkcert.exe](https://github.com/FiloSottile/mkcert/releases) and [openssl.exe](https://indy.fulgan.com/SSL/) binaries.
+```bash
+mkcert.exe localhost 127.0.0.1 ::1
+certutil -addstore "Root" "C:\Users\<USERNAME>\AppData\Local\mkcert\rootCA.pem"
 
-### Install
+openssl.exe pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+```
+#### For Linux users
+Download pre-build [mkcert](https://github.com/FiloSottile/mkcert/releases) binary.
+```bash
+mkcert localhost 127.0.0.1 ::1
+mkcert -install
+
+openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+```
+
+### 1. Run with `Docker Compose`
+
+#### Configure
+
+* Generated certificate files `certificate.pfx`, `localhost+2.pem` and `localhost+2-key.pem` should be present in the project's base folder.
+* Supply the password used when generating certificates in a file `.password`.
+  
+#### Build and Run
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+Launch `https://localhost:8000`
+
+Note:
+
+* Override environment variable values in `.env` file as needed.
+* If facing issues, try with `docker-compose restart`.
+
+### 2. Run directly on Host
+
+#### Install
 
 ```bash
 npm install
@@ -106,13 +147,13 @@ source env/bin/activate
 pip install -r requirements.txt
 ```
 
-### Configure
+#### Configure
 
 ```bash
 cp sample/local.settings.json api/local.settings.json
 ```
 
-### Run
+#### Run
 
 ```bash
 # Process 1 - Start the API
@@ -126,7 +167,7 @@ npm run develop -- --https --cert-file localhost+2.pem --key-file localhost+2-ke
 ```
 
 Launch `https://localhost:8000`
-
+  
 ## Getting Started
 
 ### Certificates
@@ -148,10 +189,18 @@ openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in local
 
 For Windows users:
 
-```
-$cert = New-SelfSignedCertificate -Subject localhost -DnsName localhost -FriendlyName "Functions Development" -KeyUsage DigitalSignature -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.1")
+Download pre-build binaries of [mkcert.exe](https://github.com/FiloSottile/mkcert/releases) and [openssl.exe](https://indy.fulgan.com/SSL/). 
 
-Export-PfxCertificate -Cert $cert -FilePath certificate.pfx -Password (ConvertTo-SecureString -String 123 -Force -AsPlainText)
+```bash
+mkcert.exe localhost 127.0.0.1 ::1
+
+openssl.exe pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+```
+
+Import generated rootCA certificate to Windows `Trusted Root Certification Authorities` store.
+```bash
+# Run in elevated command prompt window
+certutil -addstore "Root" "C:\Users\<USERNAME>\AppData\Local\mkcert\rootCA.pem"
 ```
 
 ### Azure Functions
@@ -172,7 +221,7 @@ export base_url_logapi="https://log.api.nuance.com"
 export oauth_scope="dlg nlu tts log"
 ```
 
-Note: When deployed, these can be set per deployment environment in the Azure Portal.
+Note: When deployed, these can be set per deployment environment in the Azure Portal. Override values as needed in `.env` when using `docker-compose`
 
 ##### local.settings.json
 
@@ -213,8 +262,9 @@ export sendgrid_api_key="<REPLACE_ME>"
 export sendgrid_from_email="<REPLACE_ME>"
 export sendgrid_custom_token="<REPLACE_ME>"
 ```
-
+Note: Override values as needed in `.env` when using `docker-compose`
 ⚠️ The _custom token_ must be provided in the Mix project named `SENDGRID_TOKEN`. This is to thwart unintentional usage.
+
 
 #### Install
 
