@@ -378,7 +378,7 @@ To take advantage of these, simply mark up your Rich Text messages appropriately
 
 ### Intent or Entity
 
-To trigger a intent or entity selection, leverage the following attributes:
+To trigger an intent or entity selection, leverage the following attributes:
 
 * `data-mix-action="selectable"`
 * `data-mix-selectable-id` - can be `INTENT` or the entity name
@@ -404,9 +404,9 @@ To trigger a intent or entity selection, leverage the following attributes:
 </a>
 ```
 
-### Faux Inputs
+### Simulated Inputs
 
-To trigger a faux user input, leverage the following attributes:
+To trigger a simulated user input, leverage the following attributes:
 
 * `data-mix-action="input"`
 * `data-mix-input`
