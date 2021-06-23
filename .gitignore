@@ -4,3 +4,12 @@ public
 .cache
 .vscode
 
+.idea
+__pycache__
+.venv
+
+# Local cerificate files
+certificate.pfx
+localhost+2.pem
+localhost+2-key.pem
+.password
