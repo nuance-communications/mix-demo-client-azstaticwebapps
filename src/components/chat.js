@@ -26,7 +26,16 @@ import { STUB_SELECTABLE_IMAGES } from "./shared"
 const components = ReactSafeHtml.components.makeElements({})
 components.div = ReactSafeHtml.components.createSimpleElement('div', {style: true, class: true})
 components.span = ReactSafeHtml.components.createSimpleElement('span', {style: true, class: true})
-components.a = ReactSafeHtml.components.createSimpleElement('a', {style: true, href: true, rel: true, target: true})
+components.a = ReactSafeHtml.components.createSimpleElement('a', {
+  style: true,
+  href: true,
+  rel: true,
+  target: true,
+  'data-mix-selectable-id': true,
+  'data-mix-selectable-value': true,
+  'data-mix-action': true,
+  'data-mix-input': true
+})
 components.p = ReactSafeHtml.components.createSimpleElement('p', {style: true, class: true})
 components.br = ReactSafeHtml.components.createSimpleElement('br', {style: true, class: true})
 components.em = ReactSafeHtml.components.createSimpleElement('em', {style: true, class: true})
@@ -419,6 +428,29 @@ export default class ChatPanel extends React.Component {
     return ret
   }
 
+  onClickEvent(evt){
+    let target = evt.target
+    let href = target.href
+    switch(target.getAttribute('data-mix-action')){
+      case 'selectable':
+        this.props.onExecute({
+          'id': target.getAttribute('data-mix-selectable-id'),
+          'value': target.getAttribute('data-mix-selectable-value')
+        })
+        evt.preventDefault()
+        break
+      case 'input':
+        this.props.onExecute(target.getAttribute('data-mix-input'))
+        evt.preventDefault()
+        break
+      case 'exteral':
+        break
+      default:
+        console.log('unhandled use-case')
+        break
+    }
+  }
+
   renderMessages(){
     let messages = []
     if(this.props.rawResponses){
@@ -465,7 +497,7 @@ export default class ChatPanel extends React.Component {
               m.visual.forEach((_m, idx3) => {
                 resMessages.push(
                   <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
-                    <div className="rounded rounded-3 bg-light msg text-dark p-2">
+                    <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
                       <ReactSafeHtml html={_m.text} components={components} />
                     </div>
                   </dd>
@@ -498,7 +530,7 @@ export default class ChatPanel extends React.Component {
                 }
               }
             }
-            resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
+            resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)}>{cardMsgs}</div></dd>)
           }
           // DATA ACTION
           const daAction = res.response.payload.daAction
