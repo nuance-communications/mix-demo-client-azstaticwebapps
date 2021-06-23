@@ -128,7 +128,7 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
               name={false}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
-              collapsed={5}
+              collapsed={8}
               displayArrayKey={false}
               // theme={'grayscale'}
             />
@@ -351,7 +351,7 @@ export default class DLGaaS extends BaseClass {
       console.log('Calling SERVER FUNCTION', daAction, externalFunctionStub())
       return await this.request(
         `${ROOT_URL}/${externalFunctionStub()}`,
-        daAction.data,
+        daAction.data,
         true
       )
     }
