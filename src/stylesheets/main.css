@@ -39,7 +39,7 @@
   line-height: 20px;
 }
 #messagesHnd .bg-light.msg {
-  background: #f5f8fa;
+  background: #efefef !important;
   color: #414141;
 }
 #messagesHnd .bg-white.msg {
@@ -72,4 +72,48 @@ input[name=textInput] {
   position: relative;
   top: -1px;
   right: 4px;
+}
+
+.table-responsive .badge {
+  line-height: 1.75;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+td .badge.bg-primary {
+  background-color: #e4e5e7 !important;
+}
+td .badge.border-primary {
+  border-color: #e4e5e7 !important;
+}
+td .badge.bg-primary.text-white,
+td .badge.text-primary {
+  color: #333 !important;
+}
+td .badge.bg-success {
+  background-color: rgb(52,182,199) !important;
+}
+td .badge.bg-light.text-success {
+  background-color: rgb(52,182,199) !important;
+}
+td .badge.border-success {
+  border-color: rgb(52,182,199) !important;
+}
+td .badge.text-success,
+td .badge.text-danger {
+  color: white !important;
+}
+
+.log-viewer .form-check-inline {
+  display: block;
+}
+
+pre {
+  white-space: pre-wrap;
+}
+
+.react-json-view,
+.pretty-json-container {
+  font-family: -apple-system, Roboto, sans-serif, serif;
+  font-size: 0.9rem;
 }
