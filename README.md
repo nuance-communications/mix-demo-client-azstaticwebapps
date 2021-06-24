@@ -77,7 +77,7 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 * [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 * Node.js 14.3+ (Client Toolchain)
 * Python 3.7+ (Functions)
-* Docker Compose (Local development)
+* Docker Engine 20.10.0+ (Local development)
   
 ## Quick Start 🚀
 
