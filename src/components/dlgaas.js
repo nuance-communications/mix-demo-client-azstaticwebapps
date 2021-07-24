@@ -128,7 +128,7 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
               name={false}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
-              collapsed={5}
+              collapsed={8}
               displayArrayKey={false}
               // theme={'grayscale'}
             />
