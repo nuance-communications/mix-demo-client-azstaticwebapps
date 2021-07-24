@@ -630,9 +630,9 @@ export default class DLGaaS extends BaseClass {
     return (
       <div className="">
         <div className="col-12">
-          <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
+          <h3 className="fw-bold text-center w-100 mb-3 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
-          {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mt-1 mb-2"><strong>:(</strong>{`   `}{this.state.error}</div>) : '' }
+          {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>:(</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
             <div className={(this.isStandalone() ? `col-12` : `col-4 offset-md-1`) + ` bg-light rounded-3 px-4 py-4`}>
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
@@ -645,11 +645,11 @@ export default class DLGaaS extends BaseClass {
                   <label htmlFor="modelUrn" className="form-label">Model URN</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={this.state.sessionId} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="language" className="form-label">Language</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={this.state.sessionId} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="channel" className="form-label">Channel</label>
                 </div>
                 <div className="form-floating">
@@ -663,7 +663,7 @@ export default class DLGaaS extends BaseClass {
                 </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
-                    {this.state.sessionId.length ? 'Resume Session' : 'Start New Session'}
+                    {this.state.sessionId ? 'Resume Session' : 'Start New Session'}
                   </button>
                 </div>
               </form>
