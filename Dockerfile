@@ -10,7 +10,7 @@ RUN npm install --loglevel warn
 COPY scripts ./scripts
 COPY src ./src
 COPY static ./static
-COPY gatsby-config.js gatsby-node.js .
+COPY gatsby-config.js gatsby-node.js ./
 
 EXPOSE 8000
-CMD [ "npm", "run", "develop", "--", "-H", "0.0.0.0" ]
+CMD [ "npm", "run", "develop" ]
