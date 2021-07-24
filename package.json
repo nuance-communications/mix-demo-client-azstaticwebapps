@@ -46,5 +46,11 @@
     "react-dom": "^16.13.1",
     "react-json-view": "^1.21.3",
     "react-safe-html": "^0.6.1"
+  },
+  "devDependencies": {
+    "trim": ">=0.0.3",
+    "react-dev-utils": ">=11.0.4",
+    "postcss": ">=7.0.36",
+    "ws": ">=7.4.6"
   }
 }
