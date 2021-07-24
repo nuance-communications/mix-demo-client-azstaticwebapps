@@ -11,6 +11,7 @@
 * [Quick Start 🚀](#quick-start-)
 * [Getting Started](#getting-started)
 * [Conventions for Rich UI](#conventions-for-rich-ui)
+* [Conventions for Link Handling](#conventions-for-link-handling)
 * [Data Access Integrations](#data-access-integrations)
 * [Publishing to Azure](#publishing-to-azure)
 * [License](#license)
@@ -368,6 +369,57 @@ Note: when using Rich Text markup in messages, if elements contains classes from
 ### Stub Images for Carousels with Selectables
 
 Images can be rendered when using selectables and the `carousel` type. Edit `STUB_SELECTABLE_IMAGES` in `shared.js` to experiment with resources.
+
+## Conventions for Link Handling
+
+This client employes certain conventions within Mix.dialog to offer special types of event handling in the presentation layer.
+
+To take advantage of these, simply mark up your Rich Text messages appropriately with the data attributes, depending on the intended interaction.
+
+### Intent or Entity
+
+To trigger an intent or entity selection, leverage the following attributes:
+
+* `data-mix-action="selectable"`
+* `data-mix-selectable-id` - can be `INTENT` or the entity name
+* `data-mix-selectable-value`
+
+#### Sample
+
+```html
+<a href="#"
+  data-mix-action="selectable"
+  data-mix-selectable-id="INTENT"
+  data-mix-selectable-value="iBuyPhone">
+    Buy a Phone
+</a>
+```
+
+```html
+<a href="#"
+  data-mix-action="selectable"
+  data-mix-selectable-id="ePhoneCapacity"
+  data-mix-selectable-value="128GB">
+    128GB
+</a>
+```
+
+### Simulated Inputs
+
+To trigger a simulated user input, leverage the following attributes:
+
+* `data-mix-action="input"`
+* `data-mix-input`
+
+#### Sample
+
+```html
+<a href="#"
+  data-mix-action="input"
+  data-mix-input="$500">
+    $500
+</a>
+```
 
 ## Data Access Integrations
 
