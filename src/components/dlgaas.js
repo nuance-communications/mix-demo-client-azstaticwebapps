@@ -38,6 +38,9 @@ class ExternalFetchHandlers {
   Server_Asset_Price = () => {
     return 'api/finance-api-asset-price'
   }
+  Server_Asset_Purchase = () => {
+    return 'api/finance-api-asset-purchase'
+  }
 
   // iSendEmail
   Server_Send_Email = () => {
@@ -125,7 +128,7 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
               name={false}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
-              collapsed={5}
+              collapsed={8}
               displayArrayKey={false}
               // theme={'grayscale'}
             />

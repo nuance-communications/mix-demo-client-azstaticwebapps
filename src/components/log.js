@@ -19,6 +19,37 @@ const TRANSFER_EVENTS = ['transfer-initiated']
 const DATA_EVENTS = ['data-required', 'data-received']
 const END_EVENTS = ['application-ended']
 const ERROR_EVENTS = ['error']
+const EVENTS_SORTED_LIST = [
+  'session-start',
+  'selector',
+  'decision',
+  'transition',
+  'event',
+  'message',
+  'qa-config',
+  'input-required',
+  'input-received',
+  'input-processed',
+  'intent',
+  'data-received',
+  'data-required',
+  'question-router',
+  'component-invoked',
+  'component-returned',
+  'transfer-initiated',
+  'transfer-completed',
+  'application-ended',
+]
+const EVENTS_SORTED = (a, b) => {
+  let aIdx = EVENTS_SORTED_LIST.indexOf(a)
+  let bIdx = EVENTS_SORTED_LIST.indexOf(b)
+  if(aIdx > bIdx){
+    return 1
+  } else if (aIdx < bIdx){
+    return -1
+  }
+  return 0
+}
 
 cytoscape.use( dagre )
 
@@ -370,7 +401,7 @@ export class LogEventsTable extends React.Component {
         ret = (<div>
           <span className="badge bg-light text-dark text-start">id={val.id}, returnCode={val.returnCode}, returnMessage={val.returnMessage}</span>
           <br/><span className="badge bg-light text-dark text-start">duration={val.duration}</span>
-          <br/><span className="badge bg-light text-dark text-start">data=<pre className="overflow-hidden">{JSON.stringify(val.data, null, 2)}</pre></span>
+          <br/><span className="badge bg-light text-dark text-start">data=<pre className="overflow-hidden text-break">{JSON.stringify(val.data, null, 2)}</pre></span>
           </div>)
         break
       case 'message':
@@ -456,6 +487,17 @@ export class LogEventsTable extends React.Component {
     return ret
   }
 
+  getBadgeClz(e){
+    return START_EVENTS.indexOf(e) > -1 ? 'border bg-dark text-white' :
+          MESSAGE_EVENTS.indexOf(e) > -1 ? 'border bg-primary text-primary' :
+          INPUT_EVENTS.indexOf(e) > -1 ? 'border bg-success text-success' :
+          TRANSFER_EVENTS.indexOf(e) > -1 ? 'border bg-warning text-dark' :
+          DATA_EVENTS.indexOf(e) > -1 ? 'border bg-warning text-dark' :
+          END_EVENTS.indexOf(e) > -1 ? 'border bg-danger text-danger' :
+          ERROR_EVENTS.indexOf(e) > -1 ? 'border bg-danger text-danger' :
+          'bg-light text-dark'
+  }
+
   renderEventsTable(events){
     const ret = []
     let e = events
@@ -467,18 +509,12 @@ export class LogEventsTable extends React.Component {
         if(this.state.filterTypes.indexOf(niiEvt.name) > -1){
           return
         }
-        let badgeBg = START_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-dark text-white' : 
-                      MESSAGE_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-primary text-primary' : 
-                      INPUT_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-success text-success' : 
-                      TRANSFER_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-warning text-dark' : 
-                      DATA_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-warning text-dark' : 
-                      END_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-danger text-danger' : 
-                      ERROR_EVENTS.indexOf(niiEvt.name) > -1 ? 'border border-danger text-danger' : 
-                      'bg-light text-dark'
+        let ts = moment(evt.value.timestamp).format('HH:mm:ss.SSS')
+        let badgeBg = this.getBadgeClz(niiEvt.name)
         ret.push(
           <tr key={'event-'+idx} className={niiEvt.name === 'session-start' ? 'bg-dark' : ''}>
             <td><span className={`badge ` + badgeBg}>{evt.value.data.seqid}</span></td>
-            <td><span className={`badge ` + badgeBg}>{evt.value.timestamp}</span></td>
+            <td><span className={`badge ` + badgeBg}>{ts}</span></td>
             <td><span className={`badge ` + badgeBg}>{niiEvt.name}</span></td>
             <td className="text-start">{this.renderNiiEvent(niiEvt)}</td>
           </tr>
@@ -555,15 +591,15 @@ export class LogEventsTable extends React.Component {
   renderFilters(){
     const eventNames = this.getAllEventNames()
     const views = []
-    eventNames.forEach(eventName => {
+    eventNames.sort(EVENTS_SORTED).forEach(eventName => {
       views.push(
         <div className="form-check form-check-inline" key={'event-filter-'+eventName}>
+          <label className="form-check-label" htmlFor={'event-filter-'+eventName}>{eventName}</label>
           <input className="form-check-input" type="checkbox" 
             id={'event-filter-'+eventName} 
             value={eventName} 
             onChange={this.updateFilters.bind(this)}
             checked={this.state.filterTypes.indexOf(eventName) === -1} />
-          <label className="form-check-label" htmlFor={'event-filter-'+eventName}>{eventName}</label>
         </div>
       )
     })
@@ -572,17 +608,20 @@ export class LogEventsTable extends React.Component {
 
   render(){
     return (
-      <div className="">
-        <div className="filters">
-          <h5>
-            <strong>Filter</strong>
-            {` `}
-            <button className="btn btn-link btn-sm text-primary text-decoration-none" onClick={this.toggleAllFilters.bind(this)}>Toggle All/Reset</button>
-          </h5>
-          {this.renderFilters()}
+      <div className="log-viewer">
+        <div className="row">
+          <div className="col-2 text-center border-end border-2">
+            <h5 className="mt-2"><strong>Filter</strong></h5>
+            <button className="btn mb-2 btn-link btn-sm text-primary text-decoration-none" onClick={this.toggleAllFilters.bind(this)}>Toggle All/Reset</button>
+            <br/>
+            <div className="text-end">
+              {this.renderFilters()}
+            </div>
+          </div>
+          <div className="col-10">
+            {this.renderEventsTable(this.props.events)}
+          </div>
         </div>
-        <hr/>
-        {this.renderEventsTable(this.props.events)}
       </div>
     )
   }
