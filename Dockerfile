@@ -4,7 +4,7 @@ ENV INTERNAL_STATUS_PORT=8001
 
 WORKDIR /app
 
-COPY package.json .
+COPY package.json package-lock.json .
 RUN npm install --loglevel warn
 
 COPY scripts ./scripts
