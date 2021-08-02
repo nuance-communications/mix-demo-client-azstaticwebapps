@@ -472,6 +472,15 @@ export class BaseClass extends React.Component {
 }
 
 export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope, standalone}) => {
+  let scopes = []
+  serviceScope.split(' ').forEach((scope, idx) => {
+    scopes.push(
+      <div key={`form-scope-${idx}`} className="form-check form-check-inline">
+        <input className="form-check-input" type="checkbox" value={scope} checked readOnly={true}/>
+        <label className="form-check-label">{scope}</label>
+      </div>
+    )
+  })
   return (
     <div>
       <h3 className="fw-bold mt-4">Authenticate</h3>
@@ -495,14 +504,7 @@ export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChang
         </div>
         <div className="form-group mt-3">
           <span className="form-label mr-3">OAuth Scopes: &nbsp; &nbsp;</span>
-          <div className="form-check form-check-inline">
-            <input className="form-check-input" type="checkbox" id="scopeSvc" value={serviceScope.split(' ')[0]} checked readOnly={true}/>
-            <label className="form-check-label" htmlFor="scopeSvc">{serviceScope.split(' ')[0]}</label>
-          </div>
-          <div className="form-check form-check-inline">
-            <input className="form-check-input" type="checkbox" id="scopeLog" value={serviceScope.split(' ')[1]} checked readOnly={true}/>
-            <label className="form-check-label" htmlFor="scopeLog">{serviceScope.split(' ')[1]}</label>
-          </div>
+          {scopes}
         </div>
         <div className="form-group mt-3">
           <button className="btn btn-primary" type="submit">Get Token</button>
