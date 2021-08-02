@@ -30,7 +30,7 @@
     "@mdx-js/react": "^1.6.22",
     "@popperjs/core": "^2.9.2",
     "axios": "^0.21.1",
-    "bootstrap": "^5.0.0-beta3",
+    "bootstrap": "^5.0.2",
     "cytoscape": "^3.19.0",
     "cytoscape-dagre": "^2.3.2",
     "gatsby": "^2.32.13",
