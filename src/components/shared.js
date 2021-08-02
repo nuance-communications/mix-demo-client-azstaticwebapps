@@ -86,6 +86,41 @@ export const LANG_EMOJIS = {
     "zh-tw": "🇹🇼"
 };
 
+const EXPERIENCE_TYPES = {
+  ivrTextWithTts: {
+    playTTS: true,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true
+  },
+  ivrTextWithSSML: {
+    playTTS: false,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true
+  },
+  visualVA: {
+    playTTS: false,
+    isOutputHTML: true,
+    isOutputSSML: false,
+    bindTimeouts: false,
+    dtmfInput: false
+  },
+  visualVAwithTts: {
+    playTTS: true,
+    isOutputHTML: true,
+    isOutputSSML: true,
+    bindTimeouts: false,
+    dtmfInput: false
+  }
+}
+
+export const SIMULATED_EXPERIENCES = (experienceType) => {
+  return EXPERIENCE_TYPES[experienceType]
+}
+
 export const STUB_SELECTABLE_IMAGES = {
   // 'entity':{
   //   'value': 'https://url.png', 
