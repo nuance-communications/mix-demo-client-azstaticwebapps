@@ -39,6 +39,7 @@ const EVENTS_SORTED_LIST = [
   'transfer-initiated',
   'transfer-completed',
   'application-ended',
+  'error',
 ]
 const EVENTS_SORTED = (a, b) => {
   let aIdx = EVENTS_SORTED_LIST.indexOf(a)
@@ -472,7 +473,7 @@ export class LogEventsTable extends React.Component {
         ret = (<span className="badge bg-light text-dark text-start">from=<strong>{val.from.name}</strong> ({val.from.uuid})<br/>to=<strong>{val.to.name}</strong> ({val.to.uuid}, {val.to.type})</span>)
         break
       case 'error':
-        ret = (<span className="badge bg-light text-danger text-start text-wrap"><strong>{val.name}</strong>: {val.message}</span>)
+        ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>{val.name}</strong>: {val.message}</span>)
         break
       case 'transfer-initiated':
         ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>{val.id}</strong><br/><pre className="">{JSON.stringify(val.data, null, 2)}</pre></span>)
@@ -488,7 +489,7 @@ export class LogEventsTable extends React.Component {
   }
 
   getBadgeClz(e){
-    return START_EVENTS.indexOf(e) > -1 ? 'border bg-dark text-white' :
+    return START_EVENTS.indexOf(e) > -1 ? 'border border-dark bg-dark text-white' :
           MESSAGE_EVENTS.indexOf(e) > -1 ? 'border bg-primary text-primary' :
           INPUT_EVENTS.indexOf(e) > -1 ? 'border bg-success text-success' :
           TRANSFER_EVENTS.indexOf(e) > -1 ? 'border bg-warning text-dark' :
