@@ -9,6 +9,8 @@
 import React from "react"
 import moment from 'moment'
 
+import { SIMULATED_EXPERIENCES } from "./shared"
+
 import cytoscape from 'cytoscape'
 import dagre from 'cytoscape-dagre'
 
@@ -406,7 +408,12 @@ export class LogEventsTable extends React.Component {
         break
       case 'message':
         const vTxt = []
-        val.visual.forEach(v => vTxt.push(v.text))
+        const exp = SIMULATED_EXPERIENCES(this.props.simulateExperience)
+        if(exp.isOutputSSML){
+          val.nlg.forEach(v => vTxt.push(v.text))
+        } else {
+          val.visual.forEach(v => vTxt.push(v.text))
+        }
         ret = (<div>
           <strong className="badge bg-primary text-white text-start text-wrap">{val.visual.length ? vTxt.join(' ') : ''}</strong>
           <br/><span className="badge bg-light text-dark text-start">nlg={val.nlg.length}, visual={val.visual.length}, audio={val.audio.length}</span>
