@@ -169,7 +169,7 @@ export default class TTSaaS extends BaseClass {
       ssmlInput: false,
       voice: { 
         "name": "Evan", 
-        "model": "xpremium-high" 
+        "model": "enhanced" 
       },
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
