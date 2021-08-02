@@ -173,9 +173,11 @@ export default class TTSaaS extends BaseClass {
       },
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
-      voices: []
+      voices: [],
     }
     this.audioSink = null
+    this.playQueue = []
+    this.onAudioEndFunctions = []
   }
 
   componentDidMount(){
@@ -188,6 +190,28 @@ export default class TTSaaS extends BaseClass {
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
     this.audioSink = new Audio()
+    this.audioSink.onended = this.onAudioEnded.bind(this)
+  }
+
+  onAudioEnded() {
+    let audioData = this.playQueue.shift()
+    if(audioData){
+      this.playAudio(audioData)
+    } else {
+      if(this.audioSink){
+        this.audioSink.currentTime = 0
+      }
+      if(this.onAudioEndFunctions.length){
+        let f 
+        while(f = this.onAudioEndFunctions.shift()){
+          f.call()
+        }
+      }
+    }
+  }
+
+  whenAudioEnds(func) {
+    this.onAudioEndFunctions.push(func)
   }
 
   initVoices() {
@@ -218,6 +242,15 @@ export default class TTSaaS extends BaseClass {
     }
   }
 
+  resetAudio(){
+    this.playQueue.length = 0
+    if(this.audioSink){
+      this.audioSink.pause()
+      this.audioSink.currentTime = 0
+    }
+  }
+
+
   // TTSaaS
 
   async getVoices(rawPayload) {
@@ -238,7 +271,7 @@ export default class TTSaaS extends BaseClass {
     })
   }
 
-  async executeTextInput(){
+  async executeTextInput(clientData){
     let input = {
       text: {
         text: this.state.textInput
@@ -268,9 +301,9 @@ export default class TTSaaS extends BaseClass {
       }, 
       input: input, 
       event_params: { 
-        send_log_events: true 
+        // send_log_events: true 
       },
-      client_data: CLIENT_DATA,
+      client_data: clientData ? { ...clientData, ...CLIENT_DATA } : CLIENT_DATA,
     }
     let rawResponses = this.state.rawResponses || []
     let synthesizedAudioClips = this.state.synthesizedAudioClips || []
@@ -299,17 +332,22 @@ export default class TTSaaS extends BaseClass {
       })
       this.parseResponse(res)
     }
+    return { payload, res }
   }
 
   playAudio(audio) {
     let audioclipRaw = "data:audio/ogg;base64," + audio
     this.audioSink.src = audioclipRaw;
-    this.audioSink.play();    
+    this.audioSink.play();
   }
 
   parseResponse(res){
     if(res.response.payload){
-      this.playAudio(res.response.payload.audio)
+      if(this.audioSink.paused){
+        this.playAudio(res.response.payload.audio)
+      } else {
+        this.playQueue.push(res.response.payload.audio)
+      }
     }
   }
 
