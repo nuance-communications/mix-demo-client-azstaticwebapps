@@ -30,12 +30,12 @@ export default class DlgStandalone extends DLGaaS {
     return (
       <div className="col-md-6 offset-md-3">
         <AuthForm standalone={true} 
-                tokenError={this.state.tokenError}
-                initToken={this.initToken.bind(this)}
-                clientId={this.state.clientId}
-                clientSecret={this.state.clientSecret}
-                onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="dlg log" />
+            tokenError={this.state.tokenError}
+            initToken={this.initToken.bind(this)}
+            clientId={this.state.clientId}
+            clientSecret={this.state.clientSecret}
+            onChangeTextInput={this.onChangeTextInput.bind(this)}
+            serviceScope="dlg tts log" />
       </div>
     )
   }
@@ -56,6 +56,7 @@ export default class DlgStandalone extends DLGaaS {
             )
           }
           <ChatPanel
+            simulateExperience={this.state.simulateExperience}
             onExecute={this.execute.bind(this)}
             rawResponses={this.state.rawResponses}
             autoScrollChatPanel={this.state.autoScrollChatPanel}
