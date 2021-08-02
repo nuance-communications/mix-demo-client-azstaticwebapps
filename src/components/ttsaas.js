@@ -66,7 +66,7 @@ class SynthesisRequest {
 }
 
 function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
-  const [key, setKey] = useState('rendered_payload')
+  const [key, setKey] = useState('all_voices')
   let voicesHtml = []
   voices.forEach((v, idx) => {
     voicesHtml.push(
