@@ -168,7 +168,7 @@ function getLanguageCode(language){
 export class BaseClass extends React.Component {
 
   initStateFromQueryParams(params){
-    const toUpdate = {}
+    let toUpdate = {}
     if(typeof window !== `undefined`){
       const urlParams = new URLSearchParams(window.location.search)
       params.forEach((q) => {
@@ -178,7 +178,38 @@ export class BaseClass extends React.Component {
         }
       });
     }
+    return { 
+      ...toUpdate, 
+      ...this.initStateFromSessionStorage(params) 
+    }
+  }
+
+  initStateFromSessionStorage(params){
+    const toUpdate = {}
+    if(typeof window !== `undefined`){
+      params.forEach(q => {
+        let v = window.sessionStorage.getItem(q)
+        if(v){
+          try{
+            toUpdate[q] = JSON.parse(v)
+          } catch(ex) {
+            toUpdate[q] = v
+          }
+        }
+      })
+    }
     return toUpdate
+  }
+
+  saveToSessionStorage(data){
+    if(typeof window !== 'undefined'){
+      Object.keys(data).forEach(key => {
+        let item = data[key]
+        window.sessionStorage.setItem(key, item)
+      })
+      return true
+    }
+    return false
   }
 
   // Request
@@ -283,7 +314,7 @@ export class BaseClass extends React.Component {
     const ret = await this.request(`${ROOT_URL}/api/logapi-destroy-consumer`, {
       token: this.state.accessToken,
       consumerName: this.state.logConsumerName,
-      consumerGroup: this.state.logConsumerGroup,      
+      consumerGroup: this.state.logConsumerGroup,
     })
     console.log("Consumer destroyed")
     this.setState({
@@ -300,15 +331,17 @@ export class BaseClass extends React.Component {
     // purposefully scheduled on interval; 
     // fetch records will noop if request is inflight
     this.logTimer = window.setInterval(() => {
-      const logEvents = this.getLogEvents();
-      if(logEvents.length > 0){
-        const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
-        if(lastEvent === 'application-ended'){
-          this.stopCapturingLogs()
-          return
+      Promise.resolve().then(() => {
+        const logEvents = this.getLogEvents();
+        if(logEvents.length > 0){
+          const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
+          if(lastEvent === 'application-ended'){
+            this.stopCapturingLogs()
+            return
+          }
         }
-      }
-      this.doFetchRecords(50)
+        this.doFetchRecords(50)
+      })
     }, LOG_TIMER_DURATION)
   }
 
@@ -369,6 +402,29 @@ export class BaseClass extends React.Component {
     this.setState(toUpdate)
   }
 
+  onChangeSelectInput(evt) {
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'simulateExperience':
+        this.setState({
+          simulateExperience: tgt.value
+        })
+        break
+      case 'ttsVoice':
+        let newVoice = {
+            name: tgt.value, 
+            model: tgt.selectedOptions[0].getAttribute('data-model')
+          }
+        this.setState({
+          ttsVoice: newVoice
+        })
+        this.saveToSessionStorage({
+          ttsVoice: JSON.stringify(newVoice)
+        })
+        break
+    }
+  }
+
   onChangeTextInput(evt) {
     // Handle text input
     const tgt = evt.target
@@ -386,6 +442,9 @@ export class BaseClass extends React.Component {
       case 'clientSecret':
         this.setState({
           clientSecret: tgt.value
+        })
+        this.saveToSessionStorage({
+          'clientSecret': tgt.value
         })
         break
       case 'channel':
@@ -490,12 +549,12 @@ export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChang
         </div>) : '' }
       <form className="" onSubmit={(evt) => {initToken(serviceScope); evt.preventDefault();}}>
         <div className="form-floating mt-3">
-          <input type="text" className="form-control" name="clientId" value={clientId} onChange={onChangeTextInput} />
+          <input type="text"  className={'form-control ' + (clientId.length === 0 || tokenError ? 'is-invalid' : '')} name="clientId" value={clientId} onChange={onChangeTextInput} />
           <label htmlFor="clientId" className="form-label">Client ID</label>
         </div>
         <div className="form-floating mt-2">
-          <input type="password" className="form-control" name="clientSecret" value={clientSecret} onChange={onChangeTextInput} />
-          <label htmlFor="clientSecret"  className={'form-label ' + (tokenError ? 'is-invalid' : '')}>Client Secret</label>
+          <input type="password" className={'form-control ' + (clientSecret.length === 0 || tokenError ? 'is-invalid' : '')} name="clientSecret" value={clientSecret} onChange={onChangeTextInput} />
+          <label htmlFor="clientSecret" className="form-label">Client Secret</label>
           { tokenError ? (
             <div id="validationClientSecret" className="badge bg-danger text-white text-wrap invalid-feedback">
               <strong>Issue</strong> {tokenError}
