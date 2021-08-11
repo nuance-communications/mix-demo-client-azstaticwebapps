@@ -842,6 +842,7 @@ export default class DLGaaS extends BaseClass {
   }
 
   getConfigureSessionHtml(){
+    let sessionIdExists = Boolean(this.state.sessionId ? this.state.sessionId.length : false)
     return (
       <div className="">
         <div className="col-12">
@@ -896,11 +897,11 @@ export default class DLGaaS extends BaseClass {
                   <label htmlFor="modelUrn" className="form-label">Model URN</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="language" className="form-label">Language</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="channel" className="form-label">Channel</label>
                 </div>
                 <div className="form-floating">
@@ -914,7 +915,7 @@ export default class DLGaaS extends BaseClass {
                 </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
-                    {this.state.sessionId.length ? 'Resume Session' : 'Start New Session'}
+                    {sessionIdExists ? 'Resume Session' : 'Start New Session'}
                   </button>
                 </div>
               </form>
