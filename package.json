@@ -31,7 +31,7 @@
     "@popperjs/core": "^2.9.3",
     "axios": "^0.21.1",
     "bootstrap": "^5.0.2",
-    "cytoscape": "^3.19.0",
+    "cytoscape": "^3.19.1",
     "cytoscape-dagre": "^2.3.2",
     "gatsby": "^2.32.13",
     "gatsby-plugin-create-client-paths": "^2.10.0",
