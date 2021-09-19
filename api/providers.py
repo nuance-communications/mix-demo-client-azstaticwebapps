@@ -52,8 +52,10 @@ class YahooFinance:
         self.get_price_url = 'https://query2.finance.yahoo.com/v10/finance/quoteSummary/{}?modules=summaryDetail,assetProfile'
 
     def get_price_for_asset(self, ticker):
-        r = requests.get(self.get_price_url.format(ticker))
-        logging.warn(r)
+        url = self.get_price_url.format(ticker)
+        r = requests.get(url, headers={
+            'User-Agent': 'ChatBot Demo Client',
+            })
         if r.status_code == 200:
             rj = r.json()
             # ['summaryDetail']['assetProfile']
