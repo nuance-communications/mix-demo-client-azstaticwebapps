@@ -241,6 +241,7 @@ export default class DLGaaS extends BaseClass {
           location: null
         }
       },
+      clientData: CLIENT_DATA,
       tokenError: '',
       isSessionActive: false,
       logConsumerGroup: null,
@@ -290,14 +291,21 @@ export default class DLGaaS extends BaseClass {
 
   initStartData(after){
     const startDataLocalStorage = window.localStorage.getItem('startData')
-    if(startDataLocalStorage){
-      try{
-        this.setState({
-          startData: JSON.parse(startDataLocalStorage)
-        }, after)
-      } catch (ex) {
-        console.error(ex)
+    const clientDataLocalStorage = window.localStorage.getItem('clientData')
+    try{
+      let newData = {}
+
+      if(startDataLocalStorage){
+        newData.startData = JSON.parse(startDataLocalStorage)
       }
+      if(clientDataLocalStorage){
+        newData.clientData = JSON.parse(clientDataLocalStorage)
+      }
+      if(newData.startData || newData.clientData){
+        this.setState(newData, after)
+      }
+    } catch (ex) {
+      console.error(ex)
     }
   }
 
@@ -338,7 +346,7 @@ export default class DLGaaS extends BaseClass {
 
   // DLGaaS API
 
-  async sessionStart(language, channel, sessionTimeout, startData, sessionId) {
+  async sessionStart(language, channel, sessionTimeout, clientData, startData, sessionId) {
     // Second, the Session is Started
     await this.ensureTokenNotExpired()
     let fullPayload = {
@@ -351,7 +359,7 @@ export default class DLGaaS extends BaseClass {
         data: startData
       },
       session_timeout_sec: sessionTimeout,
-      client_data: CLIENT_DATA,
+      client_data: clientData,
     }
     if(sessionId){
       fullPayload.session_id = sessionId
@@ -427,6 +435,7 @@ export default class DLGaaS extends BaseClass {
         this.state.language,
         this.state.channel,
         this.state.sessionTimeout,
+        this.state.clientData,
         this.state.startData,
         this.state.sessionId
       )
@@ -449,7 +458,7 @@ export default class DLGaaS extends BaseClass {
         autoScrollChatPanel: true
       })
       // Kick things off..
-      await this.execute('')
+      await this.execute()
     }
     if(!this.isStandalone()){
       // Attach a Log Consumer
@@ -718,14 +727,20 @@ export default class DLGaaS extends BaseClass {
     }
   }
 
-  onEditStartData(type, item){
+  onEditData(dataType, type, item){
     switch(type){
       case 'edit':
       case 'add':
       case 'delete':
-        this.setState({
-          startData: item.updated_src
-        }, this.saveStartDataToLocalStorage)
+        if(dataType === 'start'){
+          this.setState({
+            startData: item.updated_src
+          }, this.saveStartDataToLocalStorage)
+        } else if (dataType === 'client'){
+          this.setState({
+            clientData: item.updated_src
+          }, this.saveClientDataToLocalStorage)
+        }
         break
       default:
         break
@@ -734,6 +749,10 @@ export default class DLGaaS extends BaseClass {
 
   saveStartDataToLocalStorage(){
     window.localStorage.setItem('startData', JSON.stringify(this.state.startData))
+  }
+
+  saveClientDataToLocalStorage(){
+    window.localStorage.setItem('clientData', JSON.stringify(this.state.clientData))
   }
 
   getApiEvents(){
@@ -921,10 +940,28 @@ export default class DLGaaS extends BaseClass {
               </form>
             </div>
             <div className={(this.isStandalone() ? `col-12` : `col-6`) + ` bg-light rounded-3 px-4 py-4`}>
+                <div className="form-floating mb-4 mt-3">
+                  <h5 className="mb-z">
+                    Client Data
+                  </h5>
+                  <ReactJson
+                    key={'json-clientData'}
+                    src={this.state.clientData}
+                    displayDataTypes={true}
+                    displayObjectSize={true}
+                    collapsed={false}
+                    name={`clientData`}
+                    theme={`grayscale:inverted`}
+                    sortKeys={true}
+                    onEdit={(edit) => { this.onEditData('client', 'edit', edit); }}
+                    onAdd={(add) => { this.onEditData('client', 'add', add); }}
+                    onDelete={(del) => { this.onEditData('client', 'delete', del); }}>
+                  </ReactJson>
+                </div>
                 <div className="form-floating">
-                  <h4 className="mb-2">
+                  <h5 className="mb-2">
                     Start Data
-                  </h4>
+                  </h5>
                   { navigator.geolocation ? (
                       <div className="d-flex w-100 pb-3">
                         <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
@@ -941,11 +978,10 @@ export default class DLGaaS extends BaseClass {
                     name={`startData`}
                     theme={`grayscale:inverted`}
                     sortKeys={true}
-                    onEdit={(edit) => { this.onEditStartData('edit', edit); }}
-                    onAdd={(add) => { this.onEditStartData('add', add); }}
-                    onDelete={(del) => { this.onEditStartData('delete', del); }}>
+                    onEdit={(edit) => { this.onEditData('start', 'edit', edit); }}
+                    onAdd={(add) => { this.onEditData('start', 'add', add); }}
+                    onDelete={(del) => { this.onEditData('start', 'delete', del); }}>
                   </ReactJson>
-                  
                 </div>
             </div>
           </div>
