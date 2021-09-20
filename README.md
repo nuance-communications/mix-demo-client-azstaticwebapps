@@ -61,7 +61,7 @@ Please see the [Exchanging data](https://docs.mix.nuance.com/data-access/?src=de
 
 Use Data Access nodes with the `client_fetch` configuration and write the integration layer locally with the **intention** of separate hosted Functions (through `external_fetch`). These Functions would be referenced and configured within Mix.dialog and Mix.dashboard respectively.
 
-![DevExample](./static/local-example.png)
+![DevExample](./app/static/local-example.png)
 
 ### Intended Hosted Use
 
@@ -69,24 +69,36 @@ The following illustrates a scenario where the client is deployed to Azure, and
 
 This simplifies the client handling, deferring to the Functions themselves, and offers lifecycle controls within Mix.
 
-![ProdExample](./static/hosted-example.png)
+![ProdExample](./app/static/hosted-example.png)
 
 ⚠️ There may be scenarios where `client_fetch` is appropriate; this has been set up such that `dlgaas.js` will invoke local `ClientFetchHandlers`.
 
 ## Pre-Requisites
 
+* [Git](https://git-scm.com/downloads)
 * [Brew](https://brew.sh/) (MacOS/Linux) or [Chocolatey](https://chocolatey.org/) (Windows)
+* [OpenSSL](https://www.openssl.org/) and [Mkcert](https://github.com/FiloSottile/mkcert/releases)
 * If using Docker..
-  * Docker Engine 20.10.0+
-* If using Native Host..
+  * [Docker Engine](https://docs.docker.com/engine/install/) 20.10.0+
+* If using a Native Host..
+  * [Node.js](https://nodejs.org/en/download/) 14.3+ (Client Toolchain)
+  * [Python](https://www.python.org/downloads/) 3.7+ (Functions)
   * [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
-  * Node.js 14.3+ (Client Toolchain)
-  * Python 3.7+ (Functions)
 
 ## Quick Start 🚀
 
+Assumes running the application using Docker: 
+
 ```bash
 make launch
+```
+
+If using Native Host:
+
+
+```bash
+make native-run-api-secure &
+make native-run-app-secure &
 ```
 
 ## Getting Started

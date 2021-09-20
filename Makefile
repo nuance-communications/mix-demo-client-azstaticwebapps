@@ -51,7 +51,7 @@ help:
 # SSL
 certs-prep:
 	@echo Preparing requirements for certificates.
-	$(XPACKAGEMANAGER) install mkcert
+	$(XPACKAGEMANAGER) install mkcert openssl
 
 certs-setup:
 	@echo Creating and Installing Certs for SSL
