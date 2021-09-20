@@ -101,7 +101,7 @@ native-build-api:
 	cd api/; \
 	python3 -m venv .venv; \
 	source .venv/bin/activate; \
-	pip install -r requirements.txt; 
+	pip install -r requirements.txt
 
 native-run-app-secure: native-build-app
 	cd app/; \
@@ -110,6 +110,8 @@ native-run-app-secure: native-build-app
 
 native-run-api-secure: native-build-api
 	cd api/; \
+	source .venv/bin/activate; \
+	pip list; \
 	func start --useHttps \
 		--cert ../resources/certificate.pfx \
 		--password ../resources/.password

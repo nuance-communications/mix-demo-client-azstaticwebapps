@@ -97,12 +97,14 @@ Assumes running the application using Docker:
 make launch
 ```
 
-If using Native Host:
-
+If using Native Host, run two processes:
 
 ```bash
-make native-run-api-secure &
-make native-run-app-secure &
+make native-run-api-secure
+```
+
+```bash
+make native-run-app-secure
 ```
 
 ## Getting Started
