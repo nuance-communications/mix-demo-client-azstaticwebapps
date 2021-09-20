@@ -87,6 +87,10 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 
 ## Quick Start 🚀
 
+```bash
+git clone git@github.com:nuance-communications/mix-demo-client-azstaticwebapps.git
+```
+
 Assumes running the application using Docker: 
 
 ```bash
@@ -121,79 +125,85 @@ DATA.ACCESS:  new-data-access-endpoint
 
 There are two main modes of operation intended: docker and native host. Launch defaults to docker. 
 
-#### `make certs-prep`
+#### Certificate Related
 
-Installs the pre-requisities for certificate creation.
+##### `make certs-prep`
 
-#### `make certs-setup`
+Installs the pre-requisities for certificate creation, namely `openssl` and `mkcert`. A package manager is used here: brew or choco depending on your platform.
+
+##### `make certs-setup`
 
 Creates certificates and stores password as needed for local use.
 
-#### `make launch`
+#### Quick Start
+
+##### `make launch`
 
 Primary command, sets up certificates and runs with docker compose.
 
-#### `make containers-build`
+#### Docker Host
 
-Builds the containers needed to run the app.
+##### `make containers-build`
 
-#### `make containers-run`
+Builds the containers needed to run the app. Reflects the full static web app, including the APIs.
 
-Runs the containers for the app.
+##### `make containers-run`
 
-#### `make containers-restart`
+Runs the containers for the app. Reflects the full static web app, including the APIs.
+
+##### `make containers-restart`
 
 Restarts the containers of the app.
 
-#### `make containers-stop`
+##### `make containers-stop`
 
 Stops the containers running.
 
-#### `make containers-status`
+##### `make containers-status`
 
 Provides status for the containers. 
 
-#### `make containers-logs`
+##### `make containers-logs`
 
 Follow the logs for the running containers.
 
-#### `make containers-clean`
+##### `make containers-clean`
 
-Removes all the images for the 
+Removes all the images for the app.
 
-#### `make native-build-app`
+#### Native Host
+
+##### `make native-build-app`
 
 Builds the client application package and brings in associated dependencies.
 
-#### `make native-build-api`
+##### `make native-build-api`
 
 Builds the functions package and sets up a virtual environment.
 
-#### `make native-run-app-secure`
+##### `make native-run-app-secure`
 
 Runs the native application securely (leveraging certs).
 
-#### `make native-run-api-secure`
+##### `make native-run-api-secure`
 
 Runs the native functions securely (leveraging certs).
 
-#### `make native-run-app-insecure`
+##### `make native-run-app-insecure`
 
 Runs the native application insecurely. Must update `local.settings.json` accordingly. Not default mode.
 
-#### `make native-run-api-insecure`
+##### `make native-run-api-insecure`
 
 Runs the native functions insecurely. Must update `local.settings.json` accordingly. Not default mode.
 
-#### `make native-clean`
+##### `make native-clean`
 
 Cleans all application and functions related resources.
 
-#### `make containers-clean`
+#### Data Access Endpoint Related
 
-Cleans all application and functions related resources.
-
-#### `make new-data-access-endpoint`
+##### `make new-data-access-endpoint`
 
 Helper to bootstrap a data access endpoint, leveraging a template.
 
