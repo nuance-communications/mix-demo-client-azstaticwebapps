@@ -14,10 +14,10 @@ RUN apt-get update -y                               \
 && apt-get update -y                                \
 && apt-get install -y azure-functions-core-tools-3  
 
-COPY api/requirements.txt .
+COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY . ./api
 
 WORKDIR $HOME/api
 
