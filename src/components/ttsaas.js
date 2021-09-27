@@ -19,6 +19,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
+import { SSML_OPTIONS } from "../utility/ssml-options"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -422,42 +423,21 @@ export default class TTSaaS extends BaseClass {
                       </Form.Control>
                       <Form.Label htmlFor="voice">Voice</Form.Label>
                     </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="speakingStyle" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="speakingStyle">Speaking Style</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="pause" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="pause">Pause</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="pause" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="pause">Pause</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="timbre" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="timbre">Timbre</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="pitch" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="pitch">Pitch</Form.Label>
-                    </Form.Group>
-                    <Form.Group className="form-floating mb-2">
-                      <Form.Control name="speechRate" as="select">
-                        { voiceOptions.slice(0,3) }
-                      </Form.Control>
-                      <Form.Label htmlFor="speechRate">Speech Rate</Form.Label>
-                    </Form.Group>
+                    {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
+                      return (
+                        <Form.Group className="form-floating mb-2" key={index}>
+                          <Form.Control defaultValue="DEFAULT" name={ssmlOptions.name} as="select" onChange={(event) => console.log(event.target.name, "event.target.value:", event.target.value)}>
+                            <option disabled value="DEFAULT">Select a value to add a tag</option>
+                            { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => {
+                              return (
+                                <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
+                              )
+                            })}
+                          </Form.Control>
+                          <Form.Label htmlFor={ssmlOptions.name} className="text-capitalize">{ssmlName}</Form.Label>
+                        </Form.Group>
+                        )
+                    })}
                     <Button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} variant="secondary" 
                     type="submit">Synthesize</Button>
                   </Col>
