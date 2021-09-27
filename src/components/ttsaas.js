@@ -12,6 +12,8 @@ import loadable from '@loadable/component'
 
 import Button from "react-bootstrap/Button"
 import Form from 'react-bootstrap/Form'
+import Row from 'react-bootstrap/Row'
+import Col from 'react-bootstrap/Col'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
@@ -394,35 +396,78 @@ export default class TTSaaS extends BaseClass {
           </div>
           <div className="col-12">
             <div className="row" style={{height: '100%'}}>
-              <form className="form" onSubmit={
+              <Form onSubmit={
                   (evt) => {
                     evt.preventDefault();
                     this.executeTextInput()
                   }
                 }>
-                <div className="input-group">
-                  <Form.Group style={{'height': '50px', 'width': '65%'}} className="form-floating">
-                    <Form.Control name="textInput" type="text" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
-                    <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
-                  </Form.Group>
-                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border">
-                    <Form.Check label={`SSML`} className="align-middle my-3" type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}></Form.Check>
-                  </Form.Group>
-                  <Form.Group style={{'width': '15%'}} className="form-floating">
-                    <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
-                      { voiceOptions }
-                    </Form.Control>
-                    <Form.Label htmlFor="voice">Voice</Form.Label>
-                  </Form.Group>
-                  <button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} className="btn btn-secondary" 
-                    type="submit" style={{'width': '10%'}}>Synthesize</button>
-                </div>
+                <Row>
+                  <label className="switch mx-2 mb-2 p-0">
+                      <input type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}/>
+                      <div className="slider round"/>
+                  </label>
+                </Row>
+                <Row>
+                  <Col sm={12} md={8}>
+                    <Form.Group className="form-floating h-100">
+                      <Form.Control className="h-100" name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
+                      <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
+                    </Form.Group>
+                  </Col>
+                  <Col sm={6} md={4}>
+                    <Form.Group className="form-floating mb-2 mt-sm-2 mt-md-0">
+                      <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
+                        { voiceOptions }
+                      </Form.Control>
+                      <Form.Label htmlFor="voice">Voice</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="speakingStyle" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="speakingStyle">Speaking Style</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="pause" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="pause">Pause</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="pause" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="pause">Pause</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="timbre" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="timbre">Timbre</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="pitch" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="pitch">Pitch</Form.Label>
+                    </Form.Group>
+                    <Form.Group className="form-floating mb-2">
+                      <Form.Control name="speechRate" as="select">
+                        { voiceOptions.slice(0,3) }
+                      </Form.Control>
+                      <Form.Label htmlFor="speechRate">Speech Rate</Form.Label>
+                    </Form.Group>
+                    <Button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} variant="secondary" 
+                    type="submit">Synthesize</Button>
+                  </Col>
+                </Row>
                 { this.state.error ? (
                   <div className="badge bg-danger text-white w-100 text-wrap mt-2">
                     {JSON.stringify(this.state.error)}
                   </div>
                 ) : ('') }
-              </form>
+              </Form>
             </div>
           </div>
         </div>
