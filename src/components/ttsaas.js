@@ -19,7 +19,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
-import { SSML_OPTIONS } from "../utility/ssml-options"
+import { NEEDS_INPUT, SSML_OPTIONS } from "../utility/ssml-options"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -393,15 +393,21 @@ export default class TTSaaS extends BaseClass {
 
     let ssmlName = evt.target.name;
     let ssmlValue = evt.target.value;
-    console.log("ssmlName", ssmlName, "ssmlValue", ssmlValue);
     if(SSML_OPTIONS.hasOwnProperty(ssmlName)){
       const ssmlDetails = SSML_OPTIONS[ssmlName];
       const ssmlAttributeOption = ssmlDetails.options[ssmlValue];
       const ssmlStartTag = `<${ssmlDetails.tag} ${getSSMLAttributeValues(ssmlDetails.attributes, ssmlAttributeOption)}${ssmlDetails.container ? '>' : '/>'}`
+      let newCursorIndex = undefined;
+      if(ssmlAttributeOption.hasOwnProperty(NEEDS_INPUT) && ssmlAttributeOption[NEEDS_INPUT] === true){
+        newCursorIndex = ssmlStartTag.indexOf(`="`) + 2;
+        if(ssmlAttributeOption.hasOwnProperty("prefix")){
+          newCursorIndex++;
+        }
+      }
       const textToSynthesize = this.refs.textToSynthesize;
       const cursorStartIndex = textToSynthesize.selectionStart;
       const cursorEndIndex = textToSynthesize.selectionEnd;
-      let textInput = this.state.textInput
+      let textInput = this.state.textInput;
       const textToWrap = textInput.substring(cursorStartIndex, cursorEndIndex);
       let ssmlWrappedText = ssmlStartTag + textToWrap;
       if(ssmlDetails.container){
@@ -410,6 +416,15 @@ export default class TTSaaS extends BaseClass {
       textInput = textInput.substring(0, cursorStartIndex) + ssmlWrappedText + textInput.substring(cursorEndIndex);
       this.setState({
         textInput
+      }, () => {
+        if(newCursorIndex !== undefined){
+          newCursorIndex += cursorStartIndex;
+        }
+        else{
+          newCursorIndex = cursorStartIndex + ssmlWrappedText.length;
+        }
+        this.refs.textToSynthesize.selectionStart = this.refs.textToSynthesize.selectionEnd = newCursorIndex;
+        this.refs.textToSynthesize.focus();
       })
     }
     else{
@@ -461,7 +476,7 @@ export default class TTSaaS extends BaseClass {
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
                         <Form.Group className="form-floating mb-2" key={index}>
-                          <Form.Control defaultValue="DEFAULT" name={ssmlName} as="select" onChange={this.addSSML.bind(this)}>
+                          <Form.Control defaultValue="DEFAULT" name={ssmlName} as="select" onChange={this.addSSML.bind(this)} onFocus={() => this.refs.textToSynthesize.focus()}>
                             <option disabled value="DEFAULT">-- SELECT A VALUE --</option>
                             { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
                               <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 

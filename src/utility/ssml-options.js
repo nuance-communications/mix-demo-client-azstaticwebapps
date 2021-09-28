@@ -1,3 +1,5 @@
+export const NEEDS_INPUT = "needsInput"
+
 const speakingStyle = {
     tag: 'style',
     name: 'Speaking Style',
@@ -44,10 +46,14 @@ const pause = {
             strength: 'none'
         },
         '...s': {
-            time: 's'
+            time: 's',
+            suffix: 's',
+            [`${NEEDS_INPUT}`]: true
         },
         '...ms': {
-            time: 'ms'
+            time: 'ms',
+            suffix: 'ms',
+            [`${NEEDS_INPUT}`]: true
         }
     }
 }
@@ -77,7 +83,8 @@ const timbre = {
             timbre: 'x-old'
         },
         '...': {
-            timbre: ''
+            timbre: '',
+            [`${NEEDS_INPUT}`]: true
         },
     }
 }
@@ -107,10 +114,16 @@ const pitch = {
             pitch: 'x-high'
         },
         '+...%': {
-            pitch: '+%'
+            pitch: '+%',
+            prefix: '+',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
         },
         '-...%': {
-            pitch: '-%'
+            pitch: '-%',
+            prefix: '-',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
         },
     }
 }
@@ -140,19 +153,30 @@ const speechRate = {
             rate: 'x-fast'
         },
         '...': {
-            rate: ''
+            rate: '',
+            [`${NEEDS_INPUT}`]: true
         },
         '+...': {
-            rate: '+'
+            rate: '+',
+            prefix: '+',
+            [`${NEEDS_INPUT}`]: true
         },
         '-...': {
-            rate: '-'
+            rate: '-',
+            prefix: '-',
+            [`${NEEDS_INPUT}`]: true
         },
         '+...%': {
-            rate: '+%'
+            rate: '+%',
+            prefix: '+',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
         },
         '-...%': {
-            rate: '-%'
+            rate: '-%',
+            prefix: '-',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
         },
     } 
 }
