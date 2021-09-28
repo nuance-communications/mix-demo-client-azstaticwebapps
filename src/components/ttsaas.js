@@ -384,6 +384,41 @@ export default class TTSaaS extends BaseClass {
     })
   }
 
+  addSSML(evt){
+    const getSSMLAttributeValues = (attributes, attributeOption) => {
+      return attributes.filter(attribute => attributeOption.hasOwnProperty(attribute))
+                .map(attribute => `${attribute}="${attributeOption[attribute]}"`)
+                .join(" ")
+    }
+
+    let ssmlName = evt.target.name;
+    let ssmlValue = evt.target.value;
+    console.log("ssmlName", ssmlName, "ssmlValue", ssmlValue);
+    if(SSML_OPTIONS.hasOwnProperty(ssmlName)){
+      const ssmlDetails = SSML_OPTIONS[ssmlName];
+      const ssmlAttributeOption = ssmlDetails.options[ssmlValue];
+      const ssmlStartTag = `<${ssmlDetails.tag} ${getSSMLAttributeValues(ssmlDetails.attributes, ssmlAttributeOption)}${ssmlDetails.container ? '>' : '/>'}`
+      const textToSynthesize = this.refs.textToSynthesize;
+      const cursorStartIndex = textToSynthesize.selectionStart;
+      const cursorEndIndex = textToSynthesize.selectionEnd;
+      let textInput = this.state.textInput
+      const textToWrap = textInput.substring(cursorStartIndex, cursorEndIndex);
+      let ssmlWrappedText = ssmlStartTag + textToWrap;
+      if(ssmlDetails.container){
+        ssmlWrappedText += `</${ssmlDetails.tag}>`
+      }
+      textInput = textInput.substring(0, cursorStartIndex) + ssmlWrappedText + textInput.substring(cursorEndIndex);
+      this.setState({
+        textInput
+      })
+    }
+    else{
+      this.setState({
+        error: "Invalid SSML Property"
+      })
+    }
+  }
+
   getSynthesizeHtml() {
     let voiceOptions = this.getVoicesSelectOptions()
     return (
@@ -412,7 +447,7 @@ export default class TTSaaS extends BaseClass {
                 <Row>
                   <Col sm={12} md={8}>
                     <Form.Group className="form-floating h-100">
-                      <Form.Control className="h-100" name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
+                      <Form.Control className="h-100" name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)} ref='textToSynthesize'/>
                       <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
                     </Form.Group>
                   </Col>
@@ -426,15 +461,13 @@ export default class TTSaaS extends BaseClass {
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
                         <Form.Group className="form-floating mb-2" key={index}>
-                          <Form.Control defaultValue="DEFAULT" name={ssmlOptions.name} as="select" onChange={(event) => console.log(event.target.name, "event.target.value:", event.target.value)}>
-                            <option disabled value="DEFAULT">Select a value to add a tag</option>
-                            { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => {
-                              return (
-                                <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
-                              )
-                            })}
+                          <Form.Control defaultValue="DEFAULT" name={ssmlName} as="select" onChange={this.addSSML.bind(this)}>
+                            <option disabled value="DEFAULT">-- SELECT A VALUE --</option>
+                            { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
+                              <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
+                            )}
                           </Form.Control>
-                          <Form.Label htmlFor={ssmlOptions.name} className="text-capitalize">{ssmlName}</Form.Label>
+                          <Form.Label htmlFor={ssmlName} className="text-capitalize">{ssmlOptions.name}</Form.Label>
                         </Form.Group>
                         )
                     })}

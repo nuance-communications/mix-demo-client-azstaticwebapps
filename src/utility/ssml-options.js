@@ -1,6 +1,6 @@
 const speakingStyle = {
     tag: 'style',
-    name: 'speakingStyle',
+    name: 'Speaking Style',
     container: true,
     attributes: ['name'],
     options: {
@@ -22,7 +22,7 @@ const speakingStyle = {
 const pause = {
     tag: 'break',
     container: false,
-    name: 'pause',
+    name: 'Pause',
     attributes: ['strength', 'time'],
     options: {
         'x-weak': {
@@ -55,7 +55,7 @@ const pause = {
 const timbre = {
     tag: 'prosody',
     container: true,
-    name: 'timbre',
+    name: 'Timbre',
     attributes: ['timbre'],
     options: {
         'x-young': {
@@ -85,7 +85,7 @@ const timbre = {
 const pitch = {
     tag: 'prosody',
     container: true,
-    name: 'pitch',
+    name: 'Pitch',
     attributes: ['pitch'],
     options: {
         'x-low': {
@@ -118,7 +118,7 @@ const pitch = {
 const speechRate = {
     tag: 'prosody',
     container: true,
-    name: 'speechRate',
+    name: 'Speech Rate',
     attributes: ['rate'],
     options: {
         'x-slow': {
@@ -158,9 +158,9 @@ const speechRate = {
 }
 
 export const SSML_OPTIONS = {
-    'Speaking Style': speakingStyle,
-    'Pause': pause,
-    'Timbre': timbre,
-    'Pitch': pitch,
-    'Speech Rate': speechRate
+    speakingStyle,
+    pause,
+    timbre,
+    pitch,
+    speechRate
 }
