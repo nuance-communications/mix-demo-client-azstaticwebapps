@@ -3,6 +3,7 @@ export const NEEDS_INPUT = "needsInput"
 const speakingStyle = {
     tag: 'style',
     name: 'Speaking Style',
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#style',
     container: true,
     attributes: ['name'],
     options: {
@@ -25,6 +26,7 @@ const pause = {
     tag: 'break',
     container: false,
     name: 'Pause',
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#break',
     attributes: ['strength', 'time'],
     options: {
         'x-weak': {
@@ -62,6 +64,7 @@ const timbre = {
     tag: 'prosody',
     container: true,
     name: 'Timbre',
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-timbre',
     attributes: ['timbre'],
     options: {
         'x-young': {
@@ -93,6 +96,7 @@ const pitch = {
     tag: 'prosody',
     container: true,
     name: 'Pitch',
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-pitch',
     attributes: ['pitch'],
     options: {
         'x-low': {
@@ -133,6 +137,7 @@ const speechRate = {
     container: true,
     name: 'Speech Rate',
     attributes: ['rate'],
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
     options: {
         'x-slow': {
             rate: 'x-slow'
