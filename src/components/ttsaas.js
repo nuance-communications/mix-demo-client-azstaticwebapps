@@ -175,6 +175,7 @@ export default class TTSaaS extends BaseClass {
         "model": "xpremium-high" 
       },
       defaultSSMLValue: DEFAULT_SSML_VALUE,
+      selectVoiceTagActive: false,
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
       voices: []
@@ -343,6 +344,7 @@ export default class TTSaaS extends BaseClass {
 
   getVoicesSelectOptions() {
     let voiceOptions = []
+    let ssmlVoiceOptions = {}
     let lastLang = null
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
@@ -351,9 +353,12 @@ export default class TTSaaS extends BaseClass {
           lastLang = v.language
         }
         voiceOptions.push(<option key={'option-'+idx} value={v.name}>{v.name}</option>)
+        ssmlVoiceOptions[v.name] = {
+          name: v.name
+        }
       }
     })
-    return voiceOptions
+    return [voiceOptions, ssmlVoiceOptions]
   }
 
   onChangeVoice(evt) {
@@ -385,7 +390,7 @@ export default class TTSaaS extends BaseClass {
     })
   }
 
-  addSSML(evt){
+  addSSML(evt, ssmlOptions){
     const getSSMLAttributeValues = (attributes, attributeOption) => {
       return attributes.filter(attribute => attributeOption.hasOwnProperty(attribute))
                 .map(attribute => `${attribute}="${attributeOption[attribute]}"`)
@@ -394,8 +399,8 @@ export default class TTSaaS extends BaseClass {
 
     let ssmlName = evt.target.name;
     let ssmlValue = evt.target.value;
-    if(SSML_OPTIONS.hasOwnProperty(ssmlName)){
-      const ssmlDetails = SSML_OPTIONS[ssmlName];
+    if(ssmlOptions.hasOwnProperty(ssmlName)){
+      const ssmlDetails = ssmlOptions[ssmlName];
       const ssmlAttributeOption = ssmlDetails.options[ssmlValue];
       const ssmlStartTag = `<${ssmlDetails.tag} ${getSSMLAttributeValues(ssmlDetails.attributes, ssmlAttributeOption)}${ssmlDetails.container ? '>' : '/>'}`
       let newCursorIndex = undefined;
@@ -436,14 +441,23 @@ export default class TTSaaS extends BaseClass {
   }
 
   getSynthesizeHtml() {
-    let voiceOptions = this.getVoicesSelectOptions()
+    let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
+    const voice = {
+      tag: 'voice',
+      container: true,
+      name: 'Voice Tag',
+      attributes: ['name'],
+      url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
+      options: ssmlVoiceOptions
+    };
+    const VOICE_NAME = "voice";
     return (
       <div className="col">
         <div className="row">
           <div className="col-12 mb-3">
             <h3 className="fw-bold">Text to Speech</h3>
             <span className="text-dark mb-3 float-start">
-              Learn more about <a href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">voices</a>.
+              Learn more about <a href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices" target="_blank" rel="noopener noreferrer">voices</a> and <a href="https://docs.mix.nuance.com/tts-grpc/v1/#ssml-tags" target="_blank" rel="noopener noreferrer">SSML tags</a>.
             </span>
           </div>
           <div className="col-12">
@@ -468,17 +482,36 @@ export default class TTSaaS extends BaseClass {
                     </Form.Group>
                   </Col>
                   <Col sm={6} md={4}>
-                    <Form.Group className="form-floating mb-2 mt-sm-2 mt-md-0">
-                      <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
-                        { voiceOptions }
-                      </Form.Control>
-                      <Form.Label htmlFor="voice">Voice</Form.Label>
-                    </Form.Group>
+                    <div className="d-flex">
+                        <Form.Group className="form-floating mb-2 mt-sm-2 mt-md-0 w-100">
+                          <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
+                            { voiceOptions }
+                          </Form.Control>
+                          <Form.Label htmlFor="voice">Voice</Form.Label>
+                        </Form.Group>
+                        {!this.state.selectVoiceTagActive && 
+                          <div className="mb-2" style={{marginLeft: ".5rem"}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill" viewBox="0 0 16 16">
+                              <path className="btn text-secondary" onClick={() => this.setState({
+                                selectVoiceTagActive: true
+                              })} d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/>
+                            </svg>
+                          </div>
+                        }
+                    </div>
+                    {this.state.selectVoiceTagActive && 
+                      <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
+                        <Form.Control value={this.state.defaultSSMLValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice})} onFocus={() => this.refs.textToSynthesize.focus()}>
+                          <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
+                          { voiceOptions }
+                        </Form.Control>
+                        <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voice.name}</Form.Label>
+                      </Form.Group>
+                    }
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
-                        <div className="d-flex" key={index}>
-                          <Form.Group className="form-floating mb-2 w-100">
-                            <Form.Control value={this.state.defaultSSMLValue} name={ssmlName} as="select" onChange={this.addSSML.bind(this)} onFocus={() => this.refs.textToSynthesize.focus()}>
+                          <Form.Group className="form-floating mb-2 w-100" key={index}>
+                            <Form.Control value={this.state.defaultSSMLValue} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()}>
                               <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
                               { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
                                 <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
@@ -486,12 +519,6 @@ export default class TTSaaS extends BaseClass {
                             </Form.Control>
                             <Form.Label htmlFor={ssmlName} className="text-capitalize">{ssmlOptions.name}</Form.Label>
                           </Form.Group>
-                          <a href={ssmlOptions.url} className="mb-2" target="_blank" rel="noopener noreferrer" style={{"marginLeft": ".5rem"}}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill" viewBox="0 0 16 16">
-                              <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm3.496 6.033a.237.237 0 0 1-.24-.247C5.35 4.091 6.737 3.5 8.005 3.5c1.396 0 2.672.73 2.672 2.24 0 1.08-.635 1.594-1.244 2.057-.737.559-1.01.768-1.01 1.486v.105a.25.25 0 0 1-.25.25h-.81a.25.25 0 0 1-.25-.246l-.004-.217c-.038-.927.495-1.498 1.168-1.987.59-.444.965-.736.965-1.371 0-.825-.628-1.168-1.314-1.168-.803 0-1.253.478-1.342 1.134-.018.137-.128.25-.266.25h-.825zm2.325 6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0 1.028.388 1.028.94 0 .533-.42.927-1.029.927z"/>
-                            </svg>
-                          </a>
-                        </div>
                         )
                     })}
                     <Button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} variant="secondary" 
