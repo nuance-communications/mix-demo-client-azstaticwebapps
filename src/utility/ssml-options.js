@@ -1,4 +1,5 @@
 export const NEEDS_INPUT = "needsInput"
+export const DEFAULT_SSML_VALUE = "DEFAULT"
 
 const speakingStyle = {
     tag: 'style',
