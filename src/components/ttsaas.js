@@ -487,8 +487,8 @@ export default class TTSaaS extends BaseClass {
                 <Row>
                   <Col sm={12} md={8}>
                     <Form.Group className="form-floating h-100">
-                      <Form.Control className="h-100" name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)} ref='textToSynthesize'/>
-                      <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
+                      <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)} ref='textToSynthesize'/>
+                      {(!this.state.textInput || this.state.textInput.length <= 0) && <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>}
                     </Form.Group>
                   </Col>
                   <Col sm={6} md={4}>
