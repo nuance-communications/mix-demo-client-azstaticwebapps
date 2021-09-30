@@ -191,3 +191,12 @@ input:checked + .slider:after{
   top: 50%;
   left: 30%;
 }
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: .5s;
+}
+
+.add-voice-btn:hover {
+  color: #5c636a !important;
+}

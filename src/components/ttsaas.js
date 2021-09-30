@@ -288,11 +288,20 @@ export default class TTSaaS extends BaseClass {
     let res = await this.synthesize(payload)
     rawResponses.unshift(res);
     if(res.response?.payload.status.code !== 200){
-      this.setState({
-        rawResponses: rawResponses,
-        error: res.response.payload.status.details,
-        processing: ProcessingState.IDLE,
-      })
+      if(res.error && !res.response){
+        this.setState({
+          rawResponses: rawResponses,
+          error: res.error.message,
+          processing: ProcessingState.IDLE,
+        })
+      }
+      else{
+        this.setState({
+          rawResponses: rawResponses,
+          error: res.response.payload.status.details,
+          processing: ProcessingState.IDLE,
+        })
+      }
     } else {
       synthesizedAudioClips.unshift(
         new SynthesisRequest(payload, res))
@@ -421,7 +430,8 @@ export default class TTSaaS extends BaseClass {
       }
       textInput = textInput.substring(0, cursorStartIndex) + ssmlWrappedText + textInput.substring(cursorEndIndex);
       this.setState({
-        textInput
+        textInput,
+        ssmlInput: true
       }, () => {
         if(newCursorIndex !== undefined){
           newCursorIndex += cursorStartIndex;
@@ -490,11 +500,11 @@ export default class TTSaaS extends BaseClass {
                           <Form.Label htmlFor="voice">Voice</Form.Label>
                         </Form.Group>
                         {!this.state.selectVoiceTagActive && 
-                          <div className="mb-2" style={{marginLeft: ".5rem"}}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill" viewBox="0 0 16 16">
-                              <path className="btn text-secondary" onClick={() => this.setState({
+                          <div className="mb-2 d-flex justify-content-center align-items-center flex-column" style={{marginLeft: ".5rem"}}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill cursor-pointer text-secondary add-voice-btn" viewBox="0 0 16 16" onClick={() => this.setState({
                                 selectVoiceTagActive: true
-                              })} d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/>
+                              })}>
+                              <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z"/>
                             </svg>
                           </div>
                         }
