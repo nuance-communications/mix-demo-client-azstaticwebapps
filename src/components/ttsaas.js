@@ -452,7 +452,7 @@ export default class TTSaaS extends BaseClass {
 
   getSynthesizeHtml() {
     let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
-    const voice = {
+    const voiceTag = {
       tag: 'voice',
       container: true,
       name: 'Voice Tag',
@@ -511,11 +511,11 @@ export default class TTSaaS extends BaseClass {
                     </div>
                     {this.state.selectVoiceTagActive && 
                       <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
-                        <Form.Control value={this.state.defaultSSMLValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice})} onFocus={() => this.refs.textToSynthesize.focus()}>
+                        <Form.Control value={this.state.defaultSSMLValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
                           <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
                           { voiceOptions }
                         </Form.Control>
-                        <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voice.name}</Form.Label>
+                        <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voiceTag.name}</Form.Label>
                       </Form.Group>
                     }
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
