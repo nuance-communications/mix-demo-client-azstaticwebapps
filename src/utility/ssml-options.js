@@ -90,6 +90,18 @@ const timbre = {
             timbre: '',
             [`${NEEDS_INPUT}`]: true
         },
+        '+...%': {
+            timbre: '+%',
+            prefix: '+',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
+        },
+        '-...%': {
+            timbre: '-%',
+            prefix: '-',
+            suffix: '%',
+            [`${NEEDS_INPUT}`]: true
+        },
     }
 }
 
