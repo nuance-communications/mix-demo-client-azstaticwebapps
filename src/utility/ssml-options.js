@@ -4,6 +4,7 @@ export const DEFAULT_SSML_VALUE = "DEFAULT"
 const speakingStyle = {
     tag: 'style',
     name: 'Speaking Style',
+    defaultValue: 'e.g. neutral, lively, forceful, ...',
     url: 'https://docs.mix.nuance.com/tts-grpc/v1/#style',
     container: true,
     attributes: ['name'],
@@ -27,6 +28,7 @@ const pause = {
     tag: 'break',
     container: false,
     name: 'Pause',
+    defaultValue: 'e.g. weak, medium, strong, ...',
     url: 'https://docs.mix.nuance.com/tts-grpc/v1/#break',
     attributes: ['strength', 'time'],
     options: {
@@ -65,6 +67,7 @@ const timbre = {
     tag: 'prosody',
     container: true,
     name: 'Timbre',
+    defaultValue: 'e.g. young, medium, old, ...',
     url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-timbre',
     attributes: ['timbre'],
     options: {
@@ -109,6 +112,7 @@ const pitch = {
     tag: 'prosody',
     container: true,
     name: 'Pitch',
+    defaultValue: 'e.g. low, medium, high, ...',
     url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-pitch',
     attributes: ['pitch'],
     options: {
@@ -148,6 +152,7 @@ const pitch = {
 const speechRate = {
     tag: 'prosody',
     container: true,
+    defaultValue: 'e.g. slow, medium, fast, ...',
     name: 'Speech Rate',
     attributes: ['rate'],
     url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
