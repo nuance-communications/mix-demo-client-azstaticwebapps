@@ -450,12 +450,34 @@ export default class TTSaaS extends BaseClass {
     }
   }
 
+  compareSelectedTextToSSML(evt){
+    const findSSMLTag = (text) => {
+      text = text.trim();
+      let selectedOption = undefined;
+      Object.entries(SSML_OPTIONS).some(([_, ssmlOptions]) => {
+        const regex = new RegExp(`^<${ssmlOptions.tag} (${ssmlOptions.attributes.map(attr => attr + '="(\\S*)"').join("|")})${ssmlOptions.container ? "" : "\/"}>`);
+        if(regex.test(text)){
+          selectedOption = ssmlOptions;
+          return true;
+        }
+      })
+      if(selectedOption !== undefined && selectedOption.name){
+        this.refs[selectedOption.name].focus();
+      }
+    }
+    const textToSynthesize = this.refs.textToSynthesize;
+    if(textToSynthesize.selectionStart === textToSynthesize.selectionEnd) return;
+    let selectedText = this.state.textInput.substring(textToSynthesize.selectionStart, textToSynthesize.selectionEnd);
+    findSSMLTag(selectedText);
+  }
+
   getSynthesizeHtml() {
     let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
     const voiceTag = {
       tag: 'voice',
       container: true,
       name: 'Voice Tag',
+      defaultValue: 'e.g. Evan, Chloe, ...',
       attributes: ['name'],
       url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
       options: ssmlVoiceOptions
@@ -487,7 +509,10 @@ export default class TTSaaS extends BaseClass {
                 <Row>
                   <Col sm={12} md={8}>
                     <Form.Group className="form-floating h-100">
-                      <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)} ref='textToSynthesize'/>
+                      <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} 
+                        name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." 
+                        onChange={this.onChangeTextInput.bind(this)} onMouseUp={(evt) => this.compareSelectedTextToSSML(evt)}
+                        onKeyUp={(evt) => this.compareSelectedTextToSSML(evt)} ref='textToSynthesize'/>
                       {(!this.state.textInput || this.state.textInput.length <= 0) && <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>}
                     </Form.Group>
                   </Col>
@@ -511,8 +536,8 @@ export default class TTSaaS extends BaseClass {
                     </div>
                     {this.state.selectVoiceTagActive && 
                       <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
-                        <Form.Control value={this.state.defaultSSMLValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
-                          <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
+                        <Form.Control value={voiceTag.defaultValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
+                          <option disabled value={voiceTag.defaultValue}>{voiceTag.defaultValue}</option>
                           { voiceOptions }
                         </Form.Control>
                         <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voiceTag.name}</Form.Label>
@@ -521,8 +546,8 @@ export default class TTSaaS extends BaseClass {
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
                           <Form.Group className="form-floating mb-2 w-100" key={index}>
-                            <Form.Control value={this.state.defaultSSMLValue} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()}>
-                              <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
+                            <Form.Control value={ssmlOptions.defaultValue} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()} ref={ssmlOptions.name}>
+                              <option disabled value={ssmlOptions.defaultValue}>{ssmlOptions.defaultValue}</option>
                               { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
                                 <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
                               )}
