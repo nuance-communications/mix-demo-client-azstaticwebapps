@@ -456,6 +456,7 @@ export default class TTSaaS extends BaseClass {
       tag: 'voice',
       container: true,
       name: 'Voice Tag',
+      defaultValue: 'e.g. Evan, Chloe, ...',
       attributes: ['name'],
       url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
       options: ssmlVoiceOptions
@@ -511,8 +512,8 @@ export default class TTSaaS extends BaseClass {
                     </div>
                     {this.state.selectVoiceTagActive && 
                       <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
-                        <Form.Control value={this.state.defaultSSMLValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
-                          <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
+                        <Form.Control value={voiceTag.name} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
+                          <option disabled value={voiceTag.name}>{voiceTag.defaultValue}</option>
                           { voiceOptions }
                         </Form.Control>
                         <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voiceTag.name}</Form.Label>
@@ -521,8 +522,8 @@ export default class TTSaaS extends BaseClass {
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
                           <Form.Group className="form-floating mb-2 w-100" key={index}>
-                            <Form.Control value={this.state.defaultSSMLValue} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()}>
-                              <option disabled value={DEFAULT_SSML_VALUE}>{""}</option>
+                            <Form.Control value={ssmlOptions.name} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()}>
+                              <option disabled value={ssmlOptions.name}>{ssmlOptions.defaultValue}</option>
                               { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
                                 <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
                               )}
