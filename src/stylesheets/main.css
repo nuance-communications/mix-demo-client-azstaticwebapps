@@ -200,3 +200,8 @@ input:checked + .slider:after{
 .add-voice-btn:hover {
   color: #5c636a !important;
 }
+
+/* .dropdown-toggle::after {
+  margin-left: auto;
+  display: inline-flex;
+} */
