@@ -20,7 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
-import { DEFAULT_SSML_VALUE, NEEDS_INPUT, SSML_OPTIONS } from "../utility/ssml-options"
+import { DEFAULT_SSML_VALUE, NEEDS_INPUT, SSML_OPTIONS, VOICE_TAG_BASE } from "../utility/ssml-options"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -354,21 +354,24 @@ export default class TTSaaS extends BaseClass {
 
   getVoicesSelectOptions() {
     let voiceOptions = []
+    let ssmlVoiceOptionsDropdown = []
     let ssmlVoiceOptions = {}
     let lastLang = null
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
         if(lastLang != v.language){
           voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
+          ssmlVoiceOptionsDropdown.push(<Dropdown.Header className="w-100" key={'optgroup-'+idx}>{v.language}</Dropdown.Header>);
           lastLang = v.language
         }
         voiceOptions.push(<option key={'option-'+idx} value={v.name}>{v.name}</option>)
+        ssmlVoiceOptionsDropdown.push(<Dropdown.Item className="w-100" key={'option-'+idx} eventKey={v.name}>{v.name}</Dropdown.Item>)
         ssmlVoiceOptions[v.name] = {
           name: v.name
         }
       }
     })
-    return [voiceOptions, ssmlVoiceOptions]
+    return [voiceOptions, ssmlVoiceOptionsDropdown, ssmlVoiceOptions]
   }
 
   onChangeVoice(evt) {
@@ -458,7 +461,8 @@ export default class TTSaaS extends BaseClass {
 
   lookForSSMLOptionFromText(text){
     let selectedOption = undefined;
-    Object.entries(SSML_OPTIONS).some(([_, ssmlOptions]) => {
+    Object.entries(this.state.selectVoiceTagActive ? 
+      {...SSML_OPTIONS, voiceTag: VOICE_TAG_BASE} : SSML_OPTIONS).some(([_, ssmlOptions]) => {
       const regex = new RegExp(`^<${ssmlOptions.tag} (${ssmlOptions.attributes.map(attr => attr + '="(\\S*)"').join("|")})${ssmlOptions.container ? "" : "\/"}>`);
       if(regex.test(text)){
         selectedOption = ssmlOptions;
@@ -486,14 +490,9 @@ export default class TTSaaS extends BaseClass {
   }
 
   getSynthesizeHtml() {
-    let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
+    let [voiceOptions, ssmlVoiceOptionsDropdown, ssmlVoiceOptions] = this.getVoicesSelectOptions();
     const voiceTag = {
-      tag: 'voice',
-      container: true,
-      name: 'Voice Tag',
-      defaultValue: 'e.g. Evan, Chloe, ...',
-      attributes: ['name'],
-      url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
+      ...VOICE_TAG_BASE,
       options: ssmlVoiceOptions
     };
     const VOICE_NAME = "voice";
@@ -548,13 +547,14 @@ export default class TTSaaS extends BaseClass {
                         }
                     </div>
                     {this.state.selectVoiceTagActive && 
-                      <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
-                        <Form.Control value={voiceTag.defaultValue} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
-                          <option disabled value={voiceTag.defaultValue}>{voiceTag.defaultValue}</option>
-                          { voiceOptions }
-                        </Form.Control>
-                        <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voiceTag.name}</Form.Label>
-                      </Form.Group>
+                      <Dropdown className="form-floating mb-2" style={{marginLeft: "2rem", width: "calc(100% - 2rem)"}} onSelect={(eventKey) => this.addSSML(VOICE_NAME, eventKey, {voice: voiceTag})} onToggle={() => this.refs.textToSynthesize.focus()}>
+                        <Dropdown.Toggle variant="light" className="w-100 d-flex justify-content-center align-items-center" ref={voiceTag.name}>
+                          {voiceTag.name}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu className="w-100">
+                          {ssmlVoiceOptionsDropdown}
+                        </Dropdown.Menu>
+                      </Dropdown>
                     }
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
