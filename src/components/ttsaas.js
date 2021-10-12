@@ -6,7 +6,7 @@
  * the LICENSE.md file in the root directory of this source tree.
  *
  */
-import React, { useState } from "react"
+import React, { useState, createRef } from "react"
 
 import loadable from '@loadable/component'
 
@@ -182,6 +182,8 @@ export default class TTSaaS extends BaseClass {
       voices: []
     }
     this.audioSink = null
+    this.focusedDropdown = null
+    console.log('const')
   }
 
   componentDidMount(){
@@ -476,15 +478,32 @@ export default class TTSaaS extends BaseClass {
   findSSMLTagFromText(text){
     const selectedOption = this.lookForSSMLOptionFromText(text);
     if(selectedOption !== undefined && selectedOption.name){
+      if(this.focusedDropdown && this.focusedDropdown !== selectedOption.name && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
+        this.refs[this.focusedDropdown].click();
+        this.focusedDropdown = null;
+      }
       if(this.refs[selectedOption.name].getAttribute("aria-expanded") == "false"){
         this.refs[selectedOption.name].click();
+        this.focusedDropdown = selectedOption.name;
+      }
+    }
+    else{
+      if(this.focusedDropdown && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
+        this.refs[this.focusedDropdown].click();
+        this.focusedDropdown = null;
       }
     }
   }
 
   compareSelectedTextToSSML(){
     const textToSynthesize = this.refs.textToSynthesize;
-    if(textToSynthesize.selectionStart === textToSynthesize.selectionEnd) return;
+    if(textToSynthesize.selectionStart === textToSynthesize.selectionEnd) {
+      if(this.focusedDropdown && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
+        this.refs[this.focusedDropdown].click();
+        this.focusedDropdown = null;
+      }
+      return;
+    }
     let selectedText = this.state.textInput.substring(textToSynthesize.selectionStart, textToSynthesize.selectionEnd);
     this.findSSMLTagFromText(selectedText);
   }
@@ -524,7 +543,7 @@ export default class TTSaaS extends BaseClass {
                     <Form.Group className="form-floating h-100">
                       <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} 
                         name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." 
-                        onChange={this.onChangeTextInput.bind(this)} onKeyUp={this.compareSelectedTextToSSML.bind(this)} ref='textToSynthesize'/>
+                        onChange={this.onChangeTextInput.bind(this)} onKeyUp={this.compareSelectedTextToSSML.bind(this)} onMouseUp={this.compareSelectedTextToSSML.bind(this)} ref='textToSynthesize'/>
                       {(!this.state.textInput || this.state.textInput.length <= 0) && <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>}
                     </Form.Group>
                   </Col>
