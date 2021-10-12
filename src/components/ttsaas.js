@@ -183,7 +183,6 @@ export default class TTSaaS extends BaseClass {
     }
     this.audioSink = null
     this.focusedDropdown = null
-    console.log('const')
   }
 
   componentDidMount(){
@@ -471,7 +470,6 @@ export default class TTSaaS extends BaseClass {
         return true;
       }
     })
-    console.log("selectedOption", selectedOption);
     return selectedOption;
   }
 
