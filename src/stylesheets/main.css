@@ -200,3 +200,20 @@ input:checked + .slider:after{
 .add-voice-btn:hover {
   color: #5c636a !important;
 }
+
+.dropdown-toggle::after {
+  margin-left: auto;
+  display: inline-flex;
+}
+
+.dropdown-menu {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.dropdown-focus {
+  color: #000;
+  background-color: #f9fafb;
+  border-color: #f9fafb;
+  box-shadow: 0 0 0 0.25rem rgb(211 212 213 / 50%);
+}

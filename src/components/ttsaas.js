@@ -14,12 +14,13 @@ import Button from "react-bootstrap/Button"
 import Form from 'react-bootstrap/Form'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
+import Dropdown from 'react-bootstrap/Dropdown';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
-import { DEFAULT_SSML_VALUE, NEEDS_INPUT, SSML_OPTIONS } from "../utility/ssml-options"
+import { DROPDOWN_FOCUS_CLASS, NEEDS_INPUT, SSML_OPTIONS, VOICE_TAG_BASE } from "../utility/ssml-options"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -174,13 +175,13 @@ export default class TTSaaS extends BaseClass {
         "name": "Evan", 
         "model": "xpremium-high" 
       },
-      defaultSSMLValue: DEFAULT_SSML_VALUE,
       selectVoiceTagActive: false,
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
       voices: []
     }
     this.audioSink = null
+    this.focusedDropdown = null
   }
 
   componentDidMount(){
@@ -358,10 +359,10 @@ export default class TTSaaS extends BaseClass {
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
         if(lastLang != v.language){
-          voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
+          voiceOptions.push(<Dropdown.Header className="w-100" key={'optgroup-'+idx}>{v.language}</Dropdown.Header>);
           lastLang = v.language
         }
-        voiceOptions.push(<option key={'option-'+idx} value={v.name}>{v.name}</option>)
+        voiceOptions.push(<Dropdown.Item className="w-100" key={'option-'+idx} eventKey={v.name}>{v.name}</Dropdown.Item>)
         ssmlVoiceOptions[v.name] = {
           name: v.name
         }
@@ -370,26 +371,18 @@ export default class TTSaaS extends BaseClass {
     return [voiceOptions, ssmlVoiceOptions]
   }
 
-  onChangeVoice(evt) {
-    // Handle text input
-    const tgt = evt.target
-    switch(tgt.name){
-      case 'voice':
-        let voice = null
-        this.state.voices.forEach(v => {
-          if(v.sampleRateHz === 22050){
-            if(tgt.value === v.name){
-              voice = v
-              return
-            }
-          }
-        })
-        if(voice){
-          this.onUseVoice(voice)
+  onChangeVoice(voiceName) {
+    let voice = null
+    this.state.voices.forEach(v => {
+      if(v.sampleRateHz === 22050){
+        if(voiceName === v.name){
+          voice = v
+          return
         }
-        break
-      default:
-        break
+      }
+    })
+    if(voice){
+      this.onUseVoice(voice)
     }
   }
 
@@ -399,15 +392,13 @@ export default class TTSaaS extends BaseClass {
     })
   }
 
-  addSSML(evt, ssmlOptions){
+  addSSML(ssmlName, ssmlValue, ssmlOptions){
     const getSSMLAttributeValues = (attributes, attributeOption) => {
       return attributes.filter(attribute => attributeOption.hasOwnProperty(attribute))
                 .map(attribute => `${attribute}="${attributeOption[attribute]}"`)
                 .join(" ")
     }
 
-    let ssmlName = evt.target.name;
-    let ssmlValue = evt.target.value;
     if(ssmlOptions.hasOwnProperty(ssmlName)){
       const ssmlDetails = ssmlOptions[ssmlName];
       const ssmlAttributeOption = ssmlDetails.options[ssmlValue];
@@ -424,9 +415,16 @@ export default class TTSaaS extends BaseClass {
       const cursorEndIndex = textToSynthesize.selectionEnd;
       let textInput = this.state.textInput;
       const textToWrap = textInput.substring(cursorStartIndex, cursorEndIndex);
-      let ssmlWrappedText = ssmlStartTag + textToWrap;
-      if(ssmlDetails.container){
-        ssmlWrappedText += `</${ssmlDetails.tag}>`
+      let ssmlWrappedText;
+      const regex = new RegExp(`^<${ssmlDetails.tag} (${ssmlDetails.attributes.map(attr => attr + '="(\\S*)"').join("|")})${ssmlDetails.container ? "" : "\/"}>`);
+      if(regex.test(textToWrap)){
+        ssmlWrappedText = textToWrap.replace(regex, ssmlStartTag);
+      }
+      else{
+        ssmlWrappedText = ssmlStartTag + textToWrap;
+        if(ssmlDetails.container){
+          ssmlWrappedText += `</${ssmlDetails.tag}>`
+        }
       }
       textInput = textInput.substring(0, cursorStartIndex) + ssmlWrappedText + textInput.substring(cursorEndIndex);
       this.setState({
@@ -450,15 +448,54 @@ export default class TTSaaS extends BaseClass {
     }
   }
 
+  lookForSSMLOptionFromText(text){
+    let selectedOption = undefined;
+    Object.entries(this.state.selectVoiceTagActive ? 
+      {...SSML_OPTIONS, voiceTag: VOICE_TAG_BASE} : SSML_OPTIONS).some(([_, ssmlOptions]) => {
+      const regex = new RegExp(`^<${ssmlOptions.tag} (${ssmlOptions.attributes.map(attr => attr + '="(\\S*)"').join("|")})${ssmlOptions.container ? "" : "\/"}>`);
+      if(regex.test(text)){
+        selectedOption = ssmlOptions;
+        return true;
+      }
+    })
+    return selectedOption;
+  }
+
+  blurFocusedDropdown(){
+    if(this.focusedDropdown){
+      this.refs[this.focusedDropdown].classList.remove(DROPDOWN_FOCUS_CLASS);
+      this.focusedDropdown = null;
+    }
+  }
+
+  findSSMLTagFromText(text){
+    const selectedOption = this.lookForSSMLOptionFromText(text);
+    if(selectedOption !== undefined && selectedOption.name){
+      if(this.focusedDropdown !== selectedOption.name){
+        if(this.focusedDropdown) this.refs[this.focusedDropdown].classList.remove(DROPDOWN_FOCUS_CLASS);
+        this.refs[selectedOption.name].classList.add(DROPDOWN_FOCUS_CLASS);
+        this.focusedDropdown = selectedOption.name;
+      }
+    }
+    else{
+      this.blurFocusedDropdown()
+    }
+  }
+
+  compareSelectedTextToSSML(){
+    const textToSynthesize = this.refs.textToSynthesize;
+    if(textToSynthesize.selectionStart === textToSynthesize.selectionEnd) {
+      this.blurFocusedDropdown()
+      return;
+    }
+    let selectedText = this.state.textInput.substring(textToSynthesize.selectionStart, textToSynthesize.selectionEnd);
+    this.findSSMLTagFromText(selectedText);
+  }
+
   getSynthesizeHtml() {
     let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
     const voiceTag = {
-      tag: 'voice',
-      container: true,
-      name: 'Voice Tag',
-      defaultValue: 'e.g. Evan, Chloe, ...',
-      attributes: ['name'],
-      url: 'https://docs.mix.nuance.com/tts-grpc/v1/#prosody-rate',
+      ...VOICE_TAG_BASE,
       options: ssmlVoiceOptions
     };
     const VOICE_NAME = "voice";
@@ -488,18 +525,22 @@ export default class TTSaaS extends BaseClass {
                 <Row>
                   <Col sm={12} md={8}>
                     <Form.Group className="form-floating h-100">
-                      <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)} ref='textToSynthesize'/>
+                      <Form.Control className={(!this.state.textInput || this.state.textInput.length <= 0) ? "h-100" : "h-100 pt-2"} 
+                        name="textInput" type="text" as="textarea" value={this.state.textInput} placeholder="Start typing here..." 
+                        onChange={this.onChangeTextInput.bind(this)} onKeyUp={this.compareSelectedTextToSSML.bind(this)} onMouseUp={this.compareSelectedTextToSSML.bind(this)} ref='textToSynthesize'/>
                       {(!this.state.textInput || this.state.textInput.length <= 0) && <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>}
                     </Form.Group>
                   </Col>
                   <Col sm={6} md={4}>
                     <div className="d-flex">
-                        <Form.Group className="form-floating mb-2 mt-sm-2 mt-md-0 w-100">
-                          <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
-                            { voiceOptions }
-                          </Form.Control>
-                          <Form.Label htmlFor="voice">Voice</Form.Label>
-                        </Form.Group>
+                        <Dropdown className="form-floating mb-2 mt-sm-2 mt-md-0 w-100" onSelect={(eventKey) => this.onChangeVoice(eventKey)}>
+                          <Dropdown.Toggle variant="secondary" className="w-100 d-flex justify-content-center align-items-center">
+                            {this.state.voice.name}
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu className="w-100">
+                            {voiceOptions}
+                          </Dropdown.Menu>
+                        </Dropdown>
                         {!this.state.selectVoiceTagActive && 
                           <div className="mb-2 d-flex justify-content-center align-items-center flex-column" style={{marginLeft: ".5rem"}}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill cursor-pointer text-secondary add-voice-btn" viewBox="0 0 16 16" onClick={() => this.setState({
@@ -511,25 +552,35 @@ export default class TTSaaS extends BaseClass {
                         }
                     </div>
                     {this.state.selectVoiceTagActive && 
-                      <Form.Group className="form-floating mb-2" style={{marginLeft: "2rem"}}>
-                        <Form.Control value={voiceTag.name} name={VOICE_NAME} as="select" onChange={(evt) => this.addSSML(evt, {voice: voiceTag})} onFocus={() => this.refs.textToSynthesize.focus()}>
-                          <option disabled value={voiceTag.name}>{voiceTag.defaultValue}</option>
-                          { voiceOptions }
-                        </Form.Control>
-                        <Form.Label htmlFor={VOICE_NAME} className="text-capitalize">{voiceTag.name}</Form.Label>
-                      </Form.Group>
+                      <Dropdown className="form-floating mb-2" style={{marginLeft: "2rem", width: "calc(100% - 2rem)"}} onSelect={(eventKey) => this.addSSML(VOICE_NAME, eventKey, {voice: voiceTag})} onToggle={() => {
+                        this.refs.textToSynthesize.focus();
+                        this.blurFocusedDropdown();
+                      }}>
+                        <Dropdown.Toggle variant="light" className="w-100 d-flex justify-content-center align-items-center" ref={voiceTag.name}>
+                          {voiceTag.name}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu className="w-100">
+                          {voiceOptions}
+                        </Dropdown.Menu>
+                      </Dropdown>
                     }
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
-                          <Form.Group className="form-floating mb-2 w-100" key={index}>
-                            <Form.Control value={ssmlOptions.name} name={ssmlName} as="select" onChange={(evt) => this.addSSML(evt, SSML_OPTIONS)} onFocus={() => this.refs.textToSynthesize.focus()}>
-                              <option disabled value={ssmlOptions.name}>{ssmlOptions.defaultValue}</option>
-                              { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
-                                <option key={`${index}-${idx}`} value={ssmlOption}>{ssmlOption}</option> 
-                              )}
-                            </Form.Control>
-                            <Form.Label htmlFor={ssmlName} className="text-capitalize">{ssmlOptions.name}</Form.Label>
-                          </Form.Group>
+                          <Dropdown className="form-floating mb-2 w-100" key={index} onToggle={() => {
+                              this.refs.textToSynthesize.focus();
+                              this.blurFocusedDropdown();
+                            }}>
+                            <Dropdown.Toggle variant="light" className="w-100 d-flex justify-content-center align-items-center" ref={ssmlOptions.name}>
+                              {ssmlOptions.name}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu className="w-100">
+                                { Object.entries(ssmlOptions.options).map(([ssmlOption, _], idx) => 
+                                  <Dropdown.Item className="w-100" key={`${index}-${idx}`} name={ssmlName} value={ssmlOption} onClick={() => this.addSSML(ssmlName, ssmlOption, SSML_OPTIONS)}>
+                                    {ssmlOption}
+                                  </Dropdown.Item> 
+                                )}
+                            </Dropdown.Menu>
+                          </Dropdown>
                         )
                     })}
                     <Button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} variant="secondary" 

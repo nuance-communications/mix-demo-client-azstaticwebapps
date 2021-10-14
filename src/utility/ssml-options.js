@@ -211,3 +211,14 @@ export const SSML_OPTIONS = {
     pitch,
     speechRate
 }
+
+export const VOICE_TAG_BASE = {
+    tag: 'voice',
+    container: true,
+    name: 'Voice Tag',
+    defaultValue: 'e.g. Evan, Chloe, ...',
+    attributes: ['name'],
+    url: 'https://docs.mix.nuance.com/tts-grpc/v1/#voice',
+}
+
+export const DROPDOWN_FOCUS_CLASS = "dropdown-focus";
