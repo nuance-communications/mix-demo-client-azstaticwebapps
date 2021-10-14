@@ -354,46 +354,35 @@ export default class TTSaaS extends BaseClass {
 
   getVoicesSelectOptions() {
     let voiceOptions = []
-    let ssmlVoiceOptionsDropdown = []
     let ssmlVoiceOptions = {}
     let lastLang = null
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
         if(lastLang != v.language){
-          voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
-          ssmlVoiceOptionsDropdown.push(<Dropdown.Header className="w-100" key={'optgroup-'+idx}>{v.language}</Dropdown.Header>);
+          voiceOptions.push(<Dropdown.Header className="w-100" key={'optgroup-'+idx}>{v.language}</Dropdown.Header>);
           lastLang = v.language
         }
-        voiceOptions.push(<option key={'option-'+idx} value={v.name}>{v.name}</option>)
-        ssmlVoiceOptionsDropdown.push(<Dropdown.Item className="w-100" key={'option-'+idx} eventKey={v.name}>{v.name}</Dropdown.Item>)
+        voiceOptions.push(<Dropdown.Item className="w-100" key={'option-'+idx} eventKey={v.name}>{v.name}</Dropdown.Item>)
         ssmlVoiceOptions[v.name] = {
           name: v.name
         }
       }
     })
-    return [voiceOptions, ssmlVoiceOptionsDropdown, ssmlVoiceOptions]
+    return [voiceOptions, ssmlVoiceOptions]
   }
 
-  onChangeVoice(evt) {
-    // Handle text input
-    const tgt = evt.target
-    switch(tgt.name){
-      case 'voice':
-        let voice = null
-        this.state.voices.forEach(v => {
-          if(v.sampleRateHz === 22050){
-            if(tgt.value === v.name){
-              voice = v
-              return
-            }
-          }
-        })
-        if(voice){
-          this.onUseVoice(voice)
+  onChangeVoice(voiceName) {
+    let voice = null
+    this.state.voices.forEach(v => {
+      if(v.sampleRateHz === 22050){
+        if(voiceName === v.name){
+          voice = v
+          return
         }
-        break
-      default:
-        break
+      }
+    })
+    if(voice){
+      this.onUseVoice(voice)
     }
   }
 
@@ -504,7 +493,7 @@ export default class TTSaaS extends BaseClass {
   }
 
   getSynthesizeHtml() {
-    let [voiceOptions, ssmlVoiceOptionsDropdown, ssmlVoiceOptions] = this.getVoicesSelectOptions();
+    let [voiceOptions, ssmlVoiceOptions] = this.getVoicesSelectOptions();
     const voiceTag = {
       ...VOICE_TAG_BASE,
       options: ssmlVoiceOptions
@@ -544,12 +533,14 @@ export default class TTSaaS extends BaseClass {
                   </Col>
                   <Col sm={6} md={4}>
                     <div className="d-flex">
-                        <Form.Group className="form-floating mb-2 mt-sm-2 mt-md-0 w-100">
-                          <Form.Control name="voice" as="select" value={this.state.voice.name} onChange={this.onChangeVoice.bind(this)}>
-                            { voiceOptions }
-                          </Form.Control>
-                          <Form.Label htmlFor="voice">Voice</Form.Label>
-                        </Form.Group>
+                        <Dropdown className="form-floating mb-2 mt-sm-2 mt-md-0 w-100" onSelect={(eventKey) => this.onChangeVoice(eventKey)}>
+                          <Dropdown.Toggle variant="secondary" className="w-100 d-flex justify-content-center align-items-center">
+                            {this.state.voice.name}
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu className="w-100">
+                            {voiceOptions}
+                          </Dropdown.Menu>
+                        </Dropdown>
                         {!this.state.selectVoiceTagActive && 
                           <div className="mb-2 d-flex justify-content-center align-items-center flex-column" style={{marginLeft: ".5rem"}}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="100%" fill="currentColor" className="bi bi-question-square-fill cursor-pointer text-secondary add-voice-btn" viewBox="0 0 16 16" onClick={() => this.setState({
@@ -569,7 +560,7 @@ export default class TTSaaS extends BaseClass {
                           {voiceTag.name}
                         </Dropdown.Toggle>
                         <Dropdown.Menu className="w-100">
-                          {ssmlVoiceOptionsDropdown}
+                          {voiceOptions}
                         </Dropdown.Menu>
                       </Dropdown>
                     }
