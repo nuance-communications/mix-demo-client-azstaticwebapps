@@ -20,7 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlay } from '@fortawesome/free-solid-svg-icons'
 
 import { BaseClass, AuthForm, CLIENT_DATA, ROOT_URL, LANG_EMOJIS } from "./shared"
-import { DEFAULT_SSML_VALUE, NEEDS_INPUT, SSML_OPTIONS, VOICE_TAG_BASE } from "../utility/ssml-options"
+import { DROPDOWN_FOCUS_CLASS, NEEDS_INPUT, SSML_OPTIONS, VOICE_TAG_BASE } from "../utility/ssml-options"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
@@ -175,7 +175,6 @@ export default class TTSaaS extends BaseClass {
         "name": "Evan", 
         "model": "xpremium-high" 
       },
-      defaultSSMLValue: DEFAULT_SSML_VALUE,
       selectVoiceTagActive: false,
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
@@ -473,33 +472,31 @@ export default class TTSaaS extends BaseClass {
     return selectedOption;
   }
 
+  blurFocusedDropdown(){
+    if(this.focusedDropdown){
+      this.refs[this.focusedDropdown].classList.remove(DROPDOWN_FOCUS_CLASS);
+      this.focusedDropdown = null;
+    }
+  }
+
   findSSMLTagFromText(text){
     const selectedOption = this.lookForSSMLOptionFromText(text);
     if(selectedOption !== undefined && selectedOption.name){
-      if(this.focusedDropdown && this.focusedDropdown !== selectedOption.name && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
-        this.refs[this.focusedDropdown].click();
-        this.focusedDropdown = null;
-      }
-      if(this.refs[selectedOption.name].getAttribute("aria-expanded") == "false"){
-        this.refs[selectedOption.name].click();
+      if(this.focusedDropdown !== selectedOption.name){
+        if(this.focusedDropdown) this.refs[this.focusedDropdown].classList.remove(DROPDOWN_FOCUS_CLASS);
+        this.refs[selectedOption.name].classList.add(DROPDOWN_FOCUS_CLASS);
         this.focusedDropdown = selectedOption.name;
       }
     }
     else{
-      if(this.focusedDropdown && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
-        this.refs[this.focusedDropdown].click();
-        this.focusedDropdown = null;
-      }
+      this.blurFocusedDropdown()
     }
   }
 
   compareSelectedTextToSSML(){
     const textToSynthesize = this.refs.textToSynthesize;
     if(textToSynthesize.selectionStart === textToSynthesize.selectionEnd) {
-      if(this.focusedDropdown && this.refs[this.focusedDropdown].getAttribute("aria-expanded") != "false"){
-        this.refs[this.focusedDropdown].click();
-        this.focusedDropdown = null;
-      }
+      this.blurFocusedDropdown()
       return;
     }
     let selectedText = this.state.textInput.substring(textToSynthesize.selectionStart, textToSynthesize.selectionEnd);
@@ -564,7 +561,10 @@ export default class TTSaaS extends BaseClass {
                         }
                     </div>
                     {this.state.selectVoiceTagActive && 
-                      <Dropdown className="form-floating mb-2" style={{marginLeft: "2rem", width: "calc(100% - 2rem)"}} onSelect={(eventKey) => this.addSSML(VOICE_NAME, eventKey, {voice: voiceTag})} onToggle={() => this.refs.textToSynthesize.focus()}>
+                      <Dropdown className="form-floating mb-2" style={{marginLeft: "2rem", width: "calc(100% - 2rem)"}} onSelect={(eventKey) => this.addSSML(VOICE_NAME, eventKey, {voice: voiceTag})} onToggle={() => {
+                        this.refs.textToSynthesize.focus();
+                        this.blurFocusedDropdown();
+                      }}>
                         <Dropdown.Toggle variant="light" className="w-100 d-flex justify-content-center align-items-center" ref={voiceTag.name}>
                           {voiceTag.name}
                         </Dropdown.Toggle>
@@ -575,7 +575,10 @@ export default class TTSaaS extends BaseClass {
                     }
                     {Object.entries(SSML_OPTIONS).map(([ssmlName, ssmlOptions], index) => {
                       return (
-                          <Dropdown className="form-floating mb-2 w-100" key={index} onToggle={() => this.refs.textToSynthesize.focus()}>
+                          <Dropdown className="form-floating mb-2 w-100" key={index} onToggle={() => {
+                              this.refs.textToSynthesize.focus();
+                              this.blurFocusedDropdown();
+                            }}>
                             <Dropdown.Toggle variant="light" className="w-100 d-flex justify-content-center align-items-center" ref={ssmlOptions.name}>
                               {ssmlOptions.name}
                             </Dropdown.Toggle>
