@@ -27,6 +27,7 @@ const TabContent = loadable(() => import('react-bootstrap/TabContent'))
 const ACTION_TYPES = [ 
   'qaAction',
   'daAction',
+  'continueAction',
   // 'escalationAction',
   // 'endAction'
 ]
@@ -572,6 +573,10 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
+  async processContinueAction(continueAction){
+    return await this.execute()
+  }
+
   collectNlgMessages(res){
     let msgs = []
     res.messages.forEach(msgSegments => {
@@ -634,19 +639,22 @@ export default class DLGaaS extends BaseClass {
     try{
       let dataAction
       let collectionSettings
+      let latencySettings
       const qaAction = res.response.payload.qaAction
       const daAction = res.response.payload.daAction
       const escalationAction = res.response.payload.escalationAction
       const endAction = res.response.payload.endAction
+      const continueAction = res.response.payload.continueAction
       if(daAction){
         dataAction = daAction
       } else if (escalationAction){
         dataAction = escalationAction
       } else if (endAction){
-        console.log(endAction)
         this.stop(true)
       } else if (qaAction){
         collectionSettings = qaAction.recognitionSettings.collectionSettings
+      } else if (continueAction){
+        latencySettings = continueAction.backendConnectionSettings
       }
 
       let exp = SIMULATED_EXPERIENCES(this.state.simulateExperience)
@@ -676,6 +684,12 @@ export default class DLGaaS extends BaseClass {
           this.processDataAction(dataAction)
         }, 0)
       }
+      if(continueAction){
+        setTimeout(() => {
+          this.processContinueAction(continueAction)
+        })
+      }
+
     } catch (ex) {
       console.error('bad response parsing', ex)
     }
