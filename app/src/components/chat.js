@@ -531,29 +531,28 @@ export default class ChatPanel extends React.Component {
   }
 
   gatherAndPopulateMessages(action, resMessages){
-    if(action){
-      let m = action.message
-      if(this.isVisualExperience()){
-        m.visual.forEach((m, idx) => {
-          resMessages.push(
-            <dd key={'latency-msg-'+'-'+idx} className="d-flex justify-content-start">
-              <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-                <ReactSafeHtml html={m.text} components={components} />
-              </div>
-            </dd>
-          )
-        })
-      } else if(this.isVoiceExperience()){
-        m.nlg.forEach((m, idx) => {
-          resMessages.push(
-            <dd key={`latency-msg-${idx}`} className="">
-              <div className="rounded rounded-3 bg-light msg text-dark p-2">
-                {m.text}
-              </div>
-            </dd>
-          )
-        })
-      }
+    if(!action) return
+    let m = action.message
+    if(this.isVisualExperience()){
+      m.visual.forEach((m, idx) => {
+        resMessages.push(
+          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+              <ReactSafeHtml html={m.text} components={components} />
+            </div>
+          </dd>
+        )
+      })
+    } else if(this.isVoiceExperience()){
+      m.nlg.forEach((m, idx) => {
+        resMessages.push(
+          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2">
+              {m.text}
+            </div>
+          </dd>
+        )
+      })
     }
   }
 
