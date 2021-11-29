@@ -541,7 +541,7 @@ export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChang
     )
   })
   return (
-    <div>
+    <div className="col-md-6 offset-md-3">
       <h3 className="fw-bold mt-4">Authenticate</h3>
       { !standalone ? (
         <div className="text-muted">

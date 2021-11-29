@@ -14,12 +14,13 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.min.js"
 import "@popperjs/core/dist/umd/popper.min.js"
 import "../stylesheets/main.css"
+import Header from "../images/mix-header.png"
 
 // styles
 const pageStyles = {
   color: "#232129",
-  padding: "40px 46px",
-  fontFamily: "-apple-system, Roboto, sans-serif, serif",
+  padding: "0px 0px",
+  fontFamily: "Roboto, sans-serif, serif",
 }
 const headingStyles = {
   marginTop: 0,
@@ -28,6 +29,11 @@ const headingStyles = {
 const headingAccentStyles = {
   color: "rgb(41,180,197)",
 }
+const headingImageStyles = {
+  height: 'auto',
+  width: '100%',
+  objectFit: 'cover',
+}
 
 export default class Layout extends React.Component {
   render() {
@@ -35,11 +41,9 @@ export default class Layout extends React.Component {
       {({ location, navigate }) => (
         <main style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
-          <h1 style={headingStyles} className="text-center display-4">
-              <Link to={`/`+location.search} className="text-decoration-none text-dark">
-                Nuance <span style={headingAccentStyles}>Mix</span>
-              </Link>
-          </h1>
+          <Link to={`/`+location.search} className="text-decoration-none text-dark">
+            <img className="text-center display-4" style={headingImageStyles} src={Header}/>
+          </Link>
           <div className="container">
             {this.props.children}
           </div>

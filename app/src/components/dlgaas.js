@@ -121,7 +121,7 @@ class ClientFetchHandlers {
 function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
   const [key, setKey] = useState('raw_payloads')
   return (
-    <Tabs onSelect={(k) => setKey(k)}
+    <Tabs fill onSelect={(k) => setKey(k)}
       activeKey={key}
       transition={false}
       id="noanim-tab-example">
@@ -794,8 +794,8 @@ export default class DLGaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs variant="pills"
+      <div>
+        <Tabs fill variant="pills"
           defaultActiveKey="dlgaas" transition={false}
           id="noanim-tab-example"
           className="justify-content-center"
@@ -1020,7 +1020,7 @@ export default class DLGaaS extends BaseClass {
       <div className="col">
         <div className="row">
           <div className="col-8">
-            <h3 className="fw-bold">Converse and Troubleshoot</h3>
+            <h3 className="fw-bold mt-3">Converse and Troubleshoot</h3>
             <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
             {` `}
             <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
