@@ -41,7 +41,7 @@
     "moment": "^2.29.1",
     "query-string": "^7.0.1",
     "react": "^16.13.1",
-    "react-bootstrap": "^1.6.1",
+    "react-bootstrap": "^2.0.3",
     "react-datepicker": "^4.2.1",
     "react-dom": "^16.13.1",
     "react-json-view": "^1.21.3",
