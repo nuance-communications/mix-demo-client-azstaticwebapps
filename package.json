@@ -29,7 +29,7 @@
     "@mdx-js/mdx": "^1.6.22",
     "@mdx-js/react": "^1.6.22",
     "@popperjs/core": "^2.9.3",
-    "axios": "^0.21.1",
+    "axios": "^0.25.0",
     "bootstrap": "^5.1.0",
     "cytoscape": "^3.19.1",
     "cytoscape-dagre": "^2.3.2",
