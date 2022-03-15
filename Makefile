@@ -11,23 +11,28 @@ XMKCERT				:=
 XOPENSSL			:=
 XOPEN				:=
 XPACKAGEMANAGER		:=
+XVENVACTIVATE		:=
+
 ifeq ($(OS),Windows_NT)
 	XPACKAGEMANAGER=choco
 	XMKCERT=mkcert.exe
 	XOPENSSL=openssl.exe
 	XOPEN=start
+	XVENVACTIVATE=.venv/scripts/activate
 else
 	ifeq ($(PLATFORM),Linux)
 		XPACKAGEMANAGER=brew
 		XMKCERT=mkcert
 		XOPENSSL=openssl
 		XOPEN=xdg-open
+		XVENVACTIVATE=.venv/bin/activate
 	endif
 	ifeq ($(PLATFORM),Darwin)
 		XPACKAGEMANAGER=brew
 		XMKCERT=mkcert
 		XOPENSSL=openssl
 		XOPEN=open
+		XVENVACTIVATE=.venv/bin/activate
 	endif
 endif
 
@@ -100,7 +105,7 @@ native-build-api:
 	cp resources/local.settings.json api/local.settings.json
 	cd api/; \
 	python3 -m venv .venv; \
-	source .venv/bin/activate; \
+	source $(XVENVACTIVATE); \
 	pip install -r requirements.txt
 
 native-run-app-secure: native-build-app
@@ -110,7 +115,7 @@ native-run-app-secure: native-build-app
 
 native-run-api-secure: native-build-api
 	cd api/; \
-	source .venv/bin/activate; \
+	source $(XVENVACTIVATE); \
 	pip list; \
 	func start --useHttps \
 		--cert ../resources/certificate.pfx \
