@@ -90,7 +90,7 @@ function InterpretationTree({rootNode, literal, parseType}){
 function NluTabs({apiEvents, interpretations, rawResponses, inlineWordset, onUpdateInlineWordset}){
   const [key, setKey] = useState('rendered_payload')
   return (
-    <Tabs onSelect={(k) => setKey(k)}
+    <Tabs fill onSelect={(k) => setKey(k)}
       activeKey={key}
       transition={false} 
       id="noanim-tab-example">
@@ -291,8 +291,8 @@ export default class NLUaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="nluaas" transition={false} 
+      <div>
+        <Tabs fill defaultActiveKey="nluaas" transition={false} 
           id="noanim-tab-example" 
           variant="pills"
           className="justify-content-center"
@@ -478,7 +478,7 @@ export default class NLUaaS extends BaseClass {
         <div className="row">
           <div className="col-12 mb-3">
             {/*<span className="badge bg-light text-dark mb-3 float-end">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
-            <h3 className="fw-bold">Natural Language Understanding</h3>
+            <h3 className="fw-bold mt-3">Natural Language Understanding</h3>
           </div>
           <div className="col-12">
             <div className="row" style={{height: '100%'}}>

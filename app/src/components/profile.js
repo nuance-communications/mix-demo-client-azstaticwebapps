@@ -17,43 +17,74 @@ const Tabs = loadable(() => import('react-bootstrap/Tabs'))
 const Tab = loadable(() => import('react-bootstrap/Tab'))
 const Button = loadable(() => import('react-bootstrap/Button'))
 
-function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout, channel, nluModelUrn, sessionId, onChangeTextInput}){
+function ProfileView({
+  clientId, 
+  clientSecret, 
+  simulateExperience, 
+  modelUrn, 
+  language, 
+  sessionTimeout, 
+  channel, 
+  nluModelUrn, 
+  sessionId, 
+  onChangeTextInput, 
+  onChangeSelectInput
+}){
 
   const save = () => {
     let params = new URLSearchParams()
     params.set('clientId', clientId)
-    params.set('clientSecret', clientSecret)
+    // params.set('clientSecret', clientSecret) // USE IN DEV MODE only
+    params.set('simulateExperience', simulateExperience)
     params.set('modelUrn', modelUrn)
     params.set('language', language)
     params.set('sessionTimeout', sessionTimeout)
     params.set('channel', channel)
-    params.set('nluModelUrn', nluModelUrn)
     params.set('sessionId', sessionId)
+    params.set('nluModelUrn', nluModelUrn)
     window.location.search = params.toString()
   }
 
   return (
-    <main className="px-2 py-2 mt-3">
+    <main className="px-1 py-1 mt-3 col-md-8 offset-md-2">
+      <div className="text-center alert border-1 text-muted mb-2">
+        Set up your configuration, and save it for a URL you can bookmark and share.
+      </div>
       <Form onSubmit={evt => {
         evt.preventDefault()
         save()
       }}>
+        <h6 className='text-muted mt-4'>Client Configuration</h6>
         <Form.Group className="form-floating">
           <Form.Control name="clientId" type="text" value={clientId} placeholder="Enter Client ID" onChange={onChangeTextInput}/>
           <Form.Label htmlFor="clientId">Client ID</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
           <Form.Control name="clientSecret" type="password" value={clientSecret} placeholder="Enter Client Secret" onChange={onChangeTextInput} />
-          <Form.Label>Client Secret</Form.Label>
+          <Form.Label>Client Secret <span className="text-danger">***</span></Form.Label>
         </Form.Group>
-        <hr/>
+        <h6 className='text-muted mt-4'>DLGaaS Tab Configuration</h6>
+        <Form.Group className="form-floating">
+          <Form.Control 
+            name="simulateExperience"
+            as="select" 
+            className="form-select"
+            value={simulateExperience} 
+            onChange={onChangeSelectInput}>
+            <optgroup label="Visual VA">
+              <option value={'visualVA'}>Visual VA: Text Input with HTML Output</option>
+              <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; TTS Output</option>
+            </optgroup>
+            <optgroup label="IVR">
+              <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
+              <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with TTS Output (no ASR)</option>
+            </optgroup>
+          </Form.Control>
+          <Form.Label>Simulate Experience</Form.Label>
+        </Form.Group>
         <Form.Group className="form-floating">
           <Form.Control name="modelUrn" type="text" value={modelUrn} placeholder="Enter DLG URN" onChange={onChangeTextInput} />
           <Form.Label>DLG URN</Form.Label>
-        </Form.Group>
-        <Form.Group className="form-floating">
-          <Form.Control name="language" type="text" value={language} placeholder="Enter DLG Language" onChange={onChangeTextInput} />
-          <Form.Label>DLG Language</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
           <Form.Control name="sessionTimeout" type="text" value={sessionTimeout} placeholder="Enter DLG Timeout in Seconds" onChange={onChangeTextInput} />
@@ -64,18 +95,29 @@ function ProfileView({clientId, clientSecret, modelUrn, language, sessionTimeout
           <Form.Label>DLG Channel</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
+          <Form.Control name="language" type="text" value={language} placeholder="Enter DLG Language" onChange={onChangeTextInput} />
+          <Form.Label>DLG Language</Form.Label>
+        </Form.Group>
+        <Form.Group className="form-floating">
           <Form.Control name="sessionId" type="text" value={sessionId} placeholder="Enter DLG Session ID" onChange={onChangeTextInput} />
           <Form.Label>DLG Session ID <span className='text-muted'>(optional)</span></Form.Label>
         </Form.Group>
-        <hr/>
+        <h6 className='text-muted mt-4'>NLUaaS Tab Configuration</h6>
         <Form.Group className="form-floating">
           <Form.Control name="nluModelUrn" type="text" value={nluModelUrn} placeholder="Enter NLU URN" onChange={onChangeTextInput} />
           <Form.Label>NLU URN</Form.Label>
         </Form.Group>
         <br/>
-        <Button variant="primary" type="submit" className="float-end">
-          <span role="img" aria-label="link" aria-labelledby="link">🔗</span> Set Current URL
-        </Button>
+        <div className="row">
+          <div className="col-8 text-center alert border-1 text-muted mt-0 pt-0 mb-2">
+            <small className="text-center text-danger">🔐 <span className="text-danger">***</span> Keep your Client Secret handy <em>(and safe and secure!)</em><br/> you need to provide it with every new browser session.</small>
+          </div>
+          <div className="col-4">
+            <Button variant="primary" type="submit" className=" w-100">
+              <span role="img" aria-label="floppy" aria-labelledby="floppy">💾</span> Save
+            </Button>
+          </div>
+        </div>
       </Form>
     </main>
   )
@@ -88,6 +130,7 @@ export default class Profile extends BaseClass {
     this.state = {
       clientId: '',
       clientSecret: '',
+      simulateExperience: 'visualVA',
       modelUrn: 'urn:nuance-mix:tag:model/REPLACE_ME/mix.dialog',
       nluModelUrn: 'urn:nuance-mix:tag:model/REPLACE_ME/mix.nlu?=language=eng-USA',
       channel: 'default',
@@ -96,6 +139,7 @@ export default class Profile extends BaseClass {
       sessionId: ''
     }
     this.onChangeTextInput = this.onChangeTextInput.bind(this)
+    this.onChangeSelectInput = this.onChangeSelectInput.bind(this)
   }
 
   componentDidMount(){
@@ -108,6 +152,7 @@ export default class Profile extends BaseClass {
       'language', 
       'sessionTimeout',
       'sessionId',
+      'simulateExperience',
     ]);
     if(Object.keys(params).length){
       this.setState(params)
@@ -116,8 +161,8 @@ export default class Profile extends BaseClass {
 
   render(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="profile" 
+      <div>
+        <Tabs fill defaultActiveKey="profile" 
               transition={false} 
               id="noanim-tab-example" 
               variant="pills" 
@@ -130,10 +175,12 @@ export default class Profile extends BaseClass {
               modelUrn={this.state.modelUrn}
               nluModelUrn={this.state.nluModelUrn}
               onChangeTextInput={this.onChangeTextInput.bind(this)}
+              onChangeSelectInput={this.onChangeSelectInput.bind(this)}
               channel={this.state.channel}
               language={this.state.language}
               sessionTimeout={this.state.sessionTimeout} 
-              sessionId={this.state.sessionId}/>
+              sessionId={this.state.sessionId}
+              simulateExperience={this.state.simulateExperience}/>
           </Tab>
           <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>

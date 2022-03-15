@@ -66,7 +66,7 @@ class SynthesisRequest {
 }
 
 function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
-  const [key, setKey] = useState('rendered_payload')
+  const [key, setKey] = useState('all_voices')
   let voicesHtml = []
   voices.forEach((v, idx) => {
     voicesHtml.push(
@@ -116,7 +116,7 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
   let voicesTableHtml = (<table className="table table-sm">{headerHtml}<tbody>{voicesHtml}</tbody></table>)
   let audioClipsHtml = (<div className="card"><div className="card-body"><dl className="mb-0">{clipsHtml}</dl></div></div>)
   return (
-    <Tabs onSelect={(k) => setKey(k)}
+    <Tabs fill onSelect={(k) => setKey(k)}
       activeKey={key}
       transition={false} 
       id="noanim-tab-example">
@@ -169,13 +169,15 @@ export default class TTSaaS extends BaseClass {
       ssmlInput: false,
       voice: { 
         "name": "Evan", 
-        "model": "xpremium-high" 
+        "model": "enhanced" 
       },
       synthesizedAudioClips: [],
       processing: ProcessingState.IDLE,
-      voices: []
+      voices: [],
     }
     this.audioSink = null
+    this.playQueue = []
+    this.onAudioEndFunctions = []
   }
 
   componentDidMount(){
@@ -188,6 +190,28 @@ export default class TTSaaS extends BaseClass {
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
     this.audioSink = new Audio()
+    this.audioSink.onended = this.onAudioEnded.bind(this)
+  }
+
+  onAudioEnded() {
+    let audioData = this.playQueue.shift()
+    if(audioData){
+      this.playAudio(audioData)
+    } else {
+      if(this.audioSink){
+        this.audioSink.currentTime = 0
+      }
+      if(this.onAudioEndFunctions.length){
+        let f 
+        while(f = this.onAudioEndFunctions.shift()){
+          f.call()
+        }
+      }
+    }
+  }
+
+  whenAudioEnds(func) {
+    this.onAudioEndFunctions.push(func)
   }
 
   initVoices() {
@@ -218,6 +242,15 @@ export default class TTSaaS extends BaseClass {
     }
   }
 
+  resetAudio(){
+    this.playQueue.length = 0
+    if(this.audioSink){
+      this.audioSink.pause()
+      this.audioSink.currentTime = 0
+    }
+  }
+
+
   // TTSaaS
 
   async getVoices(rawPayload) {
@@ -238,7 +271,7 @@ export default class TTSaaS extends BaseClass {
     })
   }
 
-  async executeTextInput(){
+  async executeTextInput(clientData){
     let input = {
       text: {
         text: this.state.textInput
@@ -268,9 +301,9 @@ export default class TTSaaS extends BaseClass {
       }, 
       input: input, 
       event_params: { 
-        send_log_events: true 
+        // send_log_events: true 
       },
-      client_data: CLIENT_DATA,
+      client_data: clientData ? { ...clientData, ...CLIENT_DATA } : CLIENT_DATA,
     }
     let rawResponses = this.state.rawResponses || []
     let synthesizedAudioClips = this.state.synthesizedAudioClips || []
@@ -299,24 +332,29 @@ export default class TTSaaS extends BaseClass {
       })
       this.parseResponse(res)
     }
+    return { payload, res }
   }
 
   playAudio(audio) {
     let audioclipRaw = "data:audio/ogg;base64," + audio
     this.audioSink.src = audioclipRaw;
-    this.audioSink.play();    
+    this.audioSink.play();
   }
 
   parseResponse(res){
     if(res.response.payload){
-      this.playAudio(res.response.payload.audio)
+      if(this.audioSink.paused){
+        this.playAudio(res.response.payload.audio)
+      } else {
+        this.playQueue.push(res.response.payload.audio)
+      }
     }
   }
 
   getAuthHtml(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="ttsaas" transition={false} 
+      <div>
+        <Tabs fill defaultActiveKey="ttsaas" transition={false} 
           id="noanim-tab-example" 
           variant="pills"
           className="justify-content-center"
@@ -387,7 +425,7 @@ export default class TTSaaS extends BaseClass {
       <div className="col">
         <div className="row">
           <div className="col-12 mb-3">
-            <h3 className="fw-bold">Text to Speech</h3>
+            <h3 className="fw-bold mt-3">Text to Speech</h3>
             <span className="text-dark mb-3 float-start">
               Learn more about <a href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">voices</a>.
             </span>
@@ -405,7 +443,7 @@ export default class TTSaaS extends BaseClass {
                     <Form.Control name="textInput" type="text" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
                     <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
                   </Form.Group>
-                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border">
+                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border bg-white">
                     <Form.Check label={`SSML`} className="align-middle my-3" type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}></Form.Check>
                   </Form.Group>
                   <Form.Group style={{'width': '15%'}} className="form-floating">
