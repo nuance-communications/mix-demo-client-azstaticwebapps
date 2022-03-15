@@ -11,7 +11,7 @@ import { navigate } from "gatsby"
 import axios from "axios"
 
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
-export const VERSION = '1.3.0'
+export const VERSION = '1.4.0'
 export const CLIENT_DATA = {
     "version": VERSION,
     "client": "Nuance Mix Demo Client - Azure StaticWebApps",
