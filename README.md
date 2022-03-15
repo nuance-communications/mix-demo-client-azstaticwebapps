@@ -44,23 +44,6 @@ For more information on how to leverage the client across various environments, 
 
 Please see the [Exchanging data](https://docs.mix.nuance.com/data-access/?src=demo) section in the [Mix documentation](https://docs.mix.nuance.com/?src=demo). It is crucial to understand the concepts as you design your Mix projects and leverage this client -- it acts more like a gateway.
 
-### Intended Local Use
-
-Use Data Access nodes with the `client_fetch` configuration and write the integration layer locally with the **intention** of separate hosted Functions (through `external_fetch`). These Functions would be referenced and configured within Mix.dialog and Mix.dashboard respectively.
-
-![DevExample](./static/local-example.png)
-
-### Intended Hosted Use
-
-The following illustrates a scenario where the client is deployed to Azure, and Data Access nodes have been configured to use `external_fetch` within Mix.
-
-This simplifies the client handling, deferring to the Functions themselves, and offers lifecycle controls within Mix.
-
-![ProdExample](./static/hosted-example.png)
-
-⚠️ There may be scenarios where `client_fetch` is appropriate; this has been set up such that `dlgaas.js` will invoke local `ClientFetchHandlers`.
-
-
 ## Functionality
 
 * [x] Bot engagements using Nuance Mix's [DLGaaS](https://docs.mix.nuance.com/dialog-grpac/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
@@ -68,150 +51,209 @@ This simplifies the client handling, deferring to the Functions themselves, and 
   * PRESENTATION LAYER: Rich UI through conventions
   * DATA: Functions for development through Client Fetch, and when deployed, enables External Fetch usage
   * DATA: Client Fetch handler for Location Data supplied in userData
-  * DATA: Log Events, Filtering and Timeline Visualization
+  * LOGS: Log Events, Filtering and Timeline Visualization
+  * CHANNEL SIMULATION: Web VA and IVR with DTMF input and TTS Output
 * [x] Natural Language Understanding using [NLUaaS](https://docs.mix.nuance.com/nlu-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
 * [x] Text to Speech Synthesis using [TTSaaS](https://docs.mix.nuance.com/tts-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
 * [x] Event data using the [Log Events](https://docs.mix.nuance.com/runtime-event-logs/?src=demo) **HTTP/1.1** API
 
+### Intended Local Use
+
+Use Data Access nodes with the `client_fetch` configuration and write the integration layer locally with the **intention** of separate hosted Functions (through `external_fetch`). These Functions would be referenced and configured within Mix.dialog and Mix.dashboard respectively.
+
+![DevExample](./app/static/local-example.png)
+
+### Intended Hosted Use
+
+The following illustrates a scenario where the client is deployed to Azure, and Data Access nodes have been configured to use `external_fetch` within Mix.
+
+This simplifies the client handling, deferring to the Functions themselves, and offers lifecycle controls within Mix.
+
+![ProdExample](./app/static/hosted-example.png)
+
+⚠️ There may be scenarios where `client_fetch` is appropriate; this has been set up such that `dlgaas.js` will invoke local `ClientFetchHandlers`.
+
 ## Pre-Requisites
 
-* [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
-* Node.js 14.3+ (Client Toolchain)
-* Python 3.7+ (Functions)
-* Docker Engine 20.10.0+ (Local development)
-  
+* [Git](https://git-scm.com/downloads)
+* [Brew](https://brew.sh/) (MacOS/Linux) or [Chocolatey](https://chocolatey.org/) (Windows)
+* [OpenSSL](https://www.openssl.org/) and [Mkcert](https://github.com/FiloSottile/mkcert/releases)
+* If using Docker..
+  * [Docker Engine](https://docs.docker.com/engine/install/) 20.10.0+
+* If using a Native Host..
+  * [Node.js](https://nodejs.org/en/download/) 14.3+ (Client Toolchain)
+  * [Python](https://www.python.org/downloads/) 3.7+ (Functions)
+  * [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
+
 ## Quick Start 🚀
 
-### Self-Signed Cert
-
-_Skip this if you already have certificates_.
-
-#### For macOS users
 ```bash
-brew install mkcert
-
-mkcert localhost 127.0.0.1 ::1
-mkcert -install
-
-openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
-```
-#### For Windows users
-Download pre-build [mkcert.exe](https://github.com/FiloSottile/mkcert/releases) and [openssl.exe](https://indy.fulgan.com/SSL/) binaries.
-```bash
-mkcert.exe localhost 127.0.0.1 ::1
-certutil -addstore "Root" "C:\Users\<USERNAME>\AppData\Local\mkcert\rootCA.pem"
-
-openssl.exe pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
-```
-#### For Linux users
-Download pre-build [mkcert](https://github.com/FiloSottile/mkcert/releases) binary.
-```bash
-mkcert localhost 127.0.0.1 ::1
-mkcert -install
-
-openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+git clone git@github.com:nuance-communications/mix-demo-client-azstaticwebapps.git
 ```
 
-### 1. Run with `Docker Compose`
-
-#### Configure
-
-* Generated certificate files `certificate.pfx`, `localhost+2.pem` and `localhost+2-key.pem` should be present in the project's base folder.
-* Supply the password used when generating certificates in a file `.password`.
-  
-#### Build and Run
+Assumes running the application using Docker: 
 
 ```bash
-docker-compose build
-docker-compose up -d
+make launch
 ```
 
-Launch `https://localhost:8000`
-
-Note:
-
-* Override environment variable values in `.env` file as needed.
-* If facing issues, try with `docker-compose restart`.
-
-### 2. Run directly on Host
-
-#### Install
+If using Native Host, run two processes:
 
 ```bash
-npm install
+make native-run-api-secure
 ```
 
 ```bash
-cd api/
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt
+make native-run-app-secure
 ```
 
-#### Configure
-
-```bash
-cp sample/local.settings.json api/local.settings.json
-```
-
-#### Run
-
-```bash
-# Process 1 - Start the API
-cd api/
-func start --useHttps --cert ../certificate.pfx --password "<REPLACE_ME>"
-```
-
-```bash
-# Process 2 - Start the Client
-npm run develop -- --https --cert-file localhost+2.pem --key-file localhost+2-key.pem
-```
-
-Launch `https://localhost:8000`
-  
 ## Getting Started
 
-### Certificates
+### Makefile
 
-This set up recommends using HTTPS. A self signed cert will be necessary.
-
-⚠️ Take note of your password when creating the cert, you will need it when running the function.
-
-For macOS users:
+Various opertions are described in a Makefile. 
 
 ```bash
-brew install mkcert
+make help
 
-mkcert localhost 127.0.0.1 ::1
-mkcert -install
-
-openssl pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+CERTS:  certs-(prep|setup)
+*LAUNCH:  launch
+DOCKER:  containers-(build|run|restart|stop|status|logs|clean)
+NATIVE.BUILD:  native-build-(app|api)
+NATIVE.RUN:  native-run-(app|api)-(secure|insecure)
+NATIVE.CLEANUP:  native-clean
+DATA.ACCESS:  new-data-access-endpoint
 ```
 
-For Windows users:
+There are two main modes of operation intended: docker and native host. Launch defaults to docker. 
 
-Download pre-build binaries of [mkcert.exe](https://github.com/FiloSottile/mkcert/releases) and [openssl.exe](https://indy.fulgan.com/SSL/). 
+#### Certificate Related
+
+##### `make certs-prep`
+
+Installs the pre-requisities for certificate creation, namely `openssl` and `mkcert`. A package manager is used here: brew or choco depending on your platform.
+
+##### `make certs-setup`
+
+Creates certificates and stores password as needed for local use.
+
+#### Quick Start
+
+##### `make launch`
+
+Primary command, sets up certificates and runs with docker compose.
+
+#### Docker Host
+
+##### `make containers-build`
+
+Builds the containers needed to run the app. Reflects the full static web app, including the APIs.
+
+##### `make containers-run`
+
+Runs the containers for the app. Reflects the full static web app, including the APIs.
+
+##### `make containers-restart`
+
+Restarts the containers of the app.
+
+##### `make containers-stop`
+
+Stops the containers running.
+
+##### `make containers-status`
+
+Provides status for the containers. 
+
+##### `make containers-logs`
+
+Follow the logs for the running containers.
+
+##### `make containers-clean`
+
+Removes all the images for the app.
+
+#### Native Host
+
+##### `make native-build-app`
+
+Builds the client application package and brings in associated dependencies.
+
+##### `make native-build-api`
+
+Builds the functions package and sets up a virtual environment.
+
+##### `make native-run-app-secure`
+
+Runs the native application securely (leveraging certs).
+
+##### `make native-run-api-secure`
+
+Runs the native functions securely (leveraging certs).
+
+##### `make native-run-app-insecure`
+
+Runs the native application insecurely. Must update `local.settings.json` accordingly. Not default mode.
+
+##### `make native-run-api-insecure`
+
+Runs the native functions insecurely. Must update `local.settings.json` accordingly. Not default mode.
+
+##### `make native-clean`
+
+Cleans all application and functions related resources.
+
+#### Data Access Endpoint Related
+
+##### `make new-data-access-endpoint`
+
+Helper to bootstrap a data access endpoint, leveraging a template.
+
+### Setting Up Certificates
+
+If you do not have `mkcert` or `openssl` installed:
+```bash
+make certs-prep
+```
+
+To set up the necessary certificates:
+```bash
+make certs-setup
+```
+
+### Option 1: Run with Docker
 
 ```bash
-mkcert.exe localhost 127.0.0.1 ::1
-
-openssl.exe pkcs12 -export -out certificate.pfx -inkey localhost+2-key.pem -in localhost+2.pem
+make containers-run
 ```
 
-Import generated rootCA certificate to Windows `Trusted Root Certification Authorities` store.
+### Option 2: Run Natively
+
+Run the two processes.
+
+App:
 ```bash
-# Run in elevated command prompt window
-certutil -addstore "Root" "C:\Users\<USERNAME>\AppData\Local\mkcert\rootCA.pem"
+make native-run-api-secure
 ```
 
-### Azure Functions
+API:
+```bash
+make native-run-api-secure
+```
+
+### Create a New Data Access Endpoint
+
+```bash
+make new-data-access-endpoint
+```
 
 See the official [Azure Functions Reference - Python](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-python) for more information.
 
+### Configuration
 
-#### Configuration
+If using Docker, update the values in `.env`.
 
-Update the following environment variables to override the default values:
+If running Natively, update the following environment variables to override the default values:
 
 ```bash
 export oauth_server_url="https://auth.crt.nuance.com/oauth2"
@@ -222,39 +264,19 @@ export base_url_logapi="https://log.api.nuance.com"
 export oauth_scope="dlg nlu tts log"
 ```
 
-Note: When deployed, these can be set per deployment environment in the Azure Portal. Override values as needed in `.env` when using `docker-compose`
+When deployed, these can be set per deployment environment in the Azure Portal for the Static Web App.
 
-##### local.settings.json
+#### local.settings.json
 
-⚠️ You must add this file before running your function.
+See `resources/local.settings.json` for the base file.
 
-In the `api` directory, create a file `local.settings.json`, and populate with the following snippet.
+The default setting enable CORS for the Functions, and sets a worker count as desired. Be mindful of the `http` vs `https` distinction. By default, the application is set up to use `https`.
 
-This will enable CORS for the function, and set a worker count as desired. Be mindful of the `http` vs `https` distinction. By default, the application is set up to use `https`.
+#### Email capabilities (Optional)
 
-```json
-{
-  "IsEncrypted": false,
-  "Host": {
-    "CORS": "https://localhost:8000"
-  },
-  "Values": {
-    "AzureWebJobsStorage": "",
-    "FUNCTIONS_WORKER_RUNTIME": "python",
-    "FUNCTIONS_WORKER_PROCESS_COUNT": 10
-  }
-}
-```
+This sample offers a stub integration with SendGrid for email capabilities. 
 
-For convenience, a sample is available to copy:
-
-```bash
-cp sample/local.settings.json api/local.settings.json
-```
-
-##### Email capabilities (Optional)
-
-This sample offers a stub integration with SendGrid for email capabilities. This can be used if creating a Data Access node with the name `Server_Send_Email`, which in turn will call the `email-api-send` locally.
+This can be used if creating a Data Access node with the name `Server_Send_Email`, which in turn will call the `email-api-send` locally.
 
 To configure this integration, provide the following environment variables:
 
@@ -263,79 +285,9 @@ export sendgrid_api_key="<REPLACE_ME>"
 export sendgrid_from_email="<REPLACE_ME>"
 export sendgrid_custom_token="<REPLACE_ME>"
 ```
+
 Note: Override values as needed in `.env` when using `docker-compose`
 ⚠️ The _custom token_ must be provided in the Mix project named `SENDGRID_TOKEN`. This is to thwart unintentional usage.
-
-
-#### Install
-
-The following instructions assume the creation of a *fresh* virtual environment, followed by installing those dependencies in it.
-
-```bash
-cd api/
-# Create the virtual environment
-python3 -m venv env
-# Use the environment
-source env/bin/activate
-# Install dependencies
-pip install -r requirements.txt
-```
-
-#### Run
-
-⚠️ Ensure you are in the virtual environment when running. (ref. `source env/bin/activate`)
-
-##### Securely (Recommended)
-
-```bash
-func start --useHttps --cert ../certificate.pfx --password "<REPLACE_ME>"
-```
-
-By default, the Functions should be served on `https://localhost:7071`.
-
-##### Insecurely
-
-```bash
-func start
-```
-
-By default, the Functions should be served on `http://localhost:7071`.
-
-⚠️ Check the client's `shared.js` to change ports during development.
-
-
-### Client Frontend Application
-
-#### Install
-
-Perform the following in the root directory:
-
-```bash
-npm install
-```
-
-#### Run
-
-##### Securely (Recommended)
-
-Reference the Certificates section earlier. The following assumes the creation of a cert with `localhost+2`.
-
-```bash
-npm run develop -- --https --cert-file localhost+2.pem --key-file localhost+2-key.pem
-```
-
-By default, the webapp should be served on `https://localhost:8000` - launch this in your browser.
-
-
-##### Insecurely
-
-⚠️ Location capabilities will not be usable (ie. navigation.geolocation).
-
-```bash
-npm run develop
-```
-
-By default, the webapp should be served on `http://localhost:8000` - launch this in your browser.
 
 ## Conventions for Rich UI
 
@@ -429,19 +381,19 @@ This client offers developers the ability to use the `client_fetch` mode of the 
 
 This pattern would apply in a gateway-style integration, however the intention of _this_ set up, is to eventually have the integrations use `external_fetch` pointing to deployed Functions.
 
-#### How-To: Add Handlers for Data Access Nodes
+### How-To: Add Handlers for Data Access Nodes
 
-Create a new Function:
+Create a new Function specifying the endpoint URL and the data access node name to use if client-driven:
 
 ```bash
-./scripts/create-da-handler.sh "weather-api-city-conditions"
+./scripts/create-da-handler.sh "weather-api-city-conditions" "Server_Weather_CityConditions"
 ```
 
 Navigate to `api/weather-api-city-conditions/__init__.py` and start integrating.
 
 By default, POST requests are expected with the body containing the sendData payload. Update `api/weather-api-city-conditions/function.json` if other methods are desired.
 
-Once the function has been set up, add a handler to `ExternalFetchHandlers` in [dlgaas.js](./src/components/dlgaas.js#L27) named with the Data Access node's name, pointing to the newly defined endpoint.
+⚠️ Important: Once the function has been set up, add a handler to `ExternalFetchHandlers` in [dlgaas.js](./src/components/dlgaas.js#L27). Create a function with the Data Access node's name, pointing to the newly defined endpoint.
 
 ### Data Access Requests intended for the Client
 
@@ -497,12 +449,12 @@ This integration illustrates the use of Dynamic Wordsets, consistently filtering
 
 ## Publishing to Azure
 
-To deploy this client, follow the [Azure StaticWebApps deployment guide](https://docs.microsoft.com/en-us/azure/static-web-apps/publish-gatsby) to publish. Update `static/staticwebapp.config.json` as needed.
+To deploy this client, follow the [Azure StaticWebApps deployment guide](https://docs.microsoft.com/en-us/azure/static-web-apps/publish-gatsby) to publish. Update `app/static/staticwebapp.config.json` as needed.
 
 Essentially:
 
 1. Create a GitHub Repo
-2. Create an Azure StaticWebApp pointing to the GitHub Repo (use: gatsby, `api/`)
+2. Create an Azure StaticWebApp pointing to the GitHub Repo (use: gatsby, point to `app/`, and `api/`)
 3. Configure accordingly in Azure
    * Create a [Application Insights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) resource and link to StaticWebApp (`APPINSIGHTS_INSTRUMENTATIONKEY`)
    * Add environment variables (`sengrid_api_key`, `sendgrid_from_email`)

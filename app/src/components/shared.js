@@ -11,7 +11,7 @@ import { navigate } from "gatsby"
 import axios from "axios"
 
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
-export const VERSION = '1.2.0'
+export const VERSION = '1.4.0'
 export const CLIENT_DATA = {
     "version": VERSION,
     "client": "Nuance Mix Demo Client - Azure StaticWebApps",
@@ -86,6 +86,41 @@ export const LANG_EMOJIS = {
     "zh-tw": "🇹🇼"
 };
 
+const EXPERIENCE_TYPES = {
+  ivrTextWithTts: {
+    playTTS: true,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true
+  },
+  ivrTextWithSSML: {
+    playTTS: false,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true
+  },
+  visualVA: {
+    playTTS: false,
+    isOutputHTML: true,
+    isOutputSSML: false,
+    bindTimeouts: false,
+    dtmfInput: false
+  },
+  visualVAwithTts: {
+    playTTS: true,
+    isOutputHTML: true,
+    isOutputSSML: true,
+    bindTimeouts: false,
+    dtmfInput: false
+  }
+}
+
+export const SIMULATED_EXPERIENCES = (experienceType) => {
+  return EXPERIENCE_TYPES[experienceType]
+}
+
 export const STUB_SELECTABLE_IMAGES = {
   // 'entity':{
   //   'value': 'https://url.png', 
@@ -133,7 +168,7 @@ function getLanguageCode(language){
 export class BaseClass extends React.Component {
 
   initStateFromQueryParams(params){
-    const toUpdate = {}
+    let toUpdate = {}
     if(typeof window !== `undefined`){
       const urlParams = new URLSearchParams(window.location.search)
       params.forEach((q) => {
@@ -143,7 +178,38 @@ export class BaseClass extends React.Component {
         }
       });
     }
+    return { 
+      ...toUpdate, 
+      ...this.initStateFromSessionStorage(params) 
+    }
+  }
+
+  initStateFromSessionStorage(params){
+    const toUpdate = {}
+    if(typeof window !== `undefined`){
+      params.forEach(q => {
+        let v = window.sessionStorage.getItem(q)
+        if(v){
+          try{
+            toUpdate[q] = JSON.parse(v)
+          } catch(ex) {
+            toUpdate[q] = v
+          }
+        }
+      })
+    }
     return toUpdate
+  }
+
+  saveToSessionStorage(data){
+    if(typeof window !== 'undefined'){
+      Object.keys(data).forEach(key => {
+        let item = data[key]
+        window.sessionStorage.setItem(key, item)
+      })
+      return true
+    }
+    return false
   }
 
   // Request
@@ -248,7 +314,7 @@ export class BaseClass extends React.Component {
     const ret = await this.request(`${ROOT_URL}/api/logapi-destroy-consumer`, {
       token: this.state.accessToken,
       consumerName: this.state.logConsumerName,
-      consumerGroup: this.state.logConsumerGroup,      
+      consumerGroup: this.state.logConsumerGroup,
     })
     console.log("Consumer destroyed")
     this.setState({
@@ -265,15 +331,17 @@ export class BaseClass extends React.Component {
     // purposefully scheduled on interval; 
     // fetch records will noop if request is inflight
     this.logTimer = window.setInterval(() => {
-      const logEvents = this.getLogEvents();
-      if(logEvents.length > 0){
-        const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
-        if(lastEvent === 'application-ended'){
-          this.stopCapturingLogs()
-          return
+      Promise.resolve().then(() => {
+        const logEvents = this.getLogEvents();
+        if(logEvents.length > 0){
+          const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
+          if(lastEvent === 'application-ended'){
+            this.stopCapturingLogs()
+            return
+          }
         }
-      }
-      this.doFetchRecords(50)
+        this.doFetchRecords(50)
+      })
     }, LOG_TIMER_DURATION)
   }
 
@@ -334,6 +402,29 @@ export class BaseClass extends React.Component {
     this.setState(toUpdate)
   }
 
+  onChangeSelectInput(evt) {
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'simulateExperience':
+        this.setState({
+          simulateExperience: tgt.value
+        })
+        break
+      case 'ttsVoice':
+        let newVoice = {
+            name: tgt.value, 
+            model: tgt.selectedOptions[0].getAttribute('data-model')
+          }
+        this.setState({
+          ttsVoice: newVoice
+        })
+        this.saveToSessionStorage({
+          ttsVoice: JSON.stringify(newVoice)
+        })
+        break
+    }
+  }
+
   onChangeTextInput(evt) {
     // Handle text input
     const tgt = evt.target
@@ -351,6 +442,9 @@ export class BaseClass extends React.Component {
       case 'clientSecret':
         this.setState({
           clientSecret: tgt.value
+        })
+        this.saveToSessionStorage({
+          'clientSecret': tgt.value
         })
         break
       case 'channel':
@@ -437,6 +531,15 @@ export class BaseClass extends React.Component {
 }
 
 export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope, standalone}) => {
+  let scopes = []
+  serviceScope.split(' ').forEach((scope, idx) => {
+    scopes.push(
+      <div key={`form-scope-${idx}`} className="form-check form-check-inline">
+        <input className="form-check-input" type="checkbox" value={scope} checked readOnly={true}/>
+        <label className="form-check-label">{scope}</label>
+      </div>
+    )
+  })
   return (
     <div>
       <h3 className="fw-bold mt-4">Authenticate</h3>
@@ -446,12 +549,12 @@ export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChang
         </div>) : '' }
       <form className="" onSubmit={(evt) => {initToken(serviceScope); evt.preventDefault();}}>
         <div className="form-floating mt-3">
-          <input type="text" className="form-control" name="clientId" value={clientId} onChange={onChangeTextInput} />
+          <input type="text"  className={'form-control ' + (clientId.length === 0 || tokenError ? 'is-invalid' : '')} name="clientId" value={clientId} onChange={onChangeTextInput} />
           <label htmlFor="clientId" className="form-label">Client ID</label>
         </div>
         <div className="form-floating mt-2">
-          <input type="password" className="form-control" name="clientSecret" value={clientSecret} onChange={onChangeTextInput} />
-          <label htmlFor="clientSecret"  className={'form-label ' + (tokenError ? 'is-invalid' : '')}>Client Secret</label>
+          <input type="password" className={'form-control ' + (clientSecret.length === 0 || tokenError ? 'is-invalid' : '')} name="clientSecret" value={clientSecret} onChange={onChangeTextInput} />
+          <label htmlFor="clientSecret" className="form-label">Client Secret</label>
           { tokenError ? (
             <div id="validationClientSecret" className="badge bg-danger text-white text-wrap invalid-feedback">
               <strong>Issue</strong> {tokenError}
@@ -460,14 +563,7 @@ export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChang
         </div>
         <div className="form-group mt-3">
           <span className="form-label mr-3">OAuth Scopes: &nbsp; &nbsp;</span>
-          <div className="form-check form-check-inline">
-            <input className="form-check-input" type="checkbox" id="scopeSvc" value={serviceScope.split(' ')[0]} checked readOnly={true}/>
-            <label className="form-check-label" htmlFor="scopeSvc">{serviceScope.split(' ')[0]}</label>
-          </div>
-          <div className="form-check form-check-inline">
-            <input className="form-check-input" type="checkbox" id="scopeLog" value={serviceScope.split(' ')[1]} checked readOnly={true}/>
-            <label className="form-check-label" htmlFor="scopeLog">{serviceScope.split(' ')[1]}</label>
-          </div>
+          {scopes}
         </div>
         <div className="form-group mt-3">
           <button className="btn btn-primary" type="submit">Get Token</button>
