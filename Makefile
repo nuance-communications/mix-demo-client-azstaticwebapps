@@ -64,6 +64,9 @@ certs-setup:
 		$(XMKCERT) localhost 127.0.0.1 ::1; \
 		$(XMKCERT) -install
 
+	# Windows: 
+	# replace with `Read-Host` if using PowerShell
+	# else use GitBash/cygwin
 	@read -s -p "Password: " password; \
 		echo $$password > resources/.password
 
