@@ -486,7 +486,6 @@ export class BaseClass extends React.Component {
       case 'contextTag':
         let lang6 = getLanguageCode(this.state.language)
         let newUrn = `urn:nuance-mix:tag:model/${tgt.value}/mix.nlu?=language=${lang6}`
-        console.log('using language code', lang6, newUrn)
         this.setState({
           contextTag: tgt.value,
           nluModelUrn: newUrn
@@ -507,7 +506,6 @@ export class BaseClass extends React.Component {
       const results = urn.match(URN_REGEX)
       console.log('parsed', results)
       if(results && results.length){
-        console.log('Setting state context tag to', results[1])
         return results[1]
       }
     } catch (ex) {
