@@ -116,7 +116,7 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
   let voicesTableHtml = (<table className="table table-sm">{headerHtml}<tbody>{voicesHtml}</tbody></table>)
   let audioClipsHtml = (<div className="card"><div className="card-body"><dl className="mb-0">{clipsHtml}</dl></div></div>)
   return (
-    <Tabs onSelect={(k) => setKey(k)}
+    <Tabs fill onSelect={(k) => setKey(k)}
       activeKey={key}
       transition={false} 
       id="noanim-tab-example">
@@ -353,8 +353,8 @@ export default class TTSaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="ttsaas" transition={false} 
+      <div>
+        <Tabs fill defaultActiveKey="ttsaas" transition={false} 
           id="noanim-tab-example" 
           variant="pills"
           className="justify-content-center"
@@ -425,7 +425,7 @@ export default class TTSaaS extends BaseClass {
       <div className="col">
         <div className="row">
           <div className="col-12 mb-3">
-            <h3 className="fw-bold">Text to Speech</h3>
+            <h3 className="fw-bold mt-3">Text to Speech</h3>
             <span className="text-dark mb-3 float-start">
               Learn more about <a href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">voices</a>.
             </span>
@@ -443,7 +443,7 @@ export default class TTSaaS extends BaseClass {
                     <Form.Control name="textInput" type="text" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
                     <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
                   </Form.Group>
-                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border">
+                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border bg-white">
                     <Form.Check label={`SSML`} className="align-middle my-3" type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}></Form.Check>
                   </Form.Group>
                   <Form.Group style={{'width': '15%'}} className="form-floating">
