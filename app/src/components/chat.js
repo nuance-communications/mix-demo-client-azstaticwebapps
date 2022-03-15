@@ -530,6 +530,32 @@ export default class ChatPanel extends React.Component {
     return SIMULATED_EXPERIENCES(this.props.simulateExperience).dtmfInput
   }
 
+  gatherAndPopulateMessages(action, resMessages){
+    if(!action) return
+    let m = action.message
+    if(this.isVisualExperience()){
+      m.visual.forEach((m, idx) => {
+        resMessages.push(
+          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+              <ReactSafeHtml html={m.text} components={components} />
+            </div>
+          </dd>
+        )
+      })
+    } else if(this.isVoiceExperience()){
+      m.nlg.forEach((m, idx) => {
+        resMessages.push(
+          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2">
+              {m.text}
+            </div>
+          </dd>
+        )
+      })
+    }
+  }
+
   renderMessages(){
     let messages = []
     if(this.props.rawResponses){
@@ -628,6 +654,11 @@ export default class ChatPanel extends React.Component {
               }
             })
           }
+          // CONTINUE ACTION
+          const continueAction = res.response.payload.continueAction
+          if(continueAction){
+            this.gatherAndPopulateMessages(continueAction, resMessages)
+          }
           // QA ACTION
           const qaAction = res.response.payload.qaAction
           if(qaAction){
@@ -683,6 +714,7 @@ export default class ChatPanel extends React.Component {
           const daAction = res.response.payload.daAction
           if(daAction){
             resMessages.push(<dd key={'da-'+idx}><div className="badge w-100 rounded rounded-3 bg-light msg text-secondary p-2">{daAction.id}</div></dd>)
+            this.gatherAndPopulateMessages(daAction, resMessages)
           }
           // ESCALATE ACTION
           const escalationAction = res.response.payload.escalationAction
