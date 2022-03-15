@@ -106,7 +106,7 @@ native-build-api:
 native-run-app-secure: native-build-app
 	cd app/; \
 	npm run develop -- --https --cert-file ../resources/localhost+2.pem --key-file ../resources/localhost+2-key.pem
-	open https://localhost:8000	
+	$(XOPEN) "https://localhost:8000"
 
 native-run-api-secure: native-build-api
 	cd api/; \
@@ -135,8 +135,8 @@ native-clean:
 
 # Utiltiies
 launch: certs-setup containers-run
-	@echo Launch https://localhost:8000
-	$(XOPEN) https://localhost:8000
+	@echo Launch "https://localhost:8000"
+	$(XOPEN) "https://localhost:8000"
 
 new-data-access-endpoint:
 	@read -p "Endpoint: " endpoint; \
