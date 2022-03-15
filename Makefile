@@ -32,7 +32,7 @@ else
 endif
 
 all : certs-prep native-build-app native-build-api \
-		native-app-run-secure native-api-run-secure native-clean \
+		native-run-app-secure native-run-api-secure native-clean \
 		containers-build containers-run containers-restart \
 		containers-stop containers-status containers-logs \
 		containers-clean launch new-data-access-endpoint help
@@ -116,11 +116,11 @@ native-run-api-secure: native-build-api
 		--cert ../resources/certificate.pfx \
 		--password ../resources/.password
 
-native-app-run-insecure:
+native-run-app-insecure:
 	@echo Make sure `local.settings.json` is using `http`, _not_ `https`
 	cd app/; npm run develop
 
-native-api-run-insecure:
+native-run-api-insecure:
 	cd api/; func start
 
 native-clean:
@@ -135,8 +135,8 @@ native-clean:
 
 # Utiltiies
 launch: certs-setup containers-run
-	@echo Launch https://localhost:8000
-	$(XOPEN) https://localhost:8000
+	@echo Launch "https://localhost:8000"
+	$(XOPEN) "https://localhost:8000"
 
 new-data-access-endpoint:
 	@read -p "Endpoint: " endpoint; \
