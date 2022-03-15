@@ -46,7 +46,7 @@ function ProfileView({
   }
 
   return (
-    <main className="px-1 py-1 mt-3">
+    <main className="px-1 py-1 mt-3 col-md-8 offset-md-2">
       <div className="text-center alert border-1 text-muted mb-2">
         Set up your configuration, and save it for a URL you can bookmark and share.
       </div>
@@ -83,20 +83,20 @@ function ProfileView({
           <Form.Label>Simulate Experience</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
-          <Form.Control name="channel" type="text" value={channel} placeholder="Enter DLG Channel" onChange={onChangeTextInput} />
-          <Form.Label>DLG Channel</Form.Label>
-        </Form.Group>
-        <Form.Group className="form-floating">
-          <Form.Control name="language" type="text" value={language} placeholder="Enter DLG Language" onChange={onChangeTextInput} />
-          <Form.Label>DLG Language</Form.Label>
-        </Form.Group>
-        <Form.Group className="form-floating">
           <Form.Control name="modelUrn" type="text" value={modelUrn} placeholder="Enter DLG URN" onChange={onChangeTextInput} />
           <Form.Label>DLG URN</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
           <Form.Control name="sessionTimeout" type="text" value={sessionTimeout} placeholder="Enter DLG Timeout in Seconds" onChange={onChangeTextInput} />
           <Form.Label>DLG Session Timeout</Form.Label>
+        </Form.Group>
+        <Form.Group className="form-floating">
+          <Form.Control name="channel" type="text" value={channel} placeholder="Enter DLG Channel" onChange={onChangeTextInput} />
+          <Form.Label>DLG Channel</Form.Label>
+        </Form.Group>
+        <Form.Group className="form-floating">
+          <Form.Control name="language" type="text" value={language} placeholder="Enter DLG Language" onChange={onChangeTextInput} />
+          <Form.Label>DLG Language</Form.Label>
         </Form.Group>
         <Form.Group className="form-floating">
           <Form.Control name="sessionId" type="text" value={sessionId} placeholder="Enter DLG Session ID" onChange={onChangeTextInput} />
@@ -110,7 +110,7 @@ function ProfileView({
         <br/>
         <div className="row">
           <div className="col-8 text-center alert border-1 text-muted mt-0 pt-0 mb-2">
-            <small className="text-center text-danger">🔐 <span className="text-danger">***</span> Keep your Client Secret handy <em>(and safe and secure!)</em> &ndash; you need to provide it with every new browser session.</small>
+            <small className="text-center text-danger">🔐 <span className="text-danger">***</span> Keep your Client Secret handy <em>(and safe and secure!)</em><br/> you need to provide it with every new browser session.</small>
           </div>
           <div className="col-4">
             <Button variant="primary" type="submit" className=" w-100">
@@ -161,8 +161,8 @@ export default class Profile extends BaseClass {
 
   render(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="profile" 
+      <div>
+        <Tabs fill defaultActiveKey="profile" 
               transition={false} 
               id="noanim-tab-example" 
               variant="pills" 
