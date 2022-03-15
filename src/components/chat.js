@@ -17,11 +17,16 @@ import FormControl from 'react-bootstrap/FormControl'
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faComments, faExternalLinkAlt, faWindowMinimize, faWindowMaximize } from '@fortawesome/free-solid-svg-icons'
+import { faComments, 
+  faExternalLinkAlt, 
+  faWindowMinimize, 
+  faWindowMaximize, 
+  faPhoneSlash
+} from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
 
-import { STUB_SELECTABLE_IMAGES } from "./shared"
+import { STUB_SELECTABLE_IMAGES, SIMULATED_EXPERIENCES } from "./shared"
 
 const components = ReactSafeHtml.components.makeElements({})
 components.div = ReactSafeHtml.components.createSimpleElement('div', {style: true, class: true})
@@ -40,7 +45,7 @@ components.p = ReactSafeHtml.components.createSimpleElement('p', {style: true, c
 components.br = ReactSafeHtml.components.createSimpleElement('br', {style: true, class: true})
 components.em = ReactSafeHtml.components.createSimpleElement('em', {style: true, class: true})
 components.small = ReactSafeHtml.components.createSimpleElement('small', {style: true, class: true})
-components.img = ReactSafeHtml.components.createSimpleElement('img', {src: true, class: true})
+components.img = ReactSafeHtml.components.createSimpleElement('img', {src: true, class: true, width: true})
 components.table = ReactSafeHtml.components.createSimpleElement('table', {style: true, class: true})
 components.thead = ReactSafeHtml.components.createSimpleElement('thead', {style: true, class: true})
 components.tbody = ReactSafeHtml.components.createSimpleElement('tbody', {style: true, class: true})
@@ -108,6 +113,35 @@ const MinMaxToggle = ({ toggle }) => {
 //
 // UI Widgets
 //
+
+const Keypad = ({name, disabled, onKeypadInput, settings}) => {
+  const KEYPAD_OPTIONS = [
+    [1,2,3],
+    [4,5,6],
+    [7,8,9],
+    ['*',0,'#'],
+  ]
+  const handleClick = (e) => {
+    onKeypadInput(e.target.innerText, settings.dtmfMappings, settings.dtmfSettings, e)
+  }
+
+  let optionsHtml = []
+  KEYPAD_OPTIONS.forEach((opts, idx2) => {
+    let buttons = []
+    opts.forEach((opt, idx) => {
+      buttons.push(<button key={`keypad-button-${idx}`} disabled={disabled} className="btn rounded-circle btn-outline-secondary px-3 py-2 my-1 mx-1" onClick={handleClick}>{opt}</button>)
+    })
+    optionsHtml.push(<div key={'keypad-'+idx2} className="d-flex justify-content-center">{buttons}</div>)
+  })
+
+  return (
+    <div className="row keypadInput">
+      <div className="col-md pt-3 pb-3">
+        {optionsHtml}
+      </div>
+    </div>
+  )
+}
 
 const ChatButtons = ({view, selectables, selectItem, idx}) => {
   let items = []
@@ -301,6 +335,8 @@ export default class ChatPanel extends React.Component {
     super()
     this.state = {
       textInput: '',
+      dtmfInput: '',
+      recognitionSettings: {},
       timeoutRemaining: 0,
       minimized: false,
     }
@@ -361,18 +397,51 @@ export default class ChatPanel extends React.Component {
     document.getElementById('textInput').focus()
   }
 
+  focusKeypad(){
+    document.getElementById('keypadInput').focus()
+  }
+
   onChangeTextInput(evt) {
     // Handle text input
     const tgt = evt.target
     switch(tgt.name){
       case 'textInput':
         this.setState({
-          textInput: tgt.value
+          textInput: tgt.value,
+          dtmfInput: ''
         })
         break
       default:
         break
     }
+  }
+
+  onChangeKeypadInput(value, mappings, settings, evt) {
+    // Handle a dtmf-like input
+    let dtmfInput = {}
+    let executed = false
+    mappings.forEach(mapping => {
+      if(mapping.dtmfKey === value){
+        dtmfInput[mapping.id] = mapping.value
+      }
+    })
+    if(Object.keys(dtmfInput).length){
+      this.props.onExecute(dtmfInput, null, null, true)
+      executed = true
+    }
+    let newInput = this.state.dtmfInput
+    if(!executed && value === settings.termChar){
+      this.props.onExecute(newInput, null, null, true)
+      executed = true
+    } else {
+      newInput += value
+    }
+    let input = executed ? '' : newInput
+    this.setState({
+      dtmfInput: input,
+      textInput: input
+    })
+
   }
 
   renderSelectables(view, selectables, idx){
@@ -449,6 +518,18 @@ export default class ChatPanel extends React.Component {
     }
   }
 
+  isVisualExperience(){
+    return SIMULATED_EXPERIENCES(this.props.simulateExperience).isOutputHTML
+  }
+
+  isVoiceExperience(){
+    return SIMULATED_EXPERIENCES(this.props.simulateExperience).isOutputSSML
+  }
+
+  isIVRExperience(){
+    return SIMULATED_EXPERIENCES(this.props.simulateExperience).dtmfInput
+  }
+
   renderMessages(){
     let messages = []
     if(this.props.rawResponses){
@@ -462,27 +543,57 @@ export default class ChatPanel extends React.Component {
             return
           }
           if(!res.request.user_input){
+            if(!res.request.dialog_event){
+              return
+            }
             return
           }
           if(!res.request.user_input.user_text){
-            if(!res.request.user_input.selected_item){
-              return
+            // DTMF
+            if(res.request.user_input.interpretation){
+              let inter = res.request.user_input.interpretation.data
+              let interKeys = Object.keys(inter)
+              let interKey = interKeys.length === 1 ? interKeys[0] : null
+              let interValue = inter[interKey]
+              let dtmfInput = res.request.user_input.interpretation.input_mode === 'dtmf'
+              resMessages.push(
+                <dd key={idx} className="d-flex justify-content-end">
+                  <div className={`rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse ` + (dtmfInput ? `dtmf` : ``) }>
+                    <sub className="text-light">{interKey}</sub> {interValue} 
+                  </div>
+                  {/*<div className="float-end lh-lg mx-1">{dtmfInput ? `🔢` : ''}</div>*/}
+                </dd>)
+            } else {
+              if(!res.request.user_input.selected_item){
+                return
+              }
+              // USER SELECTABLE
+              resMessages.push(
+                <dd key={idx} className="d-flex justify-content-end">
+                  <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">
+                    <sub><em className="text-light">{res.request.user_input.selected_item.id}</em></sub> {res.request.user_input.selected_item.value}
+                  </div>
+                </dd>)
             }
-            // USER SELECTABLE
-            resMessages.push(
-              <dd key={idx} className="d-flex justify-content-end">
-                <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">
-                  <sub><em className="text-light">{res.request.user_input.selected_item.id}</em></sub> {res.request.user_input.selected_item.value}
-                </div>
-              </dd>)
+
           } else {
             // USER MESSAGE
+            let originalResponse = this.props.rawResponses.length > idx ? this.props.rawResponses[idx+1]  : null
+            let userText = res.request.user_input.user_text
+            if(originalResponse){
+              if(originalResponse.response.payload.qaAction
+                  && originalResponse.response.payload.qaAction.mask){
+                userText = Array(userText.length+1).join('*')
+              }
+            }
             resMessages.push(
               <dd key={idx} className="d-flex justify-content-end">
-                <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">{res.request.user_input.user_text}</div>
+                <div className="rounded rounded-3 text-primary bg-white msg p-2 d-inline-flex flex-row-reverse">{userText}</div>
               </dd>
             )
           }
+        } else if (!res.response){
+          return
         } else if(res.response.payload) {
           // SYSTEM MESSAGE
           if(!res.response || res.error){
@@ -492,43 +603,81 @@ export default class ChatPanel extends React.Component {
           const msgs = res.response.payload.messages
           if(msgs){
             msgs.forEach((m,idx2) => {
-              m.visual.forEach((_m, idx3) => {
-                resMessages.push(
-                  <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
-                    <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-                      <ReactSafeHtml html={_m.text} components={components} />
-                    </div>
-                  </dd>
-                )
-              })
+              if(this.isVisualExperience()){
+                m.visual.forEach((_m, idx3) => {
+                  let txt = _m.text
+                  resMessages.push(
+                    <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
+                      <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+                        <ReactSafeHtml html={txt} components={components} />
+                      </div>
+                    </dd>
+                  )
+                })
+              } else if(this.isVoiceExperience()){
+                m.nlg.forEach((_m, idx3) => {
+                  let txt = _m.text
+                  resMessages.push(
+                    <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
+                      <div className="rounded rounded-3 bg-light msg text-dark p-2">
+                        {txt}
+                      </div>
+                    </dd>
+                  )
+                })
+              }
             })
           }
           // QA ACTION
           const qaAction = res.response.payload.qaAction
           if(qaAction){
             let cardMsgs = []
-            // Text
-            qaAction.message.visual.forEach((m, idx2) => {
-              cardMsgs.push(
-                <ReactSafeHtml key={'msg-safe-'+idx2} html={m.text} components={components} />
-              )
-            })
-            if(idx === 0 && this.props.active){
-              // View handling -> Special Input Types
-              const specialInput = this.renderSpecialInput(qaAction, idx)
-              if(specialInput){
-                cardMsgs.push(specialInput)
+            if(this.isVisualExperience()){
+              // Text
+              if(qaAction.message){
+                qaAction.message.visual.forEach((m, idx2) => {
+                  cardMsgs.push(
+                    <ReactSafeHtml key={'msg-safe-'+idx2} html={m.text} components={components} />
+                  )
+                })
               }
-              // Selectable
-              if(qaAction.selectable){
-                const selectables = qaAction.selectable.selectableItems
-                if(selectables && selectables.length){
-                  cardMsgs.push(<div className="mt-3 mb-2" key={'msg-selectable-'+idx}>{this.renderSelectables(qaAction.view, selectables, idx)}</div>)
+              if(idx === 0 && this.props.active){
+                // View handling -> Special Input Types
+                const specialInput = this.renderSpecialInput(qaAction, idx)
+                if(specialInput){
+                  cardMsgs.push(specialInput)
+                }
+                // Selectable
+                if(qaAction.selectable){
+                  const selectables = qaAction.selectable.selectableItems
+                  if(selectables && selectables.length){
+                    cardMsgs.push(<div className="mt-3 mb-2" key={'msg-selectable-'+idx}>{this.renderSelectables(qaAction.view, selectables, idx)}</div>)
 
+                  }
                 }
               }
+              resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)}>{cardMsgs}</div></dd>)
+            } else if(this.isVoiceExperience()){
+              if(qaAction.message){
+                qaAction.message.nlg.forEach((m, idx2) => {
+                  cardMsgs.push(m.text)
+                })
+              }
+              resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
+              if(idx === 0 && this.props.active){
+                const dtmfMappings = qaAction.recognitionSettings.dtmfMappings
+                const dtmfMappingKeys = Object.keys(dtmfMappings)
+                if(dtmfMappingKeys.length){
+                  let dtmfTable = []
+                  dtmfMappingKeys.forEach(m => {
+                    let mapping = dtmfMappings[m]
+                    dtmfTable.unshift(<tr key={'dtmf-'+idx+'-'+m}><td>{mapping.dtmfKey}</td><td>{mapping.value}</td><td>{mapping.id}</td></tr>)
+                  })
+                  resMessages.push(<dd key={'da-'+idx}><div className="w-100 rounded rounded-3 bg-transparent msg text-secondary p-2"><table className='table table-sm'><thead><tr><th>Key</th><th>Value</th><th>ID</th></tr></thead><tbody>{dtmfTable}</tbody></table></div></dd>)
+                }
+                this.state.recognitionSettings = qaAction.recognitionSettings
+              }
             }
-            resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)}>{cardMsgs}</div></dd>)
           }
           // DATA ACTION
           const daAction = res.response.payload.daAction
@@ -555,6 +704,18 @@ export default class ChatPanel extends React.Component {
   submitDirectTextInput(input){
     this.props.onExecute(input)
     this.setState({
+      timeoutRemaining: this.props.sessionTimeout,
+    })
+  }
+
+  executeEventInput(eventType, eventMessage){
+    let e = {
+        type: eventType,
+        message: eventMessage,
+    }
+    this.props.onExecute(null, false, e)
+    this.setState({
+      textInput: '',
       timeoutRemaining: this.props.sessionTimeout,
     })
   }
@@ -586,9 +747,12 @@ export default class ChatPanel extends React.Component {
     let url = `${window.location.origin}/chat/?${searchParams.toString()}`
     let params = `width=350,height=600,menubar=false,toolbar=false,location=false,status=false,resiable=true,scrollbars=false`
     window.open(url, 'mixchat', params)
+
+    this.props.onLaunchedStandalone(url)
   }
 
   render() {
+    let inputDisabled = this.state.timeoutRemaining < 1 || !this.props.active
     return (<div className={`chat-panel border rounded border-light border-2 ` + (this.state.minimized ? ' chat-panel-minimized ' : '')}>
       <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
         style={{
@@ -634,13 +798,37 @@ export default class ChatPanel extends React.Component {
                 name="textInput"
                 style={{'height': '50px'}}
                 value={this.state.textInput}
-                disabled={this.state.timeoutRemaining < 1 || !this.props.active}
+                disabled={inputDisabled}
                 id='textInput'
                 placeholder="Type or ask me something"
                 onChange={this.onChangeTextInput.bind(this)}
                 onFocus={this.triggerAutoScroll.bind(this)} />
             </div>
           </form>
+          { (!inputDisabled && this.isIVRExperience()) ? (
+            <div className="row border-top border-2 mt-2">
+              <div className="col-md-12 mt-2 mb-1">
+                <Keypad 
+                  name="dtmfInput" 
+                  disabled={inputDisabled}
+                  onKeypadInput={this.onChangeKeypadInput.bind(this)} 
+                  settings={this.state.recognitionSettings} />
+               </div>
+               <div className="col-md-12 text-center mb-3">
+                  <button 
+                    className="btn btn-danger btn-sm px-3 py-3 rounded-circle"
+                    disabled={inputDisabled}
+                    onClick={(evt) => {
+                      evt.preventDefault()
+                      this.executeEventInput('HANGUP', 'User initiated.')
+                    }}>
+                      <FontAwesomeIcon icon={faPhoneSlash}/>
+                  </button>
+               </div>
+
+             </div>
+             ) : ''
+          }
         </div>
       </div>
     </div>)
