@@ -11,28 +11,33 @@ XMKCERT				:=
 XOPENSSL			:=
 XOPEN				:=
 XPACKAGEMANAGER		:=
+XVENVACTIVATE		:=
+
 ifeq ($(OS),Windows_NT)
 	XPACKAGEMANAGER=choco
 	XMKCERT=mkcert.exe
 	XOPENSSL=openssl.exe
 	XOPEN=start
+	XVENVACTIVATE=.venv/scripts/activate
 else
 	ifeq ($(PLATFORM),Linux)
 		XPACKAGEMANAGER=brew
 		XMKCERT=mkcert
 		XOPENSSL=openssl
 		XOPEN=xdg-open
+		XVENVACTIVATE=.venv/bin/activate
 	endif
 	ifeq ($(PLATFORM),Darwin)
 		XPACKAGEMANAGER=brew
 		XMKCERT=mkcert
 		XOPENSSL=openssl
 		XOPEN=open
+		XVENVACTIVATE=.venv/bin/activate
 	endif
 endif
 
 all : certs-prep native-build-app native-build-api \
-		native-app-run-secure native-api-run-secure native-clean \
+		native-run-app-secure native-run-api-secure native-clean \
 		containers-build containers-run containers-restart \
 		containers-stop containers-status containers-logs \
 		containers-clean launch new-data-access-endpoint help
@@ -59,6 +64,9 @@ certs-setup:
 		$(XMKCERT) localhost 127.0.0.1 ::1; \
 		$(XMKCERT) -install
 
+	# Windows: 
+	# replace with `Read-Host` if using PowerShell
+	# else use GitBash/cygwin
 	@read -s -p "Password: " password; \
 		echo $$password > resources/.password
 
@@ -100,27 +108,27 @@ native-build-api:
 	cp resources/local.settings.json api/local.settings.json
 	cd api/; \
 	python3 -m venv .venv; \
-	source .venv/bin/activate; \
+	source $(XVENVACTIVATE); \
 	pip install -r requirements.txt
 
 native-run-app-secure: native-build-app
 	cd app/; \
 	npm run develop -- --https --cert-file ../resources/localhost+2.pem --key-file ../resources/localhost+2-key.pem
-	open https://localhost:8000	
+	$(XOPEN) "https://localhost:8000"
 
 native-run-api-secure: native-build-api
 	cd api/; \
-	source .venv/bin/activate; \
+	source $(XVENVACTIVATE); \
 	pip list; \
 	func start --useHttps \
 		--cert ../resources/certificate.pfx \
 		--password ../resources/.password
 
-native-app-run-insecure:
+native-run-app-insecure:
 	@echo Make sure `local.settings.json` is using `http`, _not_ `https`
 	cd app/; npm run develop
 
-native-api-run-insecure:
+native-run-api-insecure:
 	cd api/; func start
 
 native-clean:
@@ -135,8 +143,8 @@ native-clean:
 
 # Utiltiies
 launch: certs-setup containers-run
-	@echo Launch https://localhost:8000
-	$(XOPEN) https://localhost:8000
+	@echo Launch "https://localhost:8000"
+	$(XOPEN) "https://localhost:8000"
 
 new-data-access-endpoint:
 	@read -p "Endpoint: " endpoint; \

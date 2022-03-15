@@ -233,12 +233,12 @@ Run the two processes.
 
 App:
 ```bash
-make native-app-run-secure
+make native-run-api-secure
 ```
 
 API:
 ```bash
-make native-api-run-secure
+make native-run-api-secure
 ```
 
 ### Create a New Data Access Endpoint

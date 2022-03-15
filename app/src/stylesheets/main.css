@@ -130,7 +130,8 @@ input[name=textInput] {
   right: 4px;
 }
 
-.table-responsive .badge {
+.table-responsive .badge,
+.nlu .badge {
   line-height: 1.75;
   font-weight: normal;
   font-size: 14px;

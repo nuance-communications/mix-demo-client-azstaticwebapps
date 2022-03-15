@@ -51,17 +51,17 @@ function process(literal, entities, ret, depth){
         process(literal, _eEntities, children, depth+1)
       }
       const confClz = getConfidenceClass(_e.confidence)
-      ret.push(
+      ret.unshift(
         <div className="badge lh-lg align-top" key={'nlu-tree-'+depth+'-'+entity}>
           <div className="bg-light text-dark">
-            {/*{depth !== 0 ? (<span className={`d-block lh-sm fs-`+(depth+2)}>↑</span>) : ('')}*/}
-            <strong>"{literal.substring(startIndex, endIndex)}"</strong>
+            {depth !== 0 ? (<span className={`d-block lh-sm fs-`+(depth+2)}>↑</span>) : ('')}
+            <strong>{literal.substring(startIndex, endIndex)}</strong>
             <br/>
             <span className={`badge text-dark border border-`+confClz}>{entity}</span>
             <span className={`badge text-white border bg-` + confClz}>{_e.confidence}</span>
             <br/>
             {(_e.structValue || _e.stringValue) ? (
-                <span className="badge bg-light border text-success text-wrap d-block" style={{'maxWidth': '150px', 'textAlign': _e.structValue ? 'left' : 'center'}}>{_e.structValue ? JSON.stringify(_e.structValue, undefined, 2) : _e.stringValue}</span>
+                <pre className="badge bg-light border text-success text-wrap d-block d-flex" style={{'textAlign': _e.structValue ? 'left' : 'center'}}>{_e.structValue ? JSON.stringify(_e.structValue, undefined, 2) : _e.stringValue}</pre>
               ) : (
                 hasChildren ? (<span className="badge bg-light text-dark"></span>) : (<span className="badge bg-danger text-white">x</span>)
               )
@@ -84,7 +84,7 @@ function InterpretationTree({rootNode, literal, parseType}){
   } else if (parseType === 'MULTI_INTENT'){
 
   }
-  return (<div className="bg-light" key={literal}><div className="text-dark">{ret}</div></div>)
+  return (<div className="bg-light rounded" key={literal}><div className="text-dark">{ret}</div></div>)
 }
 
 function NluTabs({apiEvents, interpretations, rawResponses, inlineWordset, onUpdateInlineWordset}){
@@ -107,6 +107,8 @@ function NluTabs({apiEvents, interpretations, rawResponses, inlineWordset, onUpd
               indentWidth={2}
               name={false}
               collapseStringsAfterLength={50}
+              groupArraysAfterLength={5}
+              quotesOnKeys={false}
               displayObjectSize={true}
               collapsed={5}
               displayArrayKey={false}
@@ -345,7 +347,7 @@ export default class NLUaaS extends BaseClass {
     })
     return (
       <div className="card mb-2">
-        <div className="card-header bg-dark text-white">
+        <div className="card-header bg-light text-dark">
           <strong>{intent.name}</strong>
           <span className={`float-end badge bg-`+(intent.confidence > 0.8 ? 'success' : intent.confidence > 0.5 ? 'warning' : 'dark')}>{intent.confidence}</span>
         </div>
@@ -368,9 +370,9 @@ export default class NLUaaS extends BaseClass {
         <ul className={``} key={`interp-${entityName}-${idx}-${i}`}>
           <li>
               <span className='badge bg-light text-dark'>{e.textRange.startIndex}->{e.textRange.endIndex}</span>
-              <span className='badge bg-primary text-white'>{entityName}</span>
-              <span className={`float-end badge bg-`+(e.confidence > 0.8 ? 'success' : e.confidence > 0.5 ? 'warning' : 'dark')}>confidence={e.confidence}</span>
-              <span className='badge bg-dark text-white'>{e.literal}</span>
+              <span className='badge bg-light text-primary'>{entityName}</span>
+              <span className='badge bg-light text-dark'>{e.literal}</span>
+              <span className={`badge text-`+(e.confidence > 0.8 ? 'success' : e.confidence > 0.5 ? 'warning' : 'dark')}>confidence={e.confidence}</span>
               <span className={`badge bg-light text-dark`}>{JSON.stringify(e.structValue || e.stringValue)}</span>
               <br/>
               {tree}
@@ -386,10 +388,11 @@ export default class NLUaaS extends BaseClass {
     // Object.keys(root.entities).forEach(e => {
     //   tree.push(this.renderSingleInterpretationEntities(e, root.entities[e].entities, 0))
     // })
+    // { tree.length ? (<div className="card-footer">{tree}</div>) : '' }
     return (
-      <div className="card" key={'single-interp-'+index}>
-        <div className="card-header bg-dark text-white">
-          <strong>{root.intent}</strong>
+      <div className="card mb-1" key={'single-interp-'+index}>
+        <div className="card-header bg-light text-dark">
+          <strong><span class='badge bg-light text-secondary rounded'>#{index+1}</span> {root.intent}</strong>
           <span className={`float-end badge bg-`+(root.confidence > 0.8 ? 'success' : root.confidence > 0.5 ? 'warning' : 'dark')}>{root.confidence}</span>
         </div>
         { Object.keys(root.entities).length ? (<div className="card-body text-center">
@@ -399,7 +402,6 @@ export default class NLUaaS extends BaseClass {
             parseType={this.state.interpretationResultType}
           />
         </div>) : '' }
-        {/*{ tree.length ? (<div className="card-footer">{tree}</div>) : '' }*/}
       </div>
     )
   }
@@ -493,7 +495,7 @@ export default class NLUaaS extends BaseClass {
                   </Form.Group>
                   <Form.Group style={{'width': '15%'}} className="form-floating">
                     <Form.Control name="contextTag" type="text" value={this.state.contextTag} placeholder="A1_C1" onChange={this.onChangeTextInput.bind(this)}/>
-                    <Form.Label htmlFor="contextTag">Context Tag</Form.Label>
+                    <Form.Label htmlFor="contextTag">Tag</Form.Label>
                   </Form.Group>
                   <button disabled={this.state.textInput.length === 0 || this.state.processing === ProcessingState.IN_FLIGHT} className="btn btn-secondary" 
                     type="submit" style={{'width': '10%'}}>Interpret</button>
@@ -535,7 +537,7 @@ export default class NLUaaS extends BaseClass {
 
   render(){
     return (
-      <div className="row">
+      <div className="row nlu">
         { 
           this.state.accessToken ? 
           this.getInterpretHtml() : 
