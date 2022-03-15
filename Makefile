@@ -135,8 +135,8 @@ native-clean:
 
 # Utiltiies
 launch: certs-setup containers-run
-	@echo Launch "https://localhost:8000"
-	$(XOPEN) "https://localhost:8000"
+	@echo Launch https://localhost:8000
+	$(XOPEN) https://localhost:8000
 
 new-data-access-endpoint:
 	@read -p "Endpoint: " endpoint; \
