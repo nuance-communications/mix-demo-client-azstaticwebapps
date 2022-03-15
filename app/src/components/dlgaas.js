@@ -12,15 +12,24 @@ import moment from 'moment'
 import loadable from '@loadable/component'
 
 import { BaseClass, AuthForm } from "./shared"
-import { CLIENT_DATA, ROOT_URL } from "./shared"
+import { CLIENT_DATA, ROOT_URL, SIMULATED_EXPERIENCES } from "./shared"
 import { LogEventsTable, LogEventsViz } from "./log"
 import ChatPanel from "./chat"
+import TTSaaS from "../components/ttsaas"
+import Form from 'react-bootstrap/Form'
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Button = loadable(() => import('react-bootstrap/Button'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
 const Tab = loadable(() => import('react-bootstrap/Tab'))
 const TabContent = loadable(() => import('react-bootstrap/TabContent'))
+
+const ACTION_TYPES = [ 
+  'qaAction',
+  'daAction',
+  // 'escalationAction',
+  // 'endAction'
+]
 
 // Data Handlers
 
@@ -108,7 +117,7 @@ class ClientFetchHandlers {
 // DLGaaS
 //
 
-function DlgTabs({logEvents, apiEvents, rawResponses}){
+function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
   const [key, setKey] = useState('raw_payloads')
   return (
     <Tabs onSelect={(k) => setKey(k)}
@@ -121,14 +130,23 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
             <ReactJson
               className="mb-2"
               key={'json-' + rawResponses.length}
-              src={rawResponses}
+              src={{
+                'latest': {
+                  1: rawResponses[0], 
+                  2: rawResponses.length > 1 ? rawResponses[1] : null,
+                  3: rawResponses.length > 2 ? rawResponses[2] : null
+                }, 
+                'all': rawResponses
+              }}
               displayDataTypes={false}
               iconStyle={'circle'}
               indentWidth={2}
               name={false}
+              quotesOnKeys={false}
+              groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
-              collapsed={8}
+              collapsed={9}
               displayArrayKey={false}
               // theme={'grayscale'}
             />
@@ -137,7 +155,7 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
       </Tab>
       <Tab eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
         <TabContent className="bg-light px-2 py-2">
-          { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents}/>) : ''}
+          { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents} simulateExperience={simulateExperience}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="viz_log_events" title={(<div>Log Events Viz</div>)} disabled={logEvents.length === 0}>
@@ -156,6 +174,8 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
               iconStyle={'circle'}
               indentWidth={2}
               name={false}
+              quotesOnKeys={false}
+              groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
               collapsed={5}
@@ -175,6 +195,8 @@ function DlgTabs({logEvents, apiEvents, rawResponses}){
               iconStyle={'circle'}
               indentWidth={2}
               name={false}
+              quotesOnKeys={false}
+              groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
               displayObjectSize={true}
               collapsed={5}
@@ -203,6 +225,9 @@ export default class DLGaaS extends BaseClass {
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
+      simulateExperience: 'visualVA',
+      ttsVoice: {name: 'Evan', model: 'enhanced'},
+      ttsVoices: [],
       rawResponses: [],
       rawEvents: [],
       autoScrollChatPanel: true,
@@ -216,6 +241,7 @@ export default class DLGaaS extends BaseClass {
           location: null
         }
       },
+      clientData: CLIENT_DATA,
       tokenError: '',
       isSessionActive: false,
       logConsumerGroup: null,
@@ -224,9 +250,14 @@ export default class DLGaaS extends BaseClass {
       fetchingLocation: false
     }
     this.logTimer = -1
+    this.recoTimeout = -1
     this.onChangeTextInput = this.onChangeTextInput.bind(this)
+    this.onChangeSelectInput = this.onChangeSelectInput.bind(this)
     this.clientHandlers = new ClientFetchHandlers()
     this.externalHandlers = new ExternalFetchHandlers()
+
+    this.ttsClz = new TTSaaS(this)
+
   }
 
   isStandalone(){
@@ -241,6 +272,8 @@ export default class DLGaaS extends BaseClass {
       'channel',
       'language',
       'sessionTimeout',
+      'simulateExperience',
+      'ttsVoice',
       'sessionId'
     ])
     if(Object.keys(params).length){
@@ -258,14 +291,21 @@ export default class DLGaaS extends BaseClass {
 
   initStartData(after){
     const startDataLocalStorage = window.localStorage.getItem('startData')
-    if(startDataLocalStorage){
-      try{
-        this.setState({
-          startData: JSON.parse(startDataLocalStorage)
-        }, after)
-      } catch (ex) {
-        console.error(ex)
+    const clientDataLocalStorage = window.localStorage.getItem('clientData')
+    try{
+      let newData = {}
+
+      if(startDataLocalStorage){
+        newData.startData = JSON.parse(startDataLocalStorage)
       }
+      if(clientDataLocalStorage){
+        newData.clientData = JSON.parse(clientDataLocalStorage)
+      }
+      if(newData.startData || newData.clientData){
+        this.setState(newData, after)
+      }
+    } catch (ex) {
+      console.error(ex)
     }
   }
 
@@ -273,6 +313,9 @@ export default class DLGaaS extends BaseClass {
     try{
       if(this.state.logConsumerName){
         this.destroyConsumer()
+      }
+      if(this.ttsClz){
+        this.ttsClz.onUnmount()
       }
     } catch(ex) {
       console.warn(ex)
@@ -285,9 +328,25 @@ export default class DLGaaS extends BaseClass {
     this.onUnmount()
   }
 
+  onTokenAcquired() {
+    // noop
+    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
+      this.ttsClz = new TTSaaS(this)
+      this.ttsClz.componentDidMount()
+      this.ttsClz.state.ssmlInput = true
+      this.ttsClz.playQueue = []
+      this.ttsClz.state.accessToken = this.state.accessToken
+      this.ttsClz.getVoices().then(res => {
+        this.setState({
+          ttsVoices: res.response.payload.voices
+        })
+      })
+    }
+  }
+
   // DLGaaS API
 
-  async sessionStart(language, channel, sessionTimeout, startData, sessionId) {
+  async sessionStart(language, channel, sessionTimeout, clientData, startData, sessionId) {
     // Second, the Session is Started
     await this.ensureTokenNotExpired()
     let fullPayload = {
@@ -300,7 +359,7 @@ export default class DLGaaS extends BaseClass {
         data: startData
       },
       session_timeout_sec: sessionTimeout,
-      client_data: CLIENT_DATA,
+      client_data: clientData,
     }
     if(sessionId){
       fullPayload.session_id = sessionId
@@ -376,6 +435,7 @@ export default class DLGaaS extends BaseClass {
         this.state.language,
         this.state.channel,
         this.state.sessionTimeout,
+        this.state.clientData,
         this.state.startData,
         this.state.sessionId
       )
@@ -398,7 +458,7 @@ export default class DLGaaS extends BaseClass {
         autoScrollChatPanel: true
       })
       // Kick things off..
-      await this.execute('')
+      await this.execute()
     }
     if(!this.isStandalone()){
       // Attach a Log Consumer
@@ -407,14 +467,18 @@ export default class DLGaaS extends BaseClass {
     return true
   }
 
-  async execute(input, dataAction) {
+  async execute(input, dataAction, dialogEvent, isDTMF) {
     // Executes within a session
-    // 3 use cases:
+    // 5 use cases:
       // 1) user input (text),
-      // 2) user input (selectable), and
+      // 2) user input (selectable)
       // 3) data interactions
-      // TODO: 4) events
-    let payload = {}
+      // 4) events
+      // 5) interpretation (external) - ie DTMF
+    let payload = {
+      client_data: CLIENT_DATA
+    }
+    let consideredInput = false
     if(typeof(input) === 'string'){
       if(dataAction){
         payload = {
@@ -429,12 +493,43 @@ export default class DLGaaS extends BaseClass {
             user_text: input
           }
         }
+        if(isDTMF){
+          payload.user_input.input_mode = 'dtmf'
+        }
+        consideredInput = true
       }
     } else if(typeof(input) === 'object'){
-      payload = {
-        user_input: {
-          selected_item: input
+      if(dialogEvent){
+        payload = {
+          dialog_event: dialogEvent
         }
+      } else if (!isDTMF) {
+        payload = {
+          user_input: {
+            selected_item: input
+          }
+        }
+        consideredInput = true
+      } else {
+        let iKeys = Object.keys(input)
+        let confidences = {}
+        let literals = {}
+        iKeys.forEach(key => {
+          confidences[key] = "1.0"
+          literals[key] = input[key]
+        })
+        payload = {
+          user_input: {
+            interpretation: {
+              confidence: "1.0",
+              data: input,
+              slot_literals: literals,
+              slot_confidences: confidences,
+              input_mode: 'dtmf'
+            },
+          }
+        }
+        consideredInput = true
       }
     }
     let rawResponses = this.state.rawResponses || []
@@ -444,6 +539,12 @@ export default class DLGaaS extends BaseClass {
     this.setState({
       rawResponses: rawResponses
     })
+    if(this.ttsClz){
+      this.ttsClz.resetAudio()
+    }
+    if(consideredInput && this.recoTimeout !== -1){
+      clearTimeout(this.recoTimeout)
+    }
     let r = await this.sessionExecute(payload)
     rawResponses.unshift(r)
     this.setState({
@@ -471,23 +572,108 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
+  collectNlgMessages(res){
+    let msgs = []
+    res.messages.forEach(msgSegments => {
+      msgSegments.nlg.forEach(msgSeg => {
+        msgs.push(msgSeg)
+      })
+    })
+    ACTION_TYPES.forEach(action => {
+      if(res[action] && res[action].message){
+        res[action].message.nlg.forEach(msgSeg => {
+          msgs.push(msgSeg)
+        })
+      }
+    })
+    return msgs
+  }
+
+  async playTtsMessage(playStr){
+    this.ttsClz.state.accessToken = this.state.accessToken
+    this.ttsClz.state.voice = this.state.ttsVoice
+    this.ttsClz.state.textInput = playStr
+    let req = await this.ttsClz.executeTextInput({
+      'x-nuance-dialog-session-id': this.state.sessionId
+    })
+    this.state.rawResponses.unshift({'tts-request': req.payload})
+    this.state.rawResponses.unshift({'tts-response': req.res})
+    this.setState({
+      rawResponses: this.state.rawResponses
+    })
+  }
+
+  bindCollectionTimeouts(timeouts){
+    if(!timeouts){
+      return
+    }
+    if(!this.state.isSessionActive){
+      return
+    }
+    if(!SIMULATED_EXPERIENCES(this.state.simulateExperience).bindTimeouts){
+      return
+    }
+    let mainTimeout = timeouts.timeout
+    let completeTimeout = timeouts.completeTimeout
+    let incompleteTimeout = timeouts.incompleteTimeout
+    let maxSpeechInput = timeouts.maxSpeechTimeout
+    if(this.recoTimeout !== -1){
+      clearTimeout(this.recoTimeout)
+    }
+    this.recoTimeout = setTimeout(() => {
+      Promise.resolve().then(() => {
+        this.execute(null, false, {
+            type: 'NO_INPUT',
+            message: `Standard reco timeout kicked in after ${mainTimeout}.`,
+        })
+      })
+    }, parseInt(mainTimeout.substring(0, mainTimeout.length-2))) // chop the `ms`
+  }
+
   parseResponse(res){
     try{
-      let action
+      let dataAction
+      let collectionSettings
+      const qaAction = res.response.payload.qaAction
       const daAction = res.response.payload.daAction
       const escalationAction = res.response.payload.escalationAction
       const endAction = res.response.payload.endAction
       if(daAction){
-        action = daAction
+        dataAction = daAction
       } else if (escalationAction){
-        action = escalationAction
+        dataAction = escalationAction
       } else if (endAction){
         console.log(endAction)
-        this.stop()
+        this.stop(true)
+      } else if (qaAction){
+        collectionSettings = qaAction.recognitionSettings.collectionSettings
       }
-      if(action){
+
+      let exp = SIMULATED_EXPERIENCES(this.state.simulateExperience)
+      if(exp.playTTS){
+        let nlgMessages = this.collectNlgMessages(res.response.payload)
+        let promiseChain = Promise.resolve()
+        nlgMessages.forEach(msg => {
+          promiseChain = promiseChain.then(() => {
+            return this.playTtsMessage(msg.text)
+          })
+        })
+        promiseChain = promiseChain.then(() => {
+          this.ttsClz.whenAudioEnds(() => {
+            if(exp.bindTimeouts){
+              this.bindCollectionTimeouts(collectionSettings)
+            }
+          })
+        })
+      } else {
+        if(collectionSettings){
+          this.bindCollectionTimeouts(collectionSettings)
+        }
+      }
+
+      if(dataAction){
         setTimeout(() => {
-          this.processDataAction(action)
+          this.processDataAction(dataAction)
         }, 0)
       }
     } catch (ex) {
@@ -495,9 +681,17 @@ export default class DLGaaS extends BaseClass {
     }
   }
 
-  async stop() {
+  async stop(ended) {
     // Stop the session
-    await this.sessionStop()
+    if(this.recoTimeout !== -1){
+      clearTimeout(this.recoTimeout)
+    }
+    if(!ended && this.ttsClz){
+      this.ttsClz.resetAudio()
+    }
+    if(!ended){
+      await this.sessionStop()
+    }
     this.setState({
       isSessionActive: false,
       autoScrollChatPanel: false
@@ -516,6 +710,9 @@ export default class DLGaaS extends BaseClass {
     if(this.state.logConsumerName){
       await this.destroyConsumer()
     }
+    if(this.ttsClz){
+      this.ttsClz.resetAudio()
+    }
     this.stopCapturingLogs()
     return false
   }
@@ -530,14 +727,20 @@ export default class DLGaaS extends BaseClass {
     }
   }
 
-  onEditStartData(type, item){
+  onEditData(dataType, type, item){
     switch(type){
       case 'edit':
       case 'add':
       case 'delete':
-        this.setState({
-          startData: item.updated_src
-        }, this.saveStartDataToLocalStorage)
+        if(dataType === 'start'){
+          this.setState({
+            startData: item.updated_src
+          }, this.saveStartDataToLocalStorage)
+        } else if (dataType === 'client'){
+          this.setState({
+            clientData: item.updated_src
+          }, this.saveClientDataToLocalStorage)
+        }
         break
       default:
         break
@@ -546,6 +749,10 @@ export default class DLGaaS extends BaseClass {
 
   saveStartDataToLocalStorage(){
     window.localStorage.setItem('startData', JSON.stringify(this.state.startData))
+  }
+
+  saveClientDataToLocalStorage(){
+    window.localStorage.setItem('clientData', JSON.stringify(this.state.clientData))
   }
 
   getApiEvents(){
@@ -586,7 +793,7 @@ export default class DLGaaS extends BaseClass {
                 clientId={this.state.clientId}
                 clientSecret={this.state.clientSecret}
                 onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="dlg log" />
+                serviceScope="dlg tts log" />
           </Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
           <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
@@ -622,34 +829,98 @@ export default class DLGaaS extends BaseClass {
     })
   }
 
+  getScope(){
+    return 'dlg tts log'
+  }
+
+  getVoiceOptionsHTML(){
+    let ret = []
+    if(this.state.ttsVoices){
+      this.state.ttsVoices.forEach(voice => {
+        if(voice.language.startsWith(this.state.language.substring(0,2)) 
+            && voice.sampleRateHz === 22050
+            && !voice.restricted){
+          ret.push(<option key={'opt-'+voice.name+'-'+voice.model} value={voice.name} data-model={voice.model}>{voice.name} ({voice.language})</option>)
+        }
+      })
+    }
+    return ret
+  }
+
   onToggleMinMax(minimized){
     
   }
 
+  onLaunchedStandalone(url){
+    if(this.state.recoTimeout !== -1){
+      clearTimeout(this.state.recoTimeout)
+    }
+    this.setState({
+      isSessionActive: false
+    })
+  }
+
   getConfigureSessionHtml(){
+    let sessionIdExists = Boolean(this.state.sessionId ? this.state.sessionId.length : false)
     return (
       <div className="">
         <div className="col-12">
           <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
-          {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mt-1 mb-2"><strong>:(</strong>{`   `}{this.state.error}</div>) : '' }
+          {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
+
+            <div className={(this.isStandalone() ? `col-12` : `col-10 offset-md-1`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
+              <div className="form-floating">
+                <Form.Control 
+                  name="simulateExperience"
+                  as="select" 
+                  className="form-select"
+                  value={this.state.simulateExperience} 
+                  onChange={this.onChangeSelectInput.bind(this)}>
+                  <optgroup label="Visual VA">
+                    <option value={'visualVA'}>Visual VA: Text Input with HTML Output</option>
+                    <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; TTS Output</option>
+                  </optgroup>
+                  <optgroup label="IVR">
+                    <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
+                    <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with TTS Output (no ASR)</option>
+                  </optgroup>
+                </Form.Control>
+                <Form.Label>Simulate Experience</Form.Label>
+              </div>
+            </div>
+
             <div className={(this.isStandalone() ? `col-12` : `col-4 offset-md-1`) + ` bg-light rounded-3 px-4 py-4`}>
+
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
                 <h4 className="w-100">Configuration</h4>
                 <p>
                   See <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">Languages and Voices</a>
                 </p>
+                {SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS ? (
+                  <div className="form-floating">
+                    <Form.Control 
+                      name="ttsVoice"
+                      as="select" 
+                      className="form-select"
+                      value={this.state.ttsVoice.name} 
+                      onChange={this.onChangeSelectInput.bind(this)}>
+                      {this.getVoiceOptionsHTML()}
+                    </Form.Control>
+                    <Form.Label>TTS Voice</Form.Label>
+                  </div>
+                  ) : ''}
                 <div className="form-floating">
                   <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="modelUrn" className="form-label">Model URN</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="language" className="form-label">Language</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={this.state.sessionId.length} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="channel" className="form-label">Channel</label>
                 </div>
                 <div className="form-floating">
@@ -663,16 +934,34 @@ export default class DLGaaS extends BaseClass {
                 </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
-                    {this.state.sessionId.length ? 'Resume Session' : 'Start New Session'}
+                    {sessionIdExists ? 'Resume Session' : 'Start New Session'}
                   </button>
                 </div>
               </form>
             </div>
             <div className={(this.isStandalone() ? `col-12` : `col-6`) + ` bg-light rounded-3 px-4 py-4`}>
+                <div className="form-floating mb-4 mt-3">
+                  <h5 className="mb-z">
+                    Client Data
+                  </h5>
+                  <ReactJson
+                    key={'json-clientData'}
+                    src={this.state.clientData}
+                    displayDataTypes={true}
+                    displayObjectSize={true}
+                    collapsed={false}
+                    name={`clientData`}
+                    theme={`grayscale:inverted`}
+                    sortKeys={true}
+                    onEdit={(edit) => { this.onEditData('client', 'edit', edit); }}
+                    onAdd={(add) => { this.onEditData('client', 'add', add); }}
+                    onDelete={(del) => { this.onEditData('client', 'delete', del); }}>
+                  </ReactJson>
+                </div>
                 <div className="form-floating">
-                  <h4 className="mb-2">
+                  <h5 className="mb-2">
                     Start Data
-                  </h4>
+                  </h5>
                   { navigator.geolocation ? (
                       <div className="d-flex w-100 pb-3">
                         <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
@@ -689,11 +978,10 @@ export default class DLGaaS extends BaseClass {
                     name={`startData`}
                     theme={`grayscale:inverted`}
                     sortKeys={true}
-                    onEdit={(edit) => { this.onEditStartData('edit', edit); }}
-                    onAdd={(add) => { this.onEditStartData('add', add); }}
-                    onDelete={(del) => { this.onEditStartData('delete', del); }}>
+                    onEdit={(edit) => { this.onEditData('start', 'edit', edit); }}
+                    onAdd={(add) => { this.onEditData('start', 'add', add); }}
+                    onDelete={(del) => { this.onEditData('start', 'delete', del); }}>
                   </ReactJson>
-                  
                 </div>
             </div>
           </div>
@@ -702,9 +990,18 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
+  getChatResponses(){
+    return this.state.rawResponses.filter(res => {
+      let keys = Object.keys(res)
+      return keys.indexOf('tts-request') === -1 &&
+             keys.indexOf('tts-response') === -1
+    })
+  }
+
   getBotSessionHtml(){
     const logEvents = this.getLogEvents()
     const apiEvents = this.getApiEvents()
+    const chatResponses = this.getChatResponses()
     return (
       <div className="col">
         <div className="row">
@@ -715,15 +1012,17 @@ export default class DLGaaS extends BaseClass {
             <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
             {` `}
           </div>
-          <div className="col-4 text-right">
+          <div className="col-4 text-end">
             { this.state.isSessionActive && this.state.sessionId.length > 0 ? (
                 <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stop(); evt.preventDefault(); }}>Stop Session</button>
               ) : (
                 <button className="btn btn-warning float-end mt-3" onClick={(evt) => {this.restart(); evt.preventDefault(); }}>New Session</button>
               )
             }
+            {` `}
             { this.state.logConsumerName ? (
-                <Button className="btn btn-secondary text-white mt-3"
+                <Button className="text-dark mt-3"
+                  variant={`light`}
                   onClick={(evt) => {this.doFetchRecords(0); evt.preventDefault(); }}
                   disabled={this.state.fetchRecordsTimeout !== -1}>
                   Fetch Log Events{` `}
@@ -737,6 +1036,7 @@ export default class DLGaaS extends BaseClass {
         <div className="row mt-4">
           <div className="col-12">
             <DlgTabs
+              simulateExperience={this.state.simulateExperience}
               logEvents={logEvents}
               apiEvents={apiEvents}
               rawResponses={this.state.rawResponses}
@@ -744,8 +1044,10 @@ export default class DLGaaS extends BaseClass {
           </div>
           <div className={`col-3 float-end`}>
             <ChatPanel
+              simulateExperience={this.state.simulateExperience}
+              onLaunchedStandalone={this.onLaunchedStandalone.bind(this)}
               onExecute={this.execute.bind(this)}
-              rawResponses={this.state.rawResponses}
+              rawResponses={chatResponses}
               autoScrollChatPanel={this.state.autoScrollChatPanel}
               width={365}
               height={window.innerHeight-250}
