@@ -1,5 +1,13 @@
 body {
   background: #E4E5E7;
+  height: 100%;
+}
+main .tab-content {
+  height: 100%;
+}
+.container-fluid > div,
+.tab-pane {
+  height: 100%;
 }
 .nav-tabs .nav-item .nav-link, 
 .nav-pills .nav-link {

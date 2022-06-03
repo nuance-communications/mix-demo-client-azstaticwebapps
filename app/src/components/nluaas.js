@@ -94,8 +94,8 @@ function NluTabs({apiEvents, interpretations, rawResponses, inlineWordset, onUpd
       activeKey={key}
       transition={false} 
       id="noanim-tab-example">
-      <Tab eventKey="inline_wordset_payload" title={(<div>Inline Wordsets</div>)}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-75 vh-75 min-vh-75 overflow-auto" eventKey="inline_wordset_payload" title={(<div>Inline Wordsets</div>)}>
+        <TabContent className="bg-light px-2 py-2 h-75 vh-75 min-vh-75">
           { key === 'inline_wordset_payload' ? (<div className=""><p><small>
             <span role="img" aria-label="notice" aria-labelledby="warning">⚠️</span> Wordsets are automatically saved in local storage for convenience. Please ensure valid JSON.
             </small></p><ReactJson 
@@ -117,13 +117,13 @@ function NluTabs({apiEvents, interpretations, rawResponses, inlineWordset, onUpd
             /></div>) : '' }
         </TabContent>
       </Tab>
-      <Tab eventKey="rendered_payload" title={(<div>Interpretations</div>)}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-75 vh-75 min-vh-75 overflow-auto" eventKey="rendered_payload" title={(<div>Interpretations</div>)}>
+        <TabContent className="bg-light px-2 py-2 h-75 vh-75 min-vh-75">
           { key === 'rendered_payload' ? interpretations : ''}
         </TabContent>
       </Tab>
-      <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-75 vh-75 min-vh-75 overflow-auto" eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
+        <TabContent className="bg-light px-2 py-2 h-75 vh-75 min-vh-75 overflow-auto">
           { key === 'raw_payloads' ? (
             <ReactJson 
               className="mb-2"
@@ -289,26 +289,17 @@ export default class NLUaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div>
-        <Tabs fill defaultActiveKey="nluaas" transition={false} 
-          id="noanim-tab-example" 
-          variant="pills"
-          className="justify-content-center"
-          onSelect={this.handleTabSelection.bind(this)}>
-          <Tab eventKey="profile" title={`Profile`}></Tab>
-          <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
-          <Tab eventKey="nluaas" title="NLUaaS">
-            <AuthForm tokenError={this.state.tokenError}
-                initToken={this.initToken.bind(this)}
-                clientId={this.state.clientId}
-                clientSecret={this.state.clientSecret}
-                onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="nlu log" />
-          </Tab>
-          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
-        </Tabs>
-      </div>
+      <AuthForm tokenError={this.state.tokenError}
+          initToken={this.initToken.bind(this)}
+          clientId={this.state.clientId}
+          clientSecret={this.state.clientSecret}
+          onChangeTextInput={this.onChangeTextInput.bind(this)}
+          serviceScope="nlu" />
     );
+  }
+
+  getScope(){
+    return 'nlu'
   }
 
   // NLUaaS Parsing
@@ -472,7 +463,7 @@ export default class NLUaaS extends BaseClass {
     const apiEvents = this.getApiEvents()
     const interpretations = this.getInterpretations()
     return (
-      <div className="col">
+      <div className="col px-4 h-100">
         <div className="row">
           <div className="col-12 mb-3">
             {/*<span className="badge bg-light text-dark mb-3 float-end">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
@@ -519,8 +510,8 @@ export default class NLUaaS extends BaseClass {
               ) : ('')}
           </div>
         </div>
-        <div className="row mt-1">
-          <div className="col-12 mt-3">
+        <div className="row h-100 mt-1">
+          <div className="col-12 mt-3 h-100">
             <NluTabs 
               inlineWordset={this.state.inlineWordset}
               onUpdateInlineWordset={this.onUpdateInlineWordset.bind(this)}
@@ -535,12 +526,24 @@ export default class NLUaaS extends BaseClass {
 
   render(){
     return (
-      <div className="row">
-        { 
-          this.state.accessToken ? 
-          this.getInterpretHtml() : 
-          this.getAuthHtml() 
-        }
+      <div className="row h-100">
+        <Tabs fill defaultActiveKey="nluaas" transition={false} 
+          id="noanim-tab-example" 
+          variant="pills"
+          className="justify-content-center"
+          onSelect={this.handleTabSelection.bind(this)}>
+          <Tab eventKey="profile" title={`Profile`}></Tab>
+          <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
+          <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
+          <Tab eventKey="nluaas" title="NLUaaS" className="h-100">
+            { 
+              this.state.accessToken ? 
+              this.getInterpretHtml() : 
+              this.getAuthHtml() 
+            }
+          </Tab>
+          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+        </Tabs>
       </div>
     )
   }

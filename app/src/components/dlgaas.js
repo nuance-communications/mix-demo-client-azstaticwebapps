@@ -126,7 +126,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
       transition={false}
       id="noanim-tab-example">
       <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_payloads' ? (
             <ReactJson
               className="mb-2"
@@ -154,18 +154,18 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
           ) : ('')}
         </TabContent>
       </Tab>
-      <Tab eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-100" eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
+        <TabContent className="bg-light px-2 py-2 h-100">
           { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents} simulateExperience={simulateExperience}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="viz_log_events" title={(<div>Log Events Viz</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-100">
           {logEvents.length && key === 'viz_log_events' ? (<LogEventsViz events={logEvents}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="raw_log_events" title={(<div>Log Events JSON <small className="badge bg-light text-secondary">{logEvents.length}</small></div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_log_events' ? (
             <ReactJson
               className="mb-2"
@@ -186,7 +186,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab eventKey="raw_api_events" title={(<div>API Events JSON <small className="badge bg-light text-secondary">{apiEvents.length}</small></div>)} className="bg-light" disabled={apiEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_api_events' ? (
             <ReactJson
               className="mb-2"
@@ -794,25 +794,12 @@ export default class DLGaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div>
-        <Tabs fill variant="pills"
-          defaultActiveKey="dlgaas" transition={false}
-          id="noanim-tab-example"
-          className="justify-content-center"
-          onSelect={this.handleTabSelection.bind(this)}>
-          <Tab eventKey="profile" title={`Profile`}></Tab>
-          <Tab eventKey="dlgaas" title={`DLGaaS`}>
-            <AuthForm tokenError={this.state.tokenError}
-                initToken={this.initToken.bind(this)}
-                clientId={this.state.clientId}
-                clientSecret={this.state.clientSecret}
-                onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="dlg tts log" />
-          </Tab>
-          <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
-          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
-        </Tabs>
-      </div>
+      <AuthForm tokenError={this.state.tokenError}
+          initToken={this.initToken.bind(this)}
+          clientId={this.state.clientId}
+          clientSecret={this.state.clientSecret}
+          onChangeTextInput={this.onChangeTextInput.bind(this)}
+          serviceScope="dlg tts log" />
     )
   }
 
@@ -877,8 +864,8 @@ export default class DLGaaS extends BaseClass {
   getConfigureSessionHtml(){
     let sessionIdExists = Boolean(this.state.sessionId ? this.state.sessionId.length : false)
     return (
-      <div className="">
-        <div className="col-12">
+      <div className="h-100">
+        <div className="col-12 h-100 overflow-auto">
           <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
@@ -953,9 +940,9 @@ export default class DLGaaS extends BaseClass {
                 </div>
               </form>
             </div>
-            <div className={(this.isStandalone() ? `col-12` : `col-6`) + ` bg-light rounded-3 px-4 py-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-5`) + ` bg-light rounded-3 px-4 py-4`}>
                 <div className="form-floating mb-4 mt-3">
-                  <h5 className="mb-z">
+                  <h5 className="pt-5">
                     Client Data
                   </h5>
                   <ReactJson
@@ -1017,14 +1004,16 @@ export default class DLGaaS extends BaseClass {
     const apiEvents = this.getApiEvents()
     const chatResponses = this.getChatResponses()
     return (
-      <div className="col">
+      <div className="col px-5 h-100">
         <div className="row">
           <div className="col-8">
+            <div className="float-end mt-3">
+              <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
+              {` `}
+              <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
+              {` `}
+            </div>
             <h3 className="fw-bold mt-3">Converse and Troubleshoot</h3>
-            <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
-            {` `}
-            <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
-            {` `}
           </div>
           <div className="col-4 text-end">
             { this.state.isSessionActive && this.state.sessionId.length > 0 ? (
@@ -1047,8 +1036,8 @@ export default class DLGaaS extends BaseClass {
               ) : ('')}
           </div>
         </div>
-        <div className="row mt-4">
-          <div className="col-12">
+        <div className="row h-100 mt-1">
+          <div className="col-12 h-100">
             <DlgTabs
               simulateExperience={this.state.simulateExperience}
               logEvents={logEvents}
@@ -1077,15 +1066,30 @@ export default class DLGaaS extends BaseClass {
   }
 
   render(){
+    let body = this.state.accessToken ? (
+        this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
+        this.getBotSessionHtml() :
+        this.getConfigureSessionHtml()) :
+        this.getAuthHtml()
+    let html = (<Tabs fill variant="pills"
+      defaultActiveKey="dlgaas" transition={false}
+      id="noanim-tab-example"
+      className="justify-content-center"
+      onSelect={this.handleTabSelection.bind(this)}>
+      <Tab eventKey="profile" title={`Profile`}></Tab>
+      <Tab eventKey="dlgaas" title={`DLGaaS`} className="h-100">
+        {body}
+      </Tab>
+      <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
+      <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
+      <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+    </Tabs>)
+    if(this.isStandalone()){
+      html = body
+    }
     return (
-      <div className="row">
-        {
-          this.state.accessToken ? (
-          this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
-          this.getBotSessionHtml() :
-          this.getConfigureSessionHtml()) :
-          this.getAuthHtml()
-        }
+      <div className="dlgaas row h-100">
+        {html}
       </div>
     )
   }

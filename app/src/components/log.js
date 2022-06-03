@@ -530,7 +530,7 @@ export class LogEventsTable extends React.Component {
       })
     })
     return (
-      <div className="table-responsive">
+      <div className="table-responsive h-75 overflow-auto">
         <table className="table table-sm table-hover">
           <thead className="">
             <tr>
@@ -616,17 +616,17 @@ export class LogEventsTable extends React.Component {
 
   render(){
     return (
-      <div className="log-viewer">
-        <div className="row">
-          <div className="col-2 text-center border-end border-2">
+      <div className="log-viewer h-100">
+        <div className="row h-100">
+          <div className="col-2 border-end border-2">
+            <button className="float-end btn mb-2 mt-2 btn-outline-primary btn-sm text-decoration-none" onClick={this.toggleAllFilters.bind(this)}>Toggle All/Reset</button>
             <h5 className="mt-2"><strong>Filter</strong></h5>
-            <button className="btn mb-2 btn-link btn-sm text-primary text-decoration-none" onClick={this.toggleAllFilters.bind(this)}>Toggle All/Reset</button>
             <br/>
             <div className="text-end">
               {this.renderFilters()}
             </div>
           </div>
-          <div className="col-10">
+          <div className="col-10 h-100">
             {this.renderEventsTable(this.props.events)}
           </div>
         </div>

@@ -18,6 +18,7 @@ import Header from "../images/mix-header.png"
 
 // styles
 const pageStyles = {
+  position: "fixed",
   color: "#232129",
   padding: "0px 0px",
   fontFamily: "Roboto, sans-serif, serif",
@@ -32,19 +33,19 @@ const headingAccentStyles = {
 const headingImageStyles = {
   height: 'auto',
   width: '100%',
-  objectFit: 'cover',
+  objectFit: 'contain',
 }
 
 export default class Layout extends React.Component {
   render() {
     return (<Location>
       {({ location, navigate }) => (
-        <main style={pageStyles}>
+        <main className="h-100" style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
           <Link to={`/`+location.search} className="text-decoration-none text-dark">
             <img className="text-center display-4" style={headingImageStyles} src={Header}/>
           </Link>
-          <div className="container">
+          <div className="container-fluid gx-0 h-100">
             {this.props.children}
           </div>
         </main>
