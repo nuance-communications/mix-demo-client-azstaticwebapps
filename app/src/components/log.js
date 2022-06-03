@@ -14,9 +14,13 @@ import { SIMULATED_EXPERIENCES } from "./shared"
 import cytoscape from 'cytoscape'
 import dagre from 'cytoscape-dagre'
 
+import loadable from '@loadable/component'
+
+const ReactJson = loadable(() => import('react-json-view'))
+
 const START_EVENTS = ['session-start']
 const MESSAGE_EVENTS = ['message']
-const INPUT_EVENTS = ['input-received']
+const INPUT_EVENTS = ['input-received', 'input-required', 'input-processed']
 const TRANSFER_EVENTS = ['transfer-initiated']
 const DATA_EVENTS = ['data-required', 'data-received']
 const END_EVENTS = ['application-ended']
@@ -40,6 +44,7 @@ const EVENTS_SORTED_LIST = [
   'component-returned',
   'transfer-initiated',
   'transfer-completed',
+  'reporting-vars',
   'application-ended',
   'error',
 ]
@@ -364,7 +369,7 @@ export class LogEventsTable extends React.Component {
     if(!interpretation){
       return ''
     }
-    return (JSON.stringify(interpretation, null, 2))
+    return (<ReactJson name="interpretation" src={interpretation}/>)
   }
 
   renderNiiEvent(niiEvent){
@@ -388,7 +393,7 @@ export class LogEventsTable extends React.Component {
           <span className="badge bg-dark text-white text-start">project={val.project.name} (id={val.project.id})</span>
           <br/><span className="badge bg-dark text-white text-start">dlg_version={val.version.dlg}  nlu={JSON.stringify(val.version.nlu)}  asr={JSON.stringify(val.version.asr)}</span>
           <br/><span className="badge bg-dark text-white text-start">organization={val.project.namespace}, deployed={moment(val.project.deployed).fromNow()} ({val.project.deployed})</span>
-          {/*<br/><span className="badge bg-dark text-white text-start">tag={val.project.contextTag}, systemID={val.user.systemID}, userChannelID={val.user.userChannelID}, userAuxiliaryID={val.user.userAuxiliaryID}, userGlobalID={val.user.userGlobalID}, location={val.user.location}</span>          */}
+          {/*<br/><span className="badge bg-dark text-white text-start">channel={val.selector.channel} language={val.selector.language}</span>*/}
           </div>)
         break
       case 'selector':
@@ -398,13 +403,22 @@ export class LogEventsTable extends React.Component {
         ret = (<span className="badge bg-light text-dark text-start">label={val.label}, next={val.next}</span>)
         break
       case 'data-required':
-        ret = (<span className="badge bg-light text-dark text-start">id={val.id}, type={val.type}</span>)
+        ret = (<div>
+          <span className="badge bg-light text-dark text-start">id={val.id}, type={val.type === 'internal' ? 'ServerSide' : 'ClientSide'}</span>
+          {val.timeout ? (<br/>) : ''}
+          {val.timeout ? (<span className="badge bg-light text-dark text-start">timeout: connect={val.timeout.connect}, request={val.timeout.request}</span>) : ''}
+          {val.data ? (<br/>) : ''}
+          {val.data ? (<span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} /></span>) : ''}
+          {val.endpoint ? (<br/>) : ''}
+          {val.endpoint ? (<span className="badge bg-light text-dark text-start"><ReactJson name="endpoint" className="overflow-hidden text-break" src={val.endpoint} collapsed={2} /></span>) : ''}
+          </div>)
         break
       case 'data-received':
         ret = (<div>
           <span className="badge bg-light text-dark text-start">id={val.id}, returnCode={val.returnCode}, returnMessage={val.returnMessage}</span>
-          <br/><span className="badge bg-light text-dark text-start">duration={val.duration}</span>
-          <br/><span className="badge bg-light text-dark text-start">data=<pre className="overflow-hidden text-break">{JSON.stringify(val.data, null, 2)}</pre></span>
+          {val.duration ? (<br/>) : ''}
+          {val.duration ? (<span className="badge bg-light text-dark text-start">duration={val.duration}</span>) : ''}
+          <br/><span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} /></span>
           </div>)
         break
       case 'message':
@@ -429,11 +443,11 @@ export class LogEventsTable extends React.Component {
       case 'input-received':
         let interpretationTable = this.getInterpretationHtml(val.interpretation)
         ret = val.userText ? (
-            <div><strong className="badge bg-success text-white text-start">{val.userText}</strong><br/><span className="badge bg-light text-success text-start">interpretation=<pre className="overflow-hidden">{interpretationTable}</pre></span></div>
+            <div><strong className="badge bg-success text-white text-start">{val.userText}</strong><br/><span className="badge bg-light text-dark text-start"><pre className="overflow-hidden">{interpretationTable}</pre></span></div>
           ) : val.selectedItem ? (
             <div><strong className="badge bg-success text-white text-start">{val.selectedItem.value}</strong><br/><span className="badge bg-light text-dark text-start"><strong>selected item</strong> id={val.selectedItem.id}, value={val.selectedItem.value}</span></div>
           ) : val.interpretation ? (
-            <div><strong className="badge bg-success text-white text-start">{val.interpretation.utterance}</strong><br/><span className="badge bg-light text-success text-start">interpretation=<pre className="overflow-hidden">{interpretationTable}</pre></span></div>
+            <div><strong className="badge bg-success text-white text-start">{val.interpretation.utterance ? val.interpretation.utterance : JSON.stringify(val.interpretation.data)} <small>(via {val.interpretation.inputmode})</small></strong><br/><span className="badge bg-light text-dark text-start"><pre className="overflow-hidden">{interpretationTable}</pre></span></div>
           ) : ('')
         break
       case 'input-processed':
@@ -488,6 +502,9 @@ export class LogEventsTable extends React.Component {
       case 'transfer-completed':
         ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>returnCode={val.returnCode}</strong><br/>returnMessage={val.returnMessage}<br/><pre className="">data={JSON.stringify(val.data, null, 2)}</pre></span>)
         break
+      case 'reporting-vars':
+        ret = (<span className="badge bg-light text-dark text-start"><ReactJson src={val} collapsed={3} /></span>)
+        break 
       default:
         ret = (<span className="badge bg-light text-dark text-start">{JSON.stringify(val)}</span>)
         break 
