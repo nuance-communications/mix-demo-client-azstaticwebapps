@@ -85,6 +85,168 @@ export const LANG_EMOJIS = {
     "cmn-tw": "🇹🇼",
     "zh-tw": "🇹🇼"
 };
+export const LANGUAGES = [
+ {
+  "code": "ara-XWW", 
+  "name": "Arabic (Worldwide)"
+ }, 
+ {
+  "code": "cat-ESP", 
+  "name": "Catalan (Spain)"
+ }, 
+ {
+  "code": "hrv-HRV", 
+  "name": "Croatian (Croatia)"
+ }, 
+ {
+  "code": "ces-CZE", 
+  "name": "Czech (Czech Republic)"
+ }, 
+ {
+  "code": "dan-DNK", 
+  "name": "Danish (Denmark)"
+ }, 
+ {
+  "code": "nld-NLD", 
+  "name": "Dutch (Netherlands)"
+ }, 
+ {
+  "code": "eng-AUS", 
+  "name": "English (Australia)"
+ }, 
+ {
+  "code": "eng-USA", 
+  "name": "English (United States)"
+ }, 
+ {
+  "code": "eng-IND", 
+  "name": "English (India)"
+ }, 
+ {
+  "code": "eng-GBR", 
+  "name": "English (United Kingdom)"
+ }, 
+ {
+  "code": "fin-FIN", 
+  "name": "Finnish (Finland)"
+ }, 
+ {
+  "code": "fra-CAN", 
+  "name": "French (Canada)"
+ }, 
+ {
+  "code": "fra-FRA", 
+  "name": "French (France)"
+ }, 
+ {
+  "code": "deu-DEU", 
+  "name": "German (Germany)"
+ }, 
+ {
+  "code": "ell-GRC", 
+  "name": "Greek (Greece)"
+ }, 
+ {
+  "code": "heb-ISR", 
+  "name": "Hebrew (Israel)"
+ }, 
+ {
+  "code": "hin-IND", 
+  "name": "Hindi (India)"
+ }, 
+ {
+  "code": "hun-HUN", 
+  "name": "Hungarian (Hungary)"
+ }, 
+ {
+  "code": "ind-IDN", 
+  "name": "Indonesian (Indonesia)"
+ }, 
+ {
+  "code": "ita-ITA", 
+  "name": "Italian (Italy)"
+ }, 
+ {
+  "code": "jpn-JPN", 
+  "name": "Japanese (Japan)"
+ }, 
+ {
+  "code": "kor-KOR", 
+  "name": "Korean (South Korea)"
+ }, 
+ {
+  "code": "zlm-MYS", 
+  "name": "Malay (Malaysia)"
+ }, 
+ {
+  "code": "nor-NOR", 
+  "name": "Norwegian (Norway)"
+ }, 
+ {
+  "code": "pol-POL", 
+  "name": "Polish (Poland)"
+ }, 
+ {
+  "code": "por-BRA", 
+  "name": "Portuguese (Brazil)"
+ }, 
+ {
+  "code": "por-PRT", 
+  "name": "Portuguese (Portugal)"
+ }, 
+ {
+  "code": "ron-ROU", 
+  "name": "Romanian (Romania)"
+ }, 
+ {
+  "code": "rus-RUS", 
+  "name": "Russian (Russia)"
+ }, 
+ {
+  "code": "cmn-CHN", 
+  "name": "Mandarin (China)"
+ }, 
+ {
+  "code": "slk-SVK", 
+  "name": "Slovak (Slovakia)"
+ }, 
+ {
+  "code": "spa-ESP", 
+  "name": "Spanish (Spain)"
+ }, 
+ {
+  "code": "spa-XLA", 
+  "name": "Spanish (Latin America)"
+ }, 
+ {
+  "code": "swe-SWE", 
+  "name": "Swedish (Sweden)"
+ }, 
+ {
+  "code": "tha-THA", 
+  "name": "Thai (Thailand)\u00a0BETA"
+ }, 
+ {
+  "code": "yue-CHS", 
+  "name": "Cantonese (Hong Kong)"
+ }, 
+ {
+  "code": "cmn-TWN", 
+  "name": "Mandarin (Taiwan)"
+ }, 
+ {
+  "code": "tur-TUR", 
+  "name": "Turkish (Turkey)"
+ }, 
+ {
+  "code": "ukr-UKR", 
+  "name": "Ukrainian (Ukraine)"
+ }, 
+ {
+  "code": "vie-VNM", 
+  "name": "Vietnamese (Vietnam)"
+ }
+]
 
 const EXPERIENCE_TYPES = {
   ivrTextWithTts: {
@@ -238,7 +400,7 @@ export class BaseClass extends React.Component {
   // OAuth Token
 
   getScope(){
-    return 'nlu tts dlg log'
+    return 'asr nlu tts dlg log'
   }
 
   async getToken(scope) {
@@ -402,6 +564,44 @@ export class BaseClass extends React.Component {
     this.setState(toUpdate)
   }
 
+  // Inline Wordsets - ASR and NLU
+
+  initInlineWordsets(){
+    const inlineWordsetsLocalStorage = window.localStorage.getItem('inlineWordset')
+    if(inlineWordsetsLocalStorage){
+      try{
+        this.setState({
+          inlineWordset: JSON.parse(inlineWordsetsLocalStorage)
+        })
+      } catch (ex) {
+        console.error(ex)
+      }
+    }
+  }
+
+  saveInlineWordsetsToLocalStorage(){
+    window.localStorage.setItem('inlineWordset', JSON.stringify(this.state.inlineWordset))
+  }
+
+  onUpdateInlineWordset(inlineWordset){
+    this.setState({ inlineWordset })
+    this.saveInlineWordsetsToLocalStorage()
+  }
+
+  onStubInlineWordset(){
+    let inlineWordset = this.state.inlineWordset
+    inlineWordset['STUB'] = [{
+      "literal": "La Jolla",
+      "spoken": ["la hoya", "la jolla"],
+      "canonical": "LA JOLLA"
+    }]
+    this.setState({ inlineWordset })
+  }
+
+  warmupExperienceSimulation(){
+    // expects override - on `simulateExperience` change mediator
+  }
+
   onChangeSelectInput(evt) {
     const tgt = evt.target
     switch(tgt.name){
@@ -420,6 +620,49 @@ export class BaseClass extends React.Component {
         })
         this.saveToSessionStorage({
           ttsVoice: JSON.stringify(newVoice)
+        })
+        break
+    }
+  }
+
+  onChangeLanguage(evt){
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'language':
+        let toUpdate = {
+          language: tgt.value
+        }
+        let asrModelUrn = this.state.asrModelUrn
+        if(asrModelUrn){
+          asrModelUrn = asrModelUrn.replace(this.state.language, toUpdate.language)
+          toUpdate.asrModelUrn = asrModelUrn
+        }
+        this.setState(toUpdate)
+        break
+    }
+  }
+
+  onChangeCheckboxInput(evt){
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'autoPunctuate':
+        this.setState({
+          autoPunctuate: tgt.checked
+        })
+        break
+      case 'filterProfanity':
+        this.setState({
+          filterProfanity: tgt.checked
+        })
+        break
+      case 'suppressInitialCapitalization':
+        this.setState({
+          suppressInitialCapitalization: tgt.checked
+        })
+        break
+      case 'useDLM':
+        this.setState({
+          useDLM: tgt.checked
         })
         break
     }
@@ -463,9 +706,20 @@ export class BaseClass extends React.Component {
           contextTag: this.parseContextTag(tgt.value)
         })
         break
+      case 'asrModelUrn':
+        this.setState({
+          asrModelUrn: tgt.value,
+          contextTag: this.parseContextTag(tgt.value)
+        })
+        break
       case 'language':
         this.setState({
           language: tgt.value
+        })
+        break
+      case 'topic':
+        this.setState({
+          topic: tgt.value
         })
         break
       case 'sessionTimeout':
@@ -517,17 +771,18 @@ export class BaseClass extends React.Component {
   }
 
   handleTabSelection(key){
-    if(key === 'nluaas'){
-      navigate(`/app/nlu/${window.location.search}`)
-    } else if (key === 'profile'){
+    if (key === 'profile'){
       navigate(`/app/${window.location.search}`)
     } else if (key === 'dlgaas'){
       navigate(`/app/dlg/${window.location.search}`)
+    } else if(key === 'nluaas'){
+      navigate(`/app/nlu/${window.location.search}`)
     } else if (key === 'ttsaas'){
       navigate(`/app/tts/${window.location.search}`)
+    } else if (key === 'asraas'){
+      navigate(`/app/asr/${window.location.search}`)
     }
   }
-
 }
 
 export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope, standalone}) => {

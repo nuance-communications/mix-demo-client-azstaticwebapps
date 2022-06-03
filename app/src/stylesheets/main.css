@@ -173,3 +173,43 @@ pre {
   font-family: Roboto, sans-serif, serif;
   font-size: 0.85em;
 }
+
+.asrWord {
+  position:relative;
+  min-width: 30px;
+  padding-right: 15px;
+  padding-top: 2px;
+  padding-bottom: 0px;
+  line-height: 1.6em;
+  color: #222;
+  display: inline-block;
+}
+.asrWord::after {
+  content: attr(data-confidence) "";
+  position: absolute;
+  font-size: .6rem;
+  color: #222;
+  top: -10px;
+  left: 0px;
+}
+.asrWord.highConf::after {
+  color: #28a745;
+}
+.asrWord.medConf::after {
+  color: #ffc107;
+}
+.asrWord.lowConf::after {
+  color: #dc3545;
+}
+.react-json-view {
+  background: transparent !important;
+  text-color: #222;
+}
+.asr .bg-primary {
+  background-color: #EFEFEF !important;
+}
+.asr .table,
+.asr .bg-primary {
+  color: #333;
+}
+
