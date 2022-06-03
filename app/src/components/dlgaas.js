@@ -257,7 +257,7 @@ export default class DLGaaS extends BaseClass {
     this.clientHandlers = new ClientFetchHandlers()
     this.externalHandlers = new ExternalFetchHandlers()
 
-    this.ttsClz = new TTSaaS(this)
+    this.ttsClz = null
 
   }
 
@@ -315,6 +315,7 @@ export default class DLGaaS extends BaseClass {
       if(this.state.logConsumerName){
         this.destroyConsumer()
       }
+      this.stopCapturingLogs()
       if(this.ttsClz){
         this.ttsClz.onUnmount()
       }
@@ -332,17 +333,31 @@ export default class DLGaaS extends BaseClass {
   onTokenAcquired() {
     // noop
     if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
-      this.ttsClz = new TTSaaS(this)
-      this.ttsClz.componentDidMount()
-      this.ttsClz.state.ssmlInput = true
-      this.ttsClz.playQueue = []
-      this.ttsClz.state.accessToken = this.state.accessToken
-      this.ttsClz.getVoices().then(res => {
-        this.setState({
-          ttsVoices: res.response.payload.voices
-        })
-      })
+      this.initTts()
     }
+  }
+
+  warmupExperienceSimulation(){
+    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
+      this.initTts()
+    }
+  }
+
+  initTts(){
+    if(this.ttsClz){
+      console.log("TTS already initialized.")
+      return
+    }
+    this.ttsClz = new TTSaaS(this)
+    this.ttsClz.componentDidMount()
+    this.ttsClz.state.ssmlInput = true
+    this.ttsClz.playQueue = []
+    this.ttsClz.state.accessToken = this.state.accessToken
+    this.ttsClz.getVoices().then(res => {
+      this.setState({
+        ttsVoices: res.response.payload.voices
+      })
+    })
   }
 
   // DLGaaS API
@@ -640,11 +655,11 @@ export default class DLGaaS extends BaseClass {
       let dataAction
       let collectionSettings
       let latencySettings
-      const qaAction = res.response.payload.qaAction
-      const daAction = res.response.payload.daAction
-      const escalationAction = res.response.payload.escalationAction
-      const endAction = res.response.payload.endAction
-      const continueAction = res.response.payload.continueAction
+      const qaAction = res.response.payload?.qaAction
+      const daAction = res.response.payload?.daAction
+      const escalationAction = res.response.payload?.escalationAction
+      const endAction = res.response.payload?.endAction
+      const continueAction = res.response.payload?.continueAction
       if(daAction){
         dataAction = daAction
       } else if (escalationAction){
@@ -871,7 +886,7 @@ export default class DLGaaS extends BaseClass {
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
 
-            <div className={(this.isStandalone() ? `col-12` : `col-10 offset-md-1`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-8 offset-md-2`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
               <div className="form-floating">
                 <Form.Control 
                   name="simulateExperience"
@@ -892,7 +907,7 @@ export default class DLGaaS extends BaseClass {
               </div>
             </div>
 
-            <div className={(this.isStandalone() ? `col-12` : `col-4 offset-md-1`) + ` bg-light rounded-3 px-4 py-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-3 offset-md-2`) + ` bg-light rounded-3 px-4 py-4`}>
 
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
                 <h4 className="w-100">Configuration</h4>
@@ -914,7 +929,7 @@ export default class DLGaaS extends BaseClass {
                   ) : ''}
                 <div className="form-floating">
                   <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="modelUrn" className="form-label">Model URN</label>
+                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
                 </div>
                 <div className="form-floating">
                   <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
@@ -931,7 +946,7 @@ export default class DLGaaS extends BaseClass {
                 <br/>
                 <div className="form-floating">
                   <input type="text" className="form-control" name="sessionId" value={this.state.sessionId} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="sessionId" className="form-label">Session ID <span className='text-muted'>(optional)</span></label>
+                  <label htmlFor="sessionId" className="form-label">Existing Session ID <span className='text-muted'>(optional)</span></label>
                 </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
@@ -1028,12 +1043,16 @@ export default class DLGaaS extends BaseClass {
                   variant={`light`}
                   onClick={(evt) => {this.doFetchRecords(0); evt.preventDefault(); }}
                   disabled={this.state.fetchRecordsTimeout !== -1}>
-                  Fetch Log Events{` `}
                   {this.state.fetchRecordsTimeout !== -1 ? (
                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   ) : ''}
+                  {` `}
+                  Fetch Log Events
                 </Button>
               ) : ('')}
+            { this.state.logConsumerName && !this.state.isSessionActive ? (
+              <button className="btn-sm btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
+            ) : ('')}
           </div>
         </div>
         <div className="row h-100 mt-1">
