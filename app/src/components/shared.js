@@ -14,7 +14,7 @@ export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://lo
 export const VERSION = '1.4.0'
 export const CLIENT_DATA = {
     "version": VERSION,
-    "client": "Nuance Mix Demo Client - Azure StaticWebApps",
+    "client": "Nuance Mix Demo Client",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
 export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^\/].*)\/mix.nlu\?=language=(?<language>.*)/
@@ -341,6 +341,7 @@ export class BaseClass extends React.Component {
         }
       });
     }
+    document.title = `Nuance Mix Demo Client - ${toUpdate['channel']} - ${toUpdate['language']} - ${this.getAppIDFromClientID(toUpdate['clientId'])}`
     return { 
       ...toUpdate, 
       ...this.initStateFromSessionStorage(params) 
@@ -365,7 +366,7 @@ export class BaseClass extends React.Component {
   }
 
   saveToSessionStorage(data){
-    if(typeof window !== 'undefined'){
+    if(typeof window !== `undefined`){
       Object.keys(data).forEach(key => {
         let item = data[key]
         window.sessionStorage.setItem(key, item)
@@ -452,13 +453,17 @@ export class BaseClass extends React.Component {
   // Log API
 
   async createConsumer(){
+    if(this.state.logConsumerName){
+      console.log("Log consumer already exists, while attempting to create.")
+      return null
+    }
     // First, create a consumer for getting the LOG data
     await this.ensureTokenNotExpired()
     const ret = await this.request(`${ROOT_URL}/api/logapi-create-consumer`, {
       clientId: encodeURIComponent(this.state.clientId),
       token: this.state.accessToken,
     })
-    console.log("New consumer created")
+    console.log("New log API consumer created")
     this.setState({
       logConsumerName: ret.response.consumerName,
       logConsumerGroup: ret.response.consumerGroup,
@@ -478,6 +483,10 @@ export class BaseClass extends React.Component {
   }
 
   async destroyConsumer(){
+    if(this.state.logConsumerName){
+      console.log("No log consumer to delete.")
+      return null
+    }
     // Lastly, destroy the Consumer attached
     await this.ensureTokenNotExpired()
     const ret = await this.request(`${ROOT_URL}/api/logapi-destroy-consumer`, {
@@ -485,7 +494,7 @@ export class BaseClass extends React.Component {
       consumerName: this.state.logConsumerName,
       consumerGroup: this.state.logConsumerGroup,
     })
-    console.log("Consumer destroyed")
+    console.log("Consumer destroyed", ret)
     this.setState({
       logConsumerName: null,
       logConsumerGroup: null,
@@ -499,12 +508,15 @@ export class BaseClass extends React.Component {
     }
     // purposefully scheduled on interval; 
     // fetch records will noop if request is inflight
+    console.log("New log API request queued")
     this.logTimer = window.setInterval(() => {
       Promise.resolve().then(() => {
+        console.log("get log events")
         const logEvents = this.getLogEvents();
         if(logEvents.length > 0){
           const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
           if(lastEvent === 'application-ended'){
+            console.log("Will stop capturing logs.")
             this.stopCapturingLogs()
             return
           }
@@ -516,10 +528,12 @@ export class BaseClass extends React.Component {
 
   doFetchRecords(dur){
     if(this.state.fetchRecordsTimeout !== -1){
+      console.log("Fetch request already in flight, ignoring.")
       return
     } 
     if(this.state.logConsumerName){
       let newTimeout = setTimeout(this.fetchRecords.bind(this), dur)
+      console.log("Fetch records request initiated.")
       this.setState({
         fetchRecordsTimeout: newTimeout
       })
@@ -531,35 +545,40 @@ export class BaseClass extends React.Component {
       return
     }
     const { response, error } = await this.getRecords(this.state.sessionId);
-    console.log('clearing fetch record timeout', this.state.fetchRecordsTimeout);
+    console.log('Clearing fetch record timeout', this.state.fetchRecordsTimeout);
     clearTimeout(this.state.fetchRecordsTimeout)
     const toUpdate = {}
     if(error){
+      console.error("There was an error fetching logs.", error)
       try{
         if(this.state.isSessionActive){
+          console.log("The session is active.")
           if(error.error_code === 40403){
-            console.warn('error getting records, creating new consumer')
+            console.warn('Consumer instance not found. Recreating consumer.')
             await this.createConsumer()
           } else {
-            console.warn('uncaptured error', error)
+            console.warn('*** Uncaptured error.. destroying consumer.', error)
             let r2 = await this.destroyConsumer()
             if(!r2.error){
+              console.log("Create a new consumer after error since session active.")
               console.warn(r2.error)
               // re-establish link
               await this.createConsumer()
             } else {
-              console.log('Ending log timer')
+              console.log('Failed to destroy consumer, stopping log capture.')
               this.stopCapturingLogs()
             }
           }
         } else {
+          console.log("No session active. Destroying consumer.")
           let r3 = await this.destroyConsumer()
           if(r3.error){
+            console.log("Ending")
             this.stopCapturingLogs()
           }
         }
       } catch(ex) {
-        console.error('error fetching records', ex, error, response)
+        console.error('Error fetching records', ex, error, response)
       }
     } else if (response) {
       if(response.payload){
@@ -615,7 +634,7 @@ export class BaseClass extends React.Component {
       case 'simulateExperience':
         this.setState({
           simulateExperience: tgt.value
-        })
+        }, this.warmupExperienceSimulation)
         break
       case 'ttsVoice':
         let newVoice = {
