@@ -632,24 +632,28 @@ export default class ChatPanel extends React.Component {
               if(this.isVisualExperience()){
                 m.visual.forEach((_m, idx3) => {
                   let txt = _m.text
-                  resMessages.push(
-                    <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
-                      <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-                        <ReactSafeHtml html={txt} components={components} />
-                      </div>
-                    </dd>
-                  )
+                  if(txt.length){
+                    resMessages.push(
+                      <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+                          <ReactSafeHtml html={txt} components={components} />
+                        </div>
+                      </dd>
+                    )
+                  }
                 })
               } else if(this.isVoiceExperience()){
                 m.nlg.forEach((_m, idx3) => {
                   let txt = _m.text
-                  resMessages.push(
-                    <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
-                      <div className="rounded rounded-3 bg-light msg text-dark p-2">
-                        {txt}
-                      </div>
-                    </dd>
-                  )
+                  if(txt.length){
+                    resMessages.push(
+                      <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2">
+                          {txt}
+                        </div>
+                      </dd>
+                    )
+                  }
                 })
               }
             })
