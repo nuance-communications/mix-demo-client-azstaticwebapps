@@ -14,9 +14,6 @@ main .tab-content {
   background: #FAFAFA;
   border-radius: 0px !important;
 }
-.nav-link {
-  color: #313335 !important;
-}
 .nav-tabs .nav-item.show .nav-link, 
 .nav-tabs .nav-link.active,
 .nav-pills .nav-link.active,
@@ -29,10 +26,9 @@ main .tab-content {
 
 .btn-primary, .btn-danger, .btn {
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 700;
-  line-height: 16px;
   letter-spacing: 0px;
   text-align: center;
 }
@@ -154,17 +150,17 @@ td .badge.bg-primary.text-white,
 td .badge.text-primary {
   color: #333 !important;
 }
-td .badge.bg-success {
+.dlgaas td .badge.bg-success {
   background-color: rgb(52,182,199) !important;
 }
-td .badge.bg-light.text-success {
+.dlgaas td .badge.bg-light.text-success {
   background-color: rgb(52,182,199) !important;
 }
-td .badge.border-success {
+.dlgaas td .badge.border-success {
   border-color: rgb(52,182,199) !important;
 }
-td .badge.text-success,
-td .badge.text-danger {
+.dlgaas td .badge.text-success,
+.dlgaas td .badge.text-danger {
   color: white !important;
 }
 
