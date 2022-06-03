@@ -9,12 +9,12 @@
 import { EventEmitter } from 'events'
 
 import {
-  ALaw, AudioFormat, Opus, PCM, RecognitionFlags, RecognitionInitMessage,
-  RecognitionParameters, ULaw, OggOpus
+  AudioFormat, PCM, RecognitionFlags, RecognitionInitMessage,
+  RecognitionParameters
 } from './proto/nuance/asr/v1/recognizer_pb'
 import { RecognitionResource, ResourceReference } from './proto/nuance/asr/v1/resource_pb'
 import { 
-  RecognitionRequest, ControlMessage, StartTimersControlMessage 
+  RecognitionRequest
 } from './proto/nuance/asr/v1/recognizer_pb'
 import { RecognizerClient } from './proto/nuance/asr/v1/recognizer_pb_service'
 import { websocketTransport } from './websocket-transport'

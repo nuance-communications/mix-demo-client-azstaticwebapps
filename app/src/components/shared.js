@@ -341,7 +341,17 @@ export class BaseClass extends React.Component {
         }
       });
     }
-    document.title = `Nuance Mix Demo Client - ${toUpdate['channel']} - ${toUpdate['language']} - ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    let title = 'Nuance Mix Demo Client -'
+    if(toUpdate.channel){
+      title += ` ${toUpdate.channel}`
+    }
+    if(toUpdate.language){
+      title += ` ${toUpdate.language}`
+    }
+    if(toUpdate.clientId){
+      title += `  ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    }
+    document.title = title
     return { 
       ...toUpdate, 
       ...this.initStateFromSessionStorage(params) 

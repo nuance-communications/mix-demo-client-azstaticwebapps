@@ -7,26 +7,20 @@
  *
  */
 import React, { useState } from "react"
-import { EventEmitter } from 'events'
 
 import loadable from '@loadable/component'
 
-import Button from "react-bootstrap/Button"
-import Form from "react-bootstrap/Form"
 import Card from "react-bootstrap/Card"
 // import Alert from "react-bootstrap/Alert"
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlay, faMicrophone, faMicrophoneSlash } from '@fortawesome/free-solid-svg-icons'
+import { faMicrophone, faMicrophoneSlash } from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
 
 import { 
   BaseClass, 
   AuthForm, 
-  CLIENT_DATA, 
-  ROOT_URL, 
-  LANG_EMOJIS, 
   LANGUAGES 
 } from "./shared"
 

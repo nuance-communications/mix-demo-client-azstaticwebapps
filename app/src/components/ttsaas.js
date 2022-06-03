@@ -7,12 +7,9 @@
  *
  */
 import React, { useState } from "react"
-import { Link } from "gatsby"
-import { Location } from '@reach/router'
 
 import loadable from '@loadable/component'
 
-import Button from "react-bootstrap/Button"
 import Form from 'react-bootstrap/Form'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -369,7 +366,7 @@ export default class TTSaaS extends BaseClass {
     let lastLang = null
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
-        if(lastLang != v.language){
+        if(lastLang !== v.language){
           voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
           lastLang = v.language
         }
