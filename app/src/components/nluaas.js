@@ -261,28 +261,6 @@ export default class NLUaaS extends BaseClass {
     }
   }
 
-  initInlineWordsets(){
-    const inlineWordsetsLocalStorage = window.localStorage.getItem('inlineWordset');
-    if(inlineWordsetsLocalStorage){
-      try{
-        this.setState({
-          inlineWordset: JSON.parse(inlineWordsetsLocalStorage)
-        })
-      } catch (ex) {
-        console.error(ex);
-      }
-    }
-  }
-
-  saveInlineWordsetsToLocalStorage(){
-    window.localStorage.setItem('inlineWordset', JSON.stringify(this.state.inlineWordset));
-  }
-
-  onUpdateInlineWordset(inlineWordset){
-    this.setState({ inlineWordset })
-    this.saveInlineWordsetsToLocalStorage()
-  }
-
   getApiEvents(){
     return this.state.rawEvents
   }
