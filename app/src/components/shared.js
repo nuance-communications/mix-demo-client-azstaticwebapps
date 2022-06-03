@@ -18,6 +18,7 @@ export const CLIENT_DATA = {
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
 export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^\/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",
@@ -372,6 +373,12 @@ export class BaseClass extends React.Component {
       return true
     }
     return false
+  }
+
+  getAppIDFromClientID(clientID){
+    const clientIDRegex = new RegExp(CLIENT_ID_REGEX)
+    const parsed = clientIDRegex.exec(clientID)
+    return parsed.length > 0 ? parsed[1] : clientID
   }
 
   // Request
