@@ -434,6 +434,8 @@ export class AsrResponse {
           return AsrResponseType.PARTIAL
         case 0:
           return AsrResponseType.FINAL
+        default:
+          break
       }
     }
     return AsrResponseType.UNHANDLED

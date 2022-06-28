@@ -661,6 +661,8 @@ export class BaseClass extends React.Component {
           ttsVoice: JSON.stringify(newVoice)
         })
         break
+      default:
+        break
     }
   }
 
@@ -677,6 +679,8 @@ export class BaseClass extends React.Component {
           toUpdate.asrModelUrn = asrModelUrn
         }
         this.setState(toUpdate)
+        break
+      default:
         break
     }
   }
@@ -703,6 +707,8 @@ export class BaseClass extends React.Component {
         this.setState({
           useDLM: tgt.checked
         })
+        break
+      default:
         break
     }
   }
