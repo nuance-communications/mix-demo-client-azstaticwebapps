@@ -19,9 +19,10 @@ import { faMicrophone, faMicrophoneSlash } from '@fortawesome/free-solid-svg-ico
 import moment from 'moment'
 
 import { 
-  BaseClass, 
-  AuthForm, 
-  LANGUAGES 
+  BaseClass,
+  AuthForm,
+  LANGUAGES,
+  ASR_SERVICE_URL 
 } from "./shared"
 
 import { MicrophoneAudioSource } from "../lib/audio"
@@ -131,9 +132,8 @@ function RecoRequestView({request, error}){
           displayDataTypes={false}
           iconStyle={'square'}
           indentWidth={2}
-          collapsed={5}
-          displayObjectSize={false}
           collapsed={true}
+          displayObjectSize={false}
           />
       </dd>
     )
@@ -156,9 +156,9 @@ function RecoRequestView({request, error}){
             displayDataTypes={false}
             iconStyle={'square'}
             indentWidth={2}
-            collapsed={5}
+            collapsed={true}
             displayObjectSize={false}
-            collapsed={true} />
+            />
         </li>
       )
     })
@@ -237,7 +237,7 @@ function RecoRequestView({request, error}){
   )
 }
 
-function AsrTabs({audioclips, asrRequests, rawResponses, useDLM, inlineWordset, onUpdateInlineWordset, onStubInlineWordset, replay, error}){
+function AsrTabs({asrRequests, rawResponses, useDLM, inlineWordset, onUpdateInlineWordset, onStubInlineWordset, error}){
   const [key, setKey] = useState('live_mic')
   let rawReqHtml = []
   asrRequests.slice().reverse().forEach(req => {
@@ -368,7 +368,6 @@ export default class ASRaaS extends BaseClass {
       rawResponses: [],
       rawEvents: [],
       tokenError: '',
-      recognizedAudioClips: [],
       processing: ProcessingState.DISCONNECTED,
       language: 'eng-USA',
       topic: 'GEN',
@@ -392,9 +391,6 @@ export default class ASRaaS extends BaseClass {
       raw: [],
       microphone: null
     }
-    this.audioSink = null
-    this.playQueue = []
-    this.onAudioEndFunctions = []
     this._micAudioSource = null
     this._asrController = null
     this._asrRequests = []
@@ -433,7 +429,7 @@ export default class ASRaaS extends BaseClass {
 
   initAsr(){
     const viewController = this
-    this._asrController = new AsrController('https://asr.api.nuance.com', async function (){
+    this._asrController = new AsrController(ASR_SERVICE_URL, async function (){
       await viewController.ensureTokenNotExpired()
       return viewController.state.accessToken
     })
@@ -465,6 +461,8 @@ export default class ASRaaS extends BaseClass {
           updateState = true
           // Final result -> stop the request
           this._asrController.stop()
+          break
+        default:
           break
       }
       if(updateState){
@@ -500,33 +498,6 @@ export default class ASRaaS extends BaseClass {
     })
     console.log("ASR initialized.")
     return this._asrController
-  }
-
-  initAudioOut(){
-    // For listening to recorded audio clips
-    this.audioSink = new Audio()
-    this.audioSink.onended = this.onAudioOutEnded.bind(this)    
-  }
-
-  onAudioOutEnded() {
-    let audioData = this.playQueue.shift()
-    if(audioData){
-      this.playAudio(audioData)
-    } else {
-      if(this.audioSink){
-        this.audioSink.currentTime = 0
-      }
-      if(this.onAudioEndFunctions.length){
-        let f 
-        while(f = this.onAudioEndFunctions.shift()){
-          f.call()
-        }
-      }
-    }
-  }
-
-  whenAudioEnds(func) {
-    this.onAudioEndFunctions.push(func)
   }
 
   getScope(){
@@ -576,8 +547,8 @@ export default class ASRaaS extends BaseClass {
         id: moment.now(),
         language: this.state.language,
         topic: this.state.topic,
-        utteranceDetectionMode: this.state.utteranceDetectionMode, // 'MULTIPLE',
-        resultType: this.state.resultType, // 'PARTIAL',
+        utteranceDetectionMode: this.state.utteranceDetectionMode,
+        resultType: this.state.resultType,
         autoPunctuate: this.state.autoPunctuate,
         maskLoadFailures: this.state.maskLoadFailures,
         filterProfanity: this.state.filterProfanity,
@@ -626,37 +597,16 @@ export default class ASRaaS extends BaseClass {
       this._asrController.dispose()
     }
     this.stopMic()
-    try{
-      this.audioSink = null
-    } catch(ex) {
-      console.warn(ex)
-    }
     return null;
   }
 
   onTokenAcquired() { 
     let audioIn = this.initAudioIn() // mic-based
     let controller = this.initAsr()
-    this.initAudioOut()
     audioIn.init().then(() => {
       // start mic & feed controller
       controller.setAudioSource(this._micAudioSource)
     })
-  }
-
-  resetAudio(){
-    this.playQueue.length = 0
-    if(this.audioSink){
-      this.audioSink.pause()
-      this.audioSink.currentTime = 0
-    }
-  }
-
-  playAudio(audio) {
-    // LIKELY PCM
-    let audioclipRaw = "data:audio/ogg;base64," + audio
-    this.audioSink.src = audioclipRaw
-    this.audioSink.play()
   }
 
   getAuthHtml(){
@@ -772,7 +722,7 @@ export default class ASRaaS extends BaseClass {
                       <span className="input-group-text" htmlFor="language">Language</span>
                       <select className="form-control" name="language"
                         value={this.state.language} 
-                        onChange={this.onChangeLanguage.bind(this)}>
+                        onBlur={this.onChangeLanguage.bind(this)}>
                         { langOptions }
                       </select>
                     </div>
@@ -822,15 +772,14 @@ export default class ASRaaS extends BaseClass {
           </form>
           <div className="col-12 mt-0 h-100">
             <AsrTabs
-              replay={this.playAudio.bind(this)} 
-              audioclips={this.state.recognizedAudioClips}
               rawResponses={this.state.rawResponses}
-              asrRequests={this._asrRequests} 
+              asrRequests={this._asrRequests}
               useDLM={this.state.useDLM}
               inlineWordset={this.state.inlineWordset}
               onUpdateInlineWordset={this.onUpdateInlineWordset.bind(this)}
               onStubInlineWordset={this.onStubInlineWordset.bind(this)}
-              error={this.state.error}/>
+              error={this.state.error}
+            />
           </div>
         </div>
       </div>

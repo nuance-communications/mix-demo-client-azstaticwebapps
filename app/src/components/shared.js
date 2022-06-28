@@ -17,8 +17,9 @@ export const CLIENT_DATA = {
     "client": "Nuance Mix Demo Client",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
-export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^\/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
+export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",

@@ -23,13 +23,6 @@ const pageStyles = {
   padding: "0px 0px",
   fontFamily: "Roboto, sans-serif, serif",
 }
-const headingStyles = {
-  marginTop: 0,
-  marginBottom: 24,
-}
-const headingAccentStyles = {
-  color: "rgb(41,180,197)",
-}
 const headingImageStyles = {
   height: 'auto',
   width: '100%',
@@ -43,7 +36,7 @@ export default class Layout extends React.Component {
         <main className="h-100" style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
           <Link to={`/`+location.search} className="text-decoration-none text-dark">
-            <img className="text-center display-4" style={headingImageStyles} src={Header}/>
+            <img alt={`Nuance Mix`} className="text-center display-4" style={headingImageStyles} src={Header}/>
           </Link>
           <div className="container-fluid gx-0 h-100">
             {this.props.children}

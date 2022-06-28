@@ -128,7 +128,7 @@ function ProfileView({
         <br/>
         <div className="row">
           <div className="col-8 text-center alert border-1 text-muted mt-0 pt-0 mb-2">
-            <small className="text-center text-danger">🔐 <span className="text-danger">***</span> Keep your Client Secret handy <em>(and safe and secure!)</em><br/> you need to provide it with every new browser session.</small>
+            <small className="text-center text-danger"><span role="img" aria-label="padlock" aria-labelledby="padlock">🔐</span> <span className="text-danger">***</span> Keep your Client Secret handy <em>(and safe and secure!)</em><br/> you need to provide it with every new browser session.</small>
           </div>
           <div className="col-4">
             <Button variant="primary" type="submit" className=" w-100">

@@ -634,9 +634,9 @@ export default class DLGaaS extends BaseClass {
       return
     }
     let mainTimeout = timeouts.timeout
-    let completeTimeout = timeouts.completeTimeout
-    let incompleteTimeout = timeouts.incompleteTimeout
-    let maxSpeechInput = timeouts.maxSpeechTimeout
+    // let completeTimeout = timeouts.completeTimeout
+    // let incompleteTimeout = timeouts.incompleteTimeout
+    // let maxSpeechInput = timeouts.maxSpeechTimeout
     if(this.recoTimeout !== -1){
       clearTimeout(this.recoTimeout)
     }

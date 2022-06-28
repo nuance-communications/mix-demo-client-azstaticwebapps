@@ -499,7 +499,6 @@ export default class ChatPanel extends React.Component {
 
   onClickEvent(evt){
     let target = evt.target
-    let href = target.href
     switch(target.getAttribute('data-mix-action')){
       case 'selectable':
         this.props.onExecute({
@@ -710,7 +709,9 @@ export default class ChatPanel extends React.Component {
                   })
                   resMessages.push(<dd key={'da-'+idx}><div className="w-100 rounded rounded-3 bg-transparent msg text-secondary p-2"><table className='table table-sm'><thead><tr><th>Key</th><th>Value</th><th>ID</th></tr></thead><tbody>{dtmfTable}</tbody></table></div></dd>)
                 }
-                this.state.recognitionSettings = qaAction.recognitionSettings
+                this.setState({
+                  recognitionSettings: qaAction.recognitionSettings
+                })
               }
             }
           }
@@ -802,7 +803,7 @@ export default class ChatPanel extends React.Component {
             { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
                 <small>
                   &nbsp;&nbsp;
-                  <a href="#" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></a>
+                  <Button variant="link" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></Button>
                 </small>
               ) : '' }
             { this.props.active ? (

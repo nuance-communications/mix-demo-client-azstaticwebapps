@@ -10,6 +10,7 @@ import React, { useState } from "react"
 
 import loadable from '@loadable/component'
 
+import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -87,8 +88,7 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
       <th>Model</th>
       <th>Gender</th>
       <th>Version</th>
-      <th>Sample Rate Hz</th>
-      <th></th>
+      <th colspan="2">Sample Rate Hz</th>
     </tr>
   )
   let clipsHtml = []
@@ -98,14 +98,14 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
         <div className="card">
           <div className="card-header">
             <span className="float-start">{clip.getInput()}</span>
-            <a href="#" className="float-end px-3" 
+            <Button className="float-end px-3" variant="link"
               onClick={evt => {
                 if(clip.getAudio()){
                   replay(clip.getAudio())
                 }
               }}>
               <FontAwesomeIcon icon={faPlay}/>
-            </a>
+            </Button>
             <span className="float-end px-3 badge bg-white text-dark">{clip.getVoice()}</span>
           </div>
         </div>

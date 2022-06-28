@@ -7,6 +7,8 @@
  *
  */
 import React from "react"
+import Button from 'react-bootstrap/Button'
+
 import moment from 'moment'
 
 import { SIMULATED_EXPERIENCES } from "./shared"
@@ -551,7 +553,7 @@ export class LogEventsTable extends React.Component {
         <table className="table table-sm table-hover">
           <thead className="">
             <tr>
-              <th style={{'width': '5%'}}><a href='#' onClick={this.toggleAllEventsSeqId.bind(this)}>SeqID</a></th>
+              <th style={{'width': '5%'}}><Button variant="link" onClick={this.toggleAllEventsSeqId.bind(this)}>SeqID</Button></th>
               <th style={{'width': '10%'}}>Timestamp</th>
               <th style={{'width': '10%'}}>Event</th>
               <th style={{'width': '75%'}}>Details</th>
