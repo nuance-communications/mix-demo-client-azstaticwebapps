@@ -472,9 +472,7 @@ export default class DLGaaS extends BaseClass {
         isSessionActive: true,
         error: false,
         autoScrollChatPanel: true
-      })
-      // Kick things off..
-      await this.execute()
+      }, this.execute.bind(this)) // kick things off
     }
     if(!this.isStandalone()){
       // Attach a Log Consumer
@@ -588,7 +586,8 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
-  async processContinueAction(continueAction){
+  async processContinueAction(continueAction, latencySettings){
+    console.log("TODO: Use `latencySettings`", latencySettings)
     return await this.execute()
   }
 
@@ -701,7 +700,7 @@ export default class DLGaaS extends BaseClass {
       }
       if(continueAction){
         setTimeout(() => {
-          this.processContinueAction(continueAction)
+          this.processContinueAction(continueAction, latencySettings)
         })
       }
 

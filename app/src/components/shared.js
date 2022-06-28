@@ -437,7 +437,7 @@ export class BaseClass extends React.Component {
     if((accessToken.expires_at * 1000) - Date.now() < one_minute){
       return await this.initToken(this.getScope())
     }
-    return false;
+    return false
   }
 
   async initToken(scope){

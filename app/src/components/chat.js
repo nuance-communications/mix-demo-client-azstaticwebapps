@@ -18,8 +18,8 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faComments, 
-  faExternalLinkAlt, 
-  faWindowMinimize, 
+  faExternalLinkAlt,
+  faWindowMinimize,
   faWindowMaximize, 
   faPhoneSlash
 } from '@fortawesome/free-solid-svg-icons'
@@ -239,15 +239,11 @@ const EmailInput = ({placeholder, onSubmit}) => {
       onSubmit(email)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="email" aria-labelledby="email">📧</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="email" aria-labelledby="email">📧</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <input placeholder={placeholder || 'user@company.com'} type="email" value={email} className="form-control border-0" onChange={handleChange}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -264,15 +260,11 @@ const PhoneInput = ({placeholder, onSubmit}) => {
       onSubmit(phoneNumber)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="phone" aria-labelledby="phone">📱</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="phone" aria-labelledby="phone">📱</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <input placeholder={placeholder} pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value={phoneNumber} className="form-control border-0" onChange={handleChange}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -288,15 +280,11 @@ const DateInput = ({placeholder, onSubmit}) => {
       onSubmit(d)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="datepickerselection"><span role="img" aria-label="date" aria-labelledby="date">📅</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="datepickerselection"><span role="img" aria-label="date" aria-labelledby="date">📅</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <DatePicker selected={date} className="form-control border-0" onChange={date => setDate(date)}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -317,13 +305,9 @@ const CurrencyInput = ({placeholder, onSubmit}) => {
       onSubmit(`$${a}`) // prepend the $
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="currencyselection">$</InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="currencyselection">$</InputGroup.Text>
         <FormControl className="border-0" id="amount" placeholder={placeholder} onChange={handleChange}/>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
