@@ -18,8 +18,8 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faComments, 
-  faExternalLinkAlt, 
-  faWindowMinimize, 
+  faExternalLinkAlt,
+  faWindowMinimize,
   faWindowMaximize, 
   faPhoneSlash
 } from '@fortawesome/free-solid-svg-icons'
@@ -239,15 +239,11 @@ const EmailInput = ({placeholder, onSubmit}) => {
       onSubmit(email)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="email" aria-labelledby="email">📧</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="email" aria-labelledby="email">📧</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <input placeholder={placeholder || 'user@company.com'} type="email" value={email} className="form-control border-0" onChange={handleChange}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -264,15 +260,11 @@ const PhoneInput = ({placeholder, onSubmit}) => {
       onSubmit(phoneNumber)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="phone" aria-labelledby="phone">📱</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="phonenumber"><span role="img" aria-label="phone" aria-labelledby="phone">📱</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <input placeholder={placeholder} pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" value={phoneNumber} className="form-control border-0" onChange={handleChange}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -288,15 +280,11 @@ const DateInput = ({placeholder, onSubmit}) => {
       onSubmit(d)
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="datepickerselection"><span role="img" aria-label="date" aria-labelledby="date">📅</span></InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="datepickerselection"><span role="img" aria-label="date" aria-labelledby="date">📅</span></InputGroup.Text>
         <div className="form-control px-0 py-0 bg-light border-0">
           <DatePicker selected={date} className="form-control border-0" onChange={date => setDate(date)}/>
         </div>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -317,13 +305,9 @@ const CurrencyInput = ({placeholder, onSubmit}) => {
       onSubmit(`$${a}`) // prepend the $
     }}>
       <InputGroup className="">
-        <InputGroup.Prepend>
-          <InputGroup.Text className="border-0" id="currencyselection">$</InputGroup.Text>
-        </InputGroup.Prepend>
+        <InputGroup.Text className="border-0" id="currencyselection">$</InputGroup.Text>
         <FormControl className="border-0" id="amount" placeholder={placeholder} onChange={handleChange}/>
-        <InputGroup.Append>
-          <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
-        </InputGroup.Append>
+        <Button type={'submit'} variant={`primary`} className="rounded-0 rounded-end">></Button>
       </InputGroup>
     </form>
   )
@@ -499,7 +483,6 @@ export default class ChatPanel extends React.Component {
 
   onClickEvent(evt){
     let target = evt.target
-    let href = target.href
     switch(target.getAttribute('data-mix-action')){
       case 'selectable':
         this.props.onExecute({
@@ -632,24 +615,28 @@ export default class ChatPanel extends React.Component {
               if(this.isVisualExperience()){
                 m.visual.forEach((_m, idx3) => {
                   let txt = _m.text
-                  resMessages.push(
-                    <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
-                      <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-                        <ReactSafeHtml html={txt} components={components} />
-                      </div>
-                    </dd>
-                  )
+                  if(txt.length){
+                    resMessages.push(
+                      <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+                          <ReactSafeHtml html={txt} components={components} />
+                        </div>
+                      </dd>
+                    )
+                  }
                 })
               } else if(this.isVoiceExperience()){
                 m.nlg.forEach((_m, idx3) => {
                   let txt = _m.text
-                  resMessages.push(
-                    <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
-                      <div className="rounded rounded-3 bg-light msg text-dark p-2">
-                        {txt}
-                      </div>
-                    </dd>
-                  )
+                  if(txt.length){
+                    resMessages.push(
+                      <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2">
+                          {txt}
+                        </div>
+                      </dd>
+                    )
+                  }
                 })
               }
             })
@@ -706,7 +693,9 @@ export default class ChatPanel extends React.Component {
                   })
                   resMessages.push(<dd key={'da-'+idx}><div className="w-100 rounded rounded-3 bg-transparent msg text-secondary p-2"><table className='table table-sm'><thead><tr><th>Key</th><th>Value</th><th>ID</th></tr></thead><tbody>{dtmfTable}</tbody></table></div></dd>)
                 }
-                this.state.recognitionSettings = qaAction.recognitionSettings
+                this.setState({
+                  recognitionSettings: qaAction.recognitionSettings
+                })
               }
             }
           }
@@ -798,7 +787,7 @@ export default class ChatPanel extends React.Component {
             { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
                 <small>
                   &nbsp;&nbsp;
-                  <a href="#" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></a>
+                  <Button variant="link" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></Button>
                 </small>
               ) : '' }
             { this.props.active ? (

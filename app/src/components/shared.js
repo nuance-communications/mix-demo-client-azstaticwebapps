@@ -11,13 +11,15 @@ import { navigate } from "gatsby"
 import axios from "axios"
 
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
-export const VERSION = '1.4.0'
+export const VERSION = '1.7.0'
 export const CLIENT_DATA = {
     "version": VERSION,
-    "client": "Nuance Mix Demo Client - Azure StaticWebApps",
+    "client": "Nuance Mix Demo Client",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
-export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^\/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
+export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",
@@ -85,6 +87,168 @@ export const LANG_EMOJIS = {
     "cmn-tw": "🇹🇼",
     "zh-tw": "🇹🇼"
 };
+export const LANGUAGES = [
+ {
+  "code": "ara-XWW", 
+  "name": "Arabic (Worldwide)"
+ }, 
+ {
+  "code": "cat-ESP", 
+  "name": "Catalan (Spain)"
+ }, 
+ {
+  "code": "hrv-HRV", 
+  "name": "Croatian (Croatia)"
+ }, 
+ {
+  "code": "ces-CZE", 
+  "name": "Czech (Czech Republic)"
+ }, 
+ {
+  "code": "dan-DNK", 
+  "name": "Danish (Denmark)"
+ }, 
+ {
+  "code": "nld-NLD", 
+  "name": "Dutch (Netherlands)"
+ }, 
+ {
+  "code": "eng-AUS", 
+  "name": "English (Australia)"
+ }, 
+ {
+  "code": "eng-USA", 
+  "name": "English (United States)"
+ }, 
+ {
+  "code": "eng-IND", 
+  "name": "English (India)"
+ }, 
+ {
+  "code": "eng-GBR", 
+  "name": "English (United Kingdom)"
+ }, 
+ {
+  "code": "fin-FIN", 
+  "name": "Finnish (Finland)"
+ }, 
+ {
+  "code": "fra-CAN", 
+  "name": "French (Canada)"
+ }, 
+ {
+  "code": "fra-FRA", 
+  "name": "French (France)"
+ }, 
+ {
+  "code": "deu-DEU", 
+  "name": "German (Germany)"
+ }, 
+ {
+  "code": "ell-GRC", 
+  "name": "Greek (Greece)"
+ }, 
+ {
+  "code": "heb-ISR", 
+  "name": "Hebrew (Israel)"
+ }, 
+ {
+  "code": "hin-IND", 
+  "name": "Hindi (India)"
+ }, 
+ {
+  "code": "hun-HUN", 
+  "name": "Hungarian (Hungary)"
+ }, 
+ {
+  "code": "ind-IDN", 
+  "name": "Indonesian (Indonesia)"
+ }, 
+ {
+  "code": "ita-ITA", 
+  "name": "Italian (Italy)"
+ }, 
+ {
+  "code": "jpn-JPN", 
+  "name": "Japanese (Japan)"
+ }, 
+ {
+  "code": "kor-KOR", 
+  "name": "Korean (South Korea)"
+ }, 
+ {
+  "code": "zlm-MYS", 
+  "name": "Malay (Malaysia)"
+ }, 
+ {
+  "code": "nor-NOR", 
+  "name": "Norwegian (Norway)"
+ }, 
+ {
+  "code": "pol-POL", 
+  "name": "Polish (Poland)"
+ }, 
+ {
+  "code": "por-BRA", 
+  "name": "Portuguese (Brazil)"
+ }, 
+ {
+  "code": "por-PRT", 
+  "name": "Portuguese (Portugal)"
+ }, 
+ {
+  "code": "ron-ROU", 
+  "name": "Romanian (Romania)"
+ }, 
+ {
+  "code": "rus-RUS", 
+  "name": "Russian (Russia)"
+ }, 
+ {
+  "code": "cmn-CHN", 
+  "name": "Mandarin (China)"
+ }, 
+ {
+  "code": "slk-SVK", 
+  "name": "Slovak (Slovakia)"
+ }, 
+ {
+  "code": "spa-ESP", 
+  "name": "Spanish (Spain)"
+ }, 
+ {
+  "code": "spa-XLA", 
+  "name": "Spanish (Latin America)"
+ }, 
+ {
+  "code": "swe-SWE", 
+  "name": "Swedish (Sweden)"
+ }, 
+ {
+  "code": "tha-THA", 
+  "name": "Thai (Thailand)\u00a0BETA"
+ }, 
+ {
+  "code": "yue-CHS", 
+  "name": "Cantonese (Hong Kong)"
+ }, 
+ {
+  "code": "cmn-TWN", 
+  "name": "Mandarin (Taiwan)"
+ }, 
+ {
+  "code": "tur-TUR", 
+  "name": "Turkish (Turkey)"
+ }, 
+ {
+  "code": "ukr-UKR", 
+  "name": "Ukrainian (Ukraine)"
+ }, 
+ {
+  "code": "vie-VNM", 
+  "name": "Vietnamese (Vietnam)"
+ }
+]
 
 const EXPERIENCE_TYPES = {
   ivrTextWithTts: {
@@ -178,6 +342,17 @@ export class BaseClass extends React.Component {
         }
       });
     }
+    let title = 'Nuance Mix Demo Client -'
+    if(toUpdate.channel){
+      title += ` ${toUpdate.channel}`
+    }
+    if(toUpdate.language){
+      title += ` ${toUpdate.language}`
+    }
+    if(toUpdate.clientId){
+      title += `  ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    }
+    document.title = title
     return { 
       ...toUpdate, 
       ...this.initStateFromSessionStorage(params) 
@@ -202,7 +377,7 @@ export class BaseClass extends React.Component {
   }
 
   saveToSessionStorage(data){
-    if(typeof window !== 'undefined'){
+    if(typeof window !== `undefined`){
       Object.keys(data).forEach(key => {
         let item = data[key]
         window.sessionStorage.setItem(key, item)
@@ -210,6 +385,12 @@ export class BaseClass extends React.Component {
       return true
     }
     return false
+  }
+
+  getAppIDFromClientID(clientID){
+    const clientIDRegex = new RegExp(CLIENT_ID_REGEX)
+    const parsed = clientIDRegex.exec(clientID)
+    return parsed.length > 0 ? parsed[1] : clientID
   }
 
   // Request
@@ -238,7 +419,7 @@ export class BaseClass extends React.Component {
   // OAuth Token
 
   getScope(){
-    return 'nlu tts dlg log'
+    return 'asr nlu tts dlg log'
   }
 
   async getToken(scope) {
@@ -256,7 +437,7 @@ export class BaseClass extends React.Component {
     if((accessToken.expires_at * 1000) - Date.now() < one_minute){
       return await this.initToken(this.getScope())
     }
-    return false;
+    return false
   }
 
   async initToken(scope){
@@ -283,13 +464,17 @@ export class BaseClass extends React.Component {
   // Log API
 
   async createConsumer(){
+    if(this.state.logConsumerName){
+      console.log("Log consumer already exists, while attempting to create.")
+      return null
+    }
     // First, create a consumer for getting the LOG data
     await this.ensureTokenNotExpired()
     const ret = await this.request(`${ROOT_URL}/api/logapi-create-consumer`, {
       clientId: encodeURIComponent(this.state.clientId),
       token: this.state.accessToken,
     })
-    console.log("New consumer created")
+    console.log("New log API consumer created")
     this.setState({
       logConsumerName: ret.response.consumerName,
       logConsumerGroup: ret.response.consumerGroup,
@@ -309,6 +494,10 @@ export class BaseClass extends React.Component {
   }
 
   async destroyConsumer(){
+    if(this.state.logConsumerName){
+      console.log("No log consumer to delete.")
+      return null
+    }
     // Lastly, destroy the Consumer attached
     await this.ensureTokenNotExpired()
     const ret = await this.request(`${ROOT_URL}/api/logapi-destroy-consumer`, {
@@ -316,7 +505,7 @@ export class BaseClass extends React.Component {
       consumerName: this.state.logConsumerName,
       consumerGroup: this.state.logConsumerGroup,
     })
-    console.log("Consumer destroyed")
+    console.log("Consumer destroyed", ret)
     this.setState({
       logConsumerName: null,
       logConsumerGroup: null,
@@ -330,12 +519,15 @@ export class BaseClass extends React.Component {
     }
     // purposefully scheduled on interval; 
     // fetch records will noop if request is inflight
+    console.log("New log API request queued")
     this.logTimer = window.setInterval(() => {
       Promise.resolve().then(() => {
+        console.log("get log events")
         const logEvents = this.getLogEvents();
         if(logEvents.length > 0){
           const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
           if(lastEvent === 'application-ended'){
+            console.log("Will stop capturing logs.")
             this.stopCapturingLogs()
             return
           }
@@ -347,10 +539,12 @@ export class BaseClass extends React.Component {
 
   doFetchRecords(dur){
     if(this.state.fetchRecordsTimeout !== -1){
+      console.log("Fetch request already in flight, ignoring.")
       return
     } 
     if(this.state.logConsumerName){
       let newTimeout = setTimeout(this.fetchRecords.bind(this), dur)
+      console.log("Fetch records request initiated.")
       this.setState({
         fetchRecordsTimeout: newTimeout
       })
@@ -362,44 +556,90 @@ export class BaseClass extends React.Component {
       return
     }
     const { response, error } = await this.getRecords(this.state.sessionId);
-    console.log('clearing fetch record timeout', this.state.fetchRecordsTimeout);
+    console.log('Clearing fetch record timeout', this.state.fetchRecordsTimeout);
     clearTimeout(this.state.fetchRecordsTimeout)
     const toUpdate = {}
     if(error){
+      console.error("There was an error fetching logs.", error)
       try{
         if(this.state.isSessionActive){
+          console.log("The session is active.")
           if(error.error_code === 40403){
-            console.warn('error getting records, creating new consumer')
+            console.warn('Consumer instance not found. Recreating consumer.')
             await this.createConsumer()
           } else {
-            console.warn('uncaptured error', error)
+            console.warn('*** Uncaptured error.. destroying consumer.', error)
             let r2 = await this.destroyConsumer()
             if(!r2.error){
+              console.log("Create a new consumer after error since session active.")
               console.warn(r2.error)
               // re-establish link
               await this.createConsumer()
             } else {
-              console.log('Ending log timer')
+              console.log('Failed to destroy consumer, stopping log capture.')
               this.stopCapturingLogs()
             }
           }
         } else {
+          console.log("No session active. Destroying consumer.")
           let r3 = await this.destroyConsumer()
           if(r3.error){
+            console.log("Ending")
             this.stopCapturingLogs()
           }
         }
       } catch(ex) {
-        console.error('error fetching records', ex, error, response)
+        console.error('Error fetching records', ex, error, response)
       }
     } else if (response) {
       if(response.payload){
         const rawEvents = this.state.rawEvents.concat(response.payload)
+                            // .filter((obj, index, arr) => {
+                            //   return arr.map(mapObj => mapObj.seqid).indexOf(obj.seqid) === index
+                            // })
         toUpdate.rawEvents = rawEvents
       }
     }
     toUpdate.fetchRecordsTimeout = -1
     this.setState(toUpdate)
+  }
+
+  // Inline Wordsets - ASR and NLU
+
+  initInlineWordsets(){
+    const inlineWordsetsLocalStorage = window.localStorage.getItem('inlineWordset')
+    if(inlineWordsetsLocalStorage){
+      try{
+        this.setState({
+          inlineWordset: JSON.parse(inlineWordsetsLocalStorage)
+        })
+      } catch (ex) {
+        console.error(ex)
+      }
+    }
+  }
+
+  saveInlineWordsetsToLocalStorage(){
+    window.localStorage.setItem('inlineWordset', JSON.stringify(this.state.inlineWordset))
+  }
+
+  onUpdateInlineWordset(inlineWordset){
+    this.setState({ inlineWordset })
+    this.saveInlineWordsetsToLocalStorage()
+  }
+
+  onStubInlineWordset(){
+    let inlineWordset = this.state.inlineWordset
+    inlineWordset['STUB'] = [{
+      "literal": "La Jolla",
+      "spoken": ["la hoya", "la jolla"],
+      "canonical": "LA JOLLA"
+    }]
+    this.setState({ inlineWordset })
+  }
+
+  warmupExperienceSimulation(){
+    // expects override - on `simulateExperience` change mediator
   }
 
   onChangeSelectInput(evt) {
@@ -408,7 +648,7 @@ export class BaseClass extends React.Component {
       case 'simulateExperience':
         this.setState({
           simulateExperience: tgt.value
-        })
+        }, this.warmupExperienceSimulation)
         break
       case 'ttsVoice':
         let newVoice = {
@@ -421,6 +661,55 @@ export class BaseClass extends React.Component {
         this.saveToSessionStorage({
           ttsVoice: JSON.stringify(newVoice)
         })
+        break
+      default:
+        break
+    }
+  }
+
+  onChangeLanguage(evt){
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'language':
+        let toUpdate = {
+          language: tgt.value
+        }
+        let asrModelUrn = this.state.asrModelUrn
+        if(asrModelUrn){
+          asrModelUrn = asrModelUrn.replace(this.state.language, toUpdate.language)
+          toUpdate.asrModelUrn = asrModelUrn
+        }
+        this.setState(toUpdate)
+        break
+      default:
+        break
+    }
+  }
+
+  onChangeCheckboxInput(evt){
+    const tgt = evt.target
+    switch(tgt.name){
+      case 'autoPunctuate':
+        this.setState({
+          autoPunctuate: tgt.checked
+        })
+        break
+      case 'filterProfanity':
+        this.setState({
+          filterProfanity: tgt.checked
+        })
+        break
+      case 'suppressInitialCapitalization':
+        this.setState({
+          suppressInitialCapitalization: tgt.checked
+        })
+        break
+      case 'useDLM':
+        this.setState({
+          useDLM: tgt.checked
+        })
+        break
+      default:
         break
     }
   }
@@ -463,9 +752,20 @@ export class BaseClass extends React.Component {
           contextTag: this.parseContextTag(tgt.value)
         })
         break
+      case 'asrModelUrn':
+        this.setState({
+          asrModelUrn: tgt.value,
+          contextTag: this.parseContextTag(tgt.value)
+        })
+        break
       case 'language':
         this.setState({
           language: tgt.value
+        })
+        break
+      case 'topic':
+        this.setState({
+          topic: tgt.value
         })
         break
       case 'sessionTimeout':
@@ -515,17 +815,18 @@ export class BaseClass extends React.Component {
   }
 
   handleTabSelection(key){
-    if(key === 'nluaas'){
-      navigate(`/app/nlu/${window.location.search}`)
-    } else if (key === 'profile'){
+    if (key === 'profile'){
       navigate(`/app/${window.location.search}`)
     } else if (key === 'dlgaas'){
       navigate(`/app/dlg/${window.location.search}`)
+    } else if(key === 'nluaas'){
+      navigate(`/app/nlu/${window.location.search}`)
     } else if (key === 'ttsaas'){
       navigate(`/app/tts/${window.location.search}`)
+    } else if (key === 'asraas'){
+      navigate(`/app/asr/${window.location.search}`)
     }
   }
-
 }
 
 export const AuthForm = ({tokenError, clientId, clientSecret, initToken, onChangeTextInput, serviceScope, standalone}) => {

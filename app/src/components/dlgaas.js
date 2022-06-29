@@ -126,7 +126,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
       transition={false}
       id="noanim-tab-example">
       <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_payloads' ? (
             <ReactJson
               className="mb-2"
@@ -154,18 +154,18 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
           ) : ('')}
         </TabContent>
       </Tab>
-      <Tab eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-100" eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
+        <TabContent className="bg-light px-2 py-2 h-100">
           { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents} simulateExperience={simulateExperience}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="viz_log_events" title={(<div>Log Events Viz</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-100">
           {logEvents.length && key === 'viz_log_events' ? (<LogEventsViz events={logEvents}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="raw_log_events" title={(<div>Log Events JSON <small className="badge bg-light text-secondary">{logEvents.length}</small></div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_log_events' ? (
             <ReactJson
               className="mb-2"
@@ -186,7 +186,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab eventKey="raw_api_events" title={(<div>API Events JSON <small className="badge bg-light text-secondary">{apiEvents.length}</small></div>)} className="bg-light" disabled={apiEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_api_events' ? (
             <ReactJson
               className="mb-2"
@@ -257,7 +257,7 @@ export default class DLGaaS extends BaseClass {
     this.clientHandlers = new ClientFetchHandlers()
     this.externalHandlers = new ExternalFetchHandlers()
 
-    this.ttsClz = new TTSaaS(this)
+    this.ttsClz = null
 
   }
 
@@ -315,6 +315,7 @@ export default class DLGaaS extends BaseClass {
       if(this.state.logConsumerName){
         this.destroyConsumer()
       }
+      this.stopCapturingLogs()
       if(this.ttsClz){
         this.ttsClz.onUnmount()
       }
@@ -332,17 +333,31 @@ export default class DLGaaS extends BaseClass {
   onTokenAcquired() {
     // noop
     if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
-      this.ttsClz = new TTSaaS(this)
-      this.ttsClz.componentDidMount()
-      this.ttsClz.state.ssmlInput = true
-      this.ttsClz.playQueue = []
-      this.ttsClz.state.accessToken = this.state.accessToken
-      this.ttsClz.getVoices().then(res => {
-        this.setState({
-          ttsVoices: res.response.payload.voices
-        })
-      })
+      this.initTts()
     }
+  }
+
+  warmupExperienceSimulation(){
+    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
+      this.initTts()
+    }
+  }
+
+  initTts(){
+    if(this.ttsClz){
+      console.log("TTS already initialized.")
+      return
+    }
+    this.ttsClz = new TTSaaS(this)
+    this.ttsClz.componentDidMount()
+    this.ttsClz.state.ssmlInput = true
+    this.ttsClz.playQueue = []
+    this.ttsClz.state.accessToken = this.state.accessToken
+    this.ttsClz.getVoices().then(res => {
+      this.setState({
+        ttsVoices: res.response.payload.voices
+      })
+    })
   }
 
   // DLGaaS API
@@ -457,9 +472,7 @@ export default class DLGaaS extends BaseClass {
         isSessionActive: true,
         error: false,
         autoScrollChatPanel: true
-      })
-      // Kick things off..
-      await this.execute()
+      }, this.execute.bind(this)) // kick things off
     }
     if(!this.isStandalone()){
       // Attach a Log Consumer
@@ -573,7 +586,8 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
-  async processContinueAction(continueAction){
+  async processContinueAction(continueAction, latencySettings){
+    console.log("TODO: Use `latencySettings`", latencySettings)
     return await this.execute()
   }
 
@@ -619,9 +633,9 @@ export default class DLGaaS extends BaseClass {
       return
     }
     let mainTimeout = timeouts.timeout
-    let completeTimeout = timeouts.completeTimeout
-    let incompleteTimeout = timeouts.incompleteTimeout
-    let maxSpeechInput = timeouts.maxSpeechTimeout
+    // let completeTimeout = timeouts.completeTimeout
+    // let incompleteTimeout = timeouts.incompleteTimeout
+    // let maxSpeechInput = timeouts.maxSpeechTimeout
     if(this.recoTimeout !== -1){
       clearTimeout(this.recoTimeout)
     }
@@ -640,11 +654,11 @@ export default class DLGaaS extends BaseClass {
       let dataAction
       let collectionSettings
       let latencySettings
-      const qaAction = res.response.payload.qaAction
-      const daAction = res.response.payload.daAction
-      const escalationAction = res.response.payload.escalationAction
-      const endAction = res.response.payload.endAction
-      const continueAction = res.response.payload.continueAction
+      const qaAction = res.response.payload?.qaAction
+      const daAction = res.response.payload?.daAction
+      const escalationAction = res.response.payload?.escalationAction
+      const endAction = res.response.payload?.endAction
+      const continueAction = res.response.payload?.continueAction
       if(daAction){
         dataAction = daAction
       } else if (escalationAction){
@@ -686,7 +700,7 @@ export default class DLGaaS extends BaseClass {
       }
       if(continueAction){
         setTimeout(() => {
-          this.processContinueAction(continueAction)
+          this.processContinueAction(continueAction, latencySettings)
         })
       }
 
@@ -794,25 +808,12 @@ export default class DLGaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div>
-        <Tabs fill variant="pills"
-          defaultActiveKey="dlgaas" transition={false}
-          id="noanim-tab-example"
-          className="justify-content-center"
-          onSelect={this.handleTabSelection.bind(this)}>
-          <Tab eventKey="profile" title={`Profile`}></Tab>
-          <Tab eventKey="dlgaas" title={`DLGaaS`}>
-            <AuthForm tokenError={this.state.tokenError}
-                initToken={this.initToken.bind(this)}
-                clientId={this.state.clientId}
-                clientSecret={this.state.clientSecret}
-                onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="dlg tts log" />
-          </Tab>
-          <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
-          <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
-        </Tabs>
-      </div>
+      <AuthForm tokenError={this.state.tokenError}
+          initToken={this.initToken.bind(this)}
+          clientId={this.state.clientId}
+          clientSecret={this.state.clientSecret}
+          onChangeTextInput={this.onChangeTextInput.bind(this)}
+          serviceScope="dlg tts log" />
     )
   }
 
@@ -877,14 +878,14 @@ export default class DLGaaS extends BaseClass {
   getConfigureSessionHtml(){
     let sessionIdExists = Boolean(this.state.sessionId ? this.state.sessionId.length : false)
     return (
-      <div className="">
-        <div className="col-12">
+      <div className="h-100">
+        <div className="col-12 h-100 overflow-auto">
           <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
 
-            <div className={(this.isStandalone() ? `col-12` : `col-10 offset-md-1`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-8 offset-md-2`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
               <div className="form-floating">
                 <Form.Control 
                   name="simulateExperience"
@@ -905,7 +906,7 @@ export default class DLGaaS extends BaseClass {
               </div>
             </div>
 
-            <div className={(this.isStandalone() ? `col-12` : `col-4 offset-md-1`) + ` bg-light rounded-3 px-4 py-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-3 offset-md-2`) + ` bg-light rounded-3 px-4 py-4`}>
 
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
                 <h4 className="w-100">Configuration</h4>
@@ -927,7 +928,7 @@ export default class DLGaaS extends BaseClass {
                   ) : ''}
                 <div className="form-floating">
                   <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="modelUrn" className="form-label">Model URN</label>
+                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
                 </div>
                 <div className="form-floating">
                   <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
@@ -944,7 +945,7 @@ export default class DLGaaS extends BaseClass {
                 <br/>
                 <div className="form-floating">
                   <input type="text" className="form-control" name="sessionId" value={this.state.sessionId} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="sessionId" className="form-label">Session ID <span className='text-muted'>(optional)</span></label>
+                  <label htmlFor="sessionId" className="form-label">Existing Session ID <span className='text-muted'>(optional)</span></label>
                 </div>
                 <div className="form-group mt-3">
                   <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
@@ -953,9 +954,9 @@ export default class DLGaaS extends BaseClass {
                 </div>
               </form>
             </div>
-            <div className={(this.isStandalone() ? `col-12` : `col-6`) + ` bg-light rounded-3 px-4 py-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-5`) + ` bg-light rounded-3 px-4 py-4`}>
                 <div className="form-floating mb-4 mt-3">
-                  <h5 className="mb-z">
+                  <h5 className="pt-5">
                     Client Data
                   </h5>
                   <ReactJson
@@ -1017,14 +1018,16 @@ export default class DLGaaS extends BaseClass {
     const apiEvents = this.getApiEvents()
     const chatResponses = this.getChatResponses()
     return (
-      <div className="col">
+      <div className="col px-5 h-100">
         <div className="row">
           <div className="col-8">
+            <div className="float-end mt-3">
+              <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
+              {` `}
+              <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
+              {` `}
+            </div>
             <h3 className="fw-bold mt-3">Converse and Troubleshoot</h3>
-            <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
-            {` `}
-            <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
-            {` `}
           </div>
           <div className="col-4 text-end">
             { this.state.isSessionActive && this.state.sessionId.length > 0 ? (
@@ -1039,16 +1042,20 @@ export default class DLGaaS extends BaseClass {
                   variant={`light`}
                   onClick={(evt) => {this.doFetchRecords(0); evt.preventDefault(); }}
                   disabled={this.state.fetchRecordsTimeout !== -1}>
-                  Fetch Log Events{` `}
                   {this.state.fetchRecordsTimeout !== -1 ? (
                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                   ) : ''}
+                  {` `}
+                  Fetch Log Events
                 </Button>
               ) : ('')}
+            { this.state.logConsumerName && !this.state.isSessionActive ? (
+              <button className="btn-sm btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
+            ) : ('')}
           </div>
         </div>
-        <div className="row mt-4">
-          <div className="col-12">
+        <div className="row h-100 mt-1">
+          <div className="col-12 h-100">
             <DlgTabs
               simulateExperience={this.state.simulateExperience}
               logEvents={logEvents}
@@ -1077,15 +1084,30 @@ export default class DLGaaS extends BaseClass {
   }
 
   render(){
+    let body = this.state.accessToken ? (
+        this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
+        this.getBotSessionHtml() :
+        this.getConfigureSessionHtml()) :
+        this.getAuthHtml()
+    let html = (<Tabs fill variant="pills"
+      defaultActiveKey="dlgaas" transition={false}
+      id="noanim-tab-example"
+      className="justify-content-center"
+      onSelect={this.handleTabSelection.bind(this)}>
+      <Tab eventKey="profile" title={`Profile`}></Tab>
+      <Tab eventKey="dlgaas" title={`DLGaaS`} className="h-100">
+        {body}
+      </Tab>
+      <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
+      <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
+      <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+    </Tabs>)
+    if(this.isStandalone()){
+      html = body
+    }
     return (
-      <div className="row">
-        {
-          this.state.accessToken ? (
-          this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
-          this.getBotSessionHtml() :
-          this.getConfigureSessionHtml()) :
-          this.getAuthHtml()
-        }
+      <div className="dlgaas row h-100">
+        {html}
       </div>
     )
   }
