@@ -329,7 +329,7 @@ export default class TTSaaS extends BaseClass {
         error: null,
         processing: ProcessingState.IDLE,
       })
-      this.parseResponse(res).bind(this)
+      this.parseResponse(res)
     }
     return { payload, res }
   }

@@ -589,7 +589,7 @@ export default class ChatPanel extends React.Component {
             // USER MESSAGE
             let originalResponse = this.props.rawResponses.length > idx ? this.props.rawResponses[idx+1]  : null
             let userText = res.request.user_input.user_text
-            if(originalResponse){
+            if(originalResponse && originalResponse.response){
               if(originalResponse.response.payload.qaAction
                   && originalResponse.response.payload.qaAction.mask){
                 userText = Array(userText.length+1).join('*')
