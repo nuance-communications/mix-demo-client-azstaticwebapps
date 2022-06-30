@@ -213,11 +213,10 @@ export default class TTSaaS extends BaseClass {
     this.onAudioEndFunctions.push(func)
   }
 
-  initVoices() {
-    this.getVoices().then(res => {
-      this.setState({
-        voices: res.response.payload.voices
-      })
+  async initVoices() {
+    let res = await this.getVoices()
+    this.setState({
+      voices: res.response.payload.voices
     })
   }
 
@@ -235,10 +234,11 @@ export default class TTSaaS extends BaseClass {
     this.onUnmount()
   }
 
-  onTokenAcquired() {
-    if(this.state.voices.length === 0){
-      this.initVoices()
+  async onTokenAcquired() {
+    if(this.state.voices.length !== 0){
+      return
     }
+    return await this.initVoices()
   }
 
   resetAudio(){
