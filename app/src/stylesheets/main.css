@@ -135,10 +135,10 @@ input[name=textInput] {
 }
 
 .table-responsive .badge,
-.nlu .badge {
-  line-height: 1.75;
+.nlu .card-body .badge {
+  line-height: 1.5;
   font-weight: normal;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 td .badge.bg-primary {
