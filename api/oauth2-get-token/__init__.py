@@ -28,8 +28,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     except ValueError:
         pass
     else:
-        client_id = req_body.get('clientId')
-        client_secret = req_body.get('clientSecret')
+        client_id = req_body.get('clientId', config.get('oauth_client_id'))
+        client_secret = req_body.get('clientSecret', config.get('oauth_client_secret'))
         scope = req_body.get('scope', 'nlu dlg log')
 
     if not client_id or not client_secret:
