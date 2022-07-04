@@ -10,7 +10,7 @@ import React, { useState } from "react"
 
 import loadable from '@loadable/component'
 
-import Button from "react-bootstrap/Button"
+import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -88,8 +88,7 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
       <th>Model</th>
       <th>Gender</th>
       <th>Version</th>
-      <th>Sample Rate Hz</th>
-      <th></th>
+      <th colspan="2">Sample Rate Hz</th>
     </tr>
   )
   let clipsHtml = []
@@ -99,14 +98,14 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
         <div className="card">
           <div className="card-header">
             <span className="float-start">{clip.getInput()}</span>
-            <a href="#" className="float-end px-3" 
+            <Button className="float-end px-3" variant="link"
               onClick={evt => {
                 if(clip.getAudio()){
                   replay(clip.getAudio())
                 }
               }}>
               <FontAwesomeIcon icon={faPlay}/>
-            </a>
+            </Button>
             <span className="float-end px-3 badge bg-white text-dark">{clip.getVoice()}</span>
           </div>
         </div>
@@ -116,22 +115,22 @@ function TtsTabs({voices, audioclips, rawResponses, replay, onUseVoice}){
   let voicesTableHtml = (<table className="table table-sm">{headerHtml}<tbody>{voicesHtml}</tbody></table>)
   let audioClipsHtml = (<div className="card"><div className="card-body"><dl className="mb-0">{clipsHtml}</dl></div></div>)
   return (
-    <Tabs onSelect={(k) => setKey(k)}
+    <Tabs fill onSelect={(k) => setKey(k)}
       activeKey={key}
       transition={false} 
       id="noanim-tab-example">
-      <Tab eventKey="all_voices" title={(<div>All Voices</div>)}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-75" eventKey="all_voices" title={(<div>All Voices</div>)}>
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'all_voices' ? voicesTableHtml : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="rendered_payload" title={(<div>Synthesized Audio</div>)}>
-        <TabContent className="bg-light px-2 py-2">
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'rendered_payload' ? audioClipsHtml : ''}
         </TabContent>
       </Tab>
-      <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2">
+      <Tab className="h-75" eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
+        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
           { key === 'raw_payloads' ? (
             <ReactJson 
               className="mb-2"
@@ -330,7 +329,7 @@ export default class TTSaaS extends BaseClass {
         error: null,
         processing: ProcessingState.IDLE,
       })
-      this.parseResponse(res)
+      this.parseResponse(res).bind(this)
     }
     return { payload, res }
   }
@@ -353,25 +352,12 @@ export default class TTSaaS extends BaseClass {
 
   getAuthHtml(){
     return (
-      <div className="col-md-6 offset-md-3">
-        <Tabs defaultActiveKey="ttsaas" transition={false} 
-          id="noanim-tab-example" 
-          variant="pills"
-          className="justify-content-center"
-          onSelect={this.handleTabSelection.bind(this)}>
-          <Tab eventKey="profile" title={`Profile`}></Tab>
-          <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
-          <Tab eventKey="nluaas" title="NLUaaS"></Tab>
-          <Tab eventKey="ttsaas" title={`TTSaaS`}>
-            <AuthForm tokenError={this.state.tokenError}
-                initToken={this.initToken.bind(this)}
-                clientId={this.state.clientId}
-                clientSecret={this.state.clientSecret}
-                onChangeTextInput={this.onChangeTextInput.bind(this)}
-                serviceScope="tts log" />
-          </Tab>
-        </Tabs>
-      </div>
+      <AuthForm tokenError={this.state.tokenError}
+          initToken={this.initToken.bind(this)}
+          clientId={this.state.clientId}
+          clientSecret={this.state.clientSecret}
+          onChangeTextInput={this.onChangeTextInput.bind(this)}
+          serviceScope="tts" />
     );
   }
 
@@ -380,7 +366,7 @@ export default class TTSaaS extends BaseClass {
     let lastLang = null
     this.state.voices.forEach((v, idx) => {
       if(v.sampleRateHz === 22050){
-        if(lastLang != v.language){
+        if(lastLang !== v.language){
           voiceOptions.push(<optgroup key={'optgroup-'+idx} label={v.language}></optgroup>)
           lastLang = v.language
         }
@@ -422,10 +408,12 @@ export default class TTSaaS extends BaseClass {
   getSynthesizeHtml() {
     let voiceOptions = this.getVoicesSelectOptions()
     return (
-      <div className="col">
+      <div className="col px-4 h-100">
         <div className="row">
-          <div className="col-12 mb-3">
-            <h3 className="fw-bold">Text to Speech</h3>
+          <div className="col-12 mb-1">
+            <h3 className="fw-bold mt-3">
+              Text to Speech
+            </h3>
             <span className="text-dark mb-3 float-start">
               Learn more about <a href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">voices</a>.
             </span>
@@ -443,7 +431,7 @@ export default class TTSaaS extends BaseClass {
                     <Form.Control name="textInput" type="text" value={this.state.textInput} placeholder="Start typing here..." onChange={this.onChangeTextInput.bind(this)}/>
                     <Form.Label htmlFor="textInput">Text to Synthesize</Form.Label>
                   </Form.Group>
-                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border">
+                  <Form.Group style={{'width': '10%'}} className="form-floating px-3 position-relative end-0 mt-0 mb-0 border bg-white">
                     <Form.Check label={`SSML`} className="align-middle my-3" type="checkbox" name="ssml" checked={this.state.ssmlInput} onChange={evt => {this.setState({ssmlInput: !this.state.ssmlInput})}}></Form.Check>
                   </Form.Group>
                   <Form.Group style={{'width': '15%'}} className="form-floating">
@@ -464,8 +452,8 @@ export default class TTSaaS extends BaseClass {
             </div>
           </div>
         </div>
-        <div className="row mt-1">
-          <div className="col-12 mt-3">
+        <div className="row mt-1 h-100">
+          <div className="col-12 mt-3 h-100">
             <TtsTabs
               replay={this.playAudio.bind(this)} 
               voices={this.state.voices} 
@@ -480,12 +468,24 @@ export default class TTSaaS extends BaseClass {
 
   render(){
     return (
-      <div className="row">
-        { 
-          this.state.accessToken ? 
-          this.getSynthesizeHtml() : 
-          this.getAuthHtml() 
-        }
+      <div className="row h-100">
+        <Tabs fill defaultActiveKey="ttsaas" transition={false} 
+          id="noanim-tab-example" 
+          variant="pills"
+          className="justify-content-center"
+          onSelect={this.handleTabSelection.bind(this)}>
+          <Tab eventKey="profile" title={`Profile`}></Tab>
+          <Tab eventKey="dlgaas" title={`DLGaaS`}></Tab>
+          <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
+          <Tab eventKey="nluaas" title="NLUaaS"></Tab>
+          <Tab eventKey="ttsaas" title={`TTSaaS`} className="h-100">
+            { 
+              this.state.accessToken ? 
+              this.getSynthesizeHtml() : 
+              this.getAuthHtml() 
+            }
+          </Tab>
+        </Tabs>
       </div>
     )
   }

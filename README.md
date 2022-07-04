@@ -91,6 +91,12 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 git clone git@github.com:nuance-communications/mix-demo-client-azstaticwebapps.git
 ```
 
+Pre-requisite for either Docker or Native Host based:
+
+```
+make certs-setup
+```
+
 Assumes running the application using Docker: 
 
 ```bash

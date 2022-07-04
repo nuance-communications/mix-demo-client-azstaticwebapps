@@ -6,7 +6,7 @@
  * the LICENSE.md file in the root directory of this source tree.
  *
  */
-import React, { useState } from "react"
+import React from "react"
 
 import { AuthForm } from "./shared"
 import ChatPanel from "./chat"

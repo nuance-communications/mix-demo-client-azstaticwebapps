@@ -10,9 +10,11 @@ import { useEffect } from 'react'
 import { navigate } from 'gatsby'
 
 // Redirect directly to CSR
-export default () => {
+const Main = () => {
   useEffect(() => {
     navigate('/app/'+window.location.search)
   }, [])
   return null
 };
+
+export default Main;

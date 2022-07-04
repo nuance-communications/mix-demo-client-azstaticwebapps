@@ -297,7 +297,6 @@ class DlgaasApi(OAuthApi):
         return self._post(f'start/{urn}', raw_payload)
 
     def execute(self, session_id, payload):
-        sid = urllib.parse.quote(session_id, safe='')
         return self._post(f'execute/{session_id}', {"payload": payload})
 
     def stop(self, session_id):

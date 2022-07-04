@@ -14,33 +14,31 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.min.js"
 import "@popperjs/core/dist/umd/popper.min.js"
 import "../stylesheets/main.css"
+import Header from "../images/mix-header.png"
 
 // styles
 const pageStyles = {
+  position: "fixed",
   color: "#232129",
-  padding: "40px 46px",
-  fontFamily: "-apple-system, Roboto, sans-serif, serif",
+  padding: "0px 0px",
+  fontFamily: "Roboto, sans-serif, serif",
 }
-const headingStyles = {
-  marginTop: 0,
-  marginBottom: 24,
-}
-const headingAccentStyles = {
-  color: "rgb(41,180,197)",
+const headingImageStyles = {
+  height: 'auto',
+  width: '100%',
+  objectFit: 'contain',
 }
 
 export default class Layout extends React.Component {
   render() {
     return (<Location>
       {({ location, navigate }) => (
-        <main style={pageStyles}>
+        <main className="h-100" style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
-          <h1 style={headingStyles} className="text-center display-4">
-              <Link to={`/`+location.search} className="text-decoration-none text-dark">
-                Nuance <span style={headingAccentStyles}>Mix</span>
-              </Link>
-          </h1>
-          <div className="container">
+          <Link to={`/`+location.search} className="text-decoration-none text-dark">
+            <img alt={`Nuance Mix`} className="text-center display-4" style={headingImageStyles} src={Header}/>
+          </Link>
+          <div className="container-fluid gx-0 h-100">
             {this.props.children}
           </div>
         </main>
