@@ -600,7 +600,7 @@ export default class ASRaaS extends BaseClass {
     return null;
   }
 
-  onTokenAcquired() { 
+  async onTokenAcquired() { 
     let audioIn = this.initAudioIn() // mic-based
     let controller = this.initAsr()
     audioIn.init().then(() => {

@@ -452,12 +452,13 @@ export class BaseClass extends React.Component {
     this.setState({
       accessToken: res.response.token,
       tokenError: null,
+    }, async () => {
+      await this.onTokenAcquired()
     })
-    this.onTokenAcquired()
     return !!res
   }
 
-  onTokenAcquired() {
+  async onTokenAcquired() {
     // Do something
   }
 

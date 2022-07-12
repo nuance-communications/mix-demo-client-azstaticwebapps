@@ -330,7 +330,7 @@ export default class DLGaaS extends BaseClass {
     this.onUnmount()
   }
 
-  onTokenAcquired() {
+  async onTokenAcquired() {
     // noop
     if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
       this.initTts()
