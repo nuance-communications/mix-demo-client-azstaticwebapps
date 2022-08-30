@@ -13,7 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var nuance_rpc_status_code_pb = require('../../nuance/rpc/status_code_pb.js');
 goog.object.extend(proto, nuance_rpc_status_code_pb);
