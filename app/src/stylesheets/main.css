@@ -9,6 +9,10 @@ main .tab-content {
 .tab-pane {
   height: 100%;
 }
+.table-fixedLayout {
+  table-layout: fixed;
+  overflow-wrap: break-word;
+}
 .nav-tabs .nav-item .nav-link, 
 .nav-pills .nav-link {
   background: #FAFAFA;
