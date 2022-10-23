@@ -35,7 +35,7 @@ export default class Layout extends React.Component {
       {({ location, navigate }) => (
         <main className="h-100" style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
-          <Link to={`/`+location.search} className="text-decoration-none text-dark">
+          <Link to={`/`+location.search} className="text-decoration-none text-dark d-block position-relative">
             <img alt={`Nuance Mix`} className="text-center display-4" style={headingImageStyles} src={Header}/>
           </Link>
           <div className="container-fluid gx-0 h-100">

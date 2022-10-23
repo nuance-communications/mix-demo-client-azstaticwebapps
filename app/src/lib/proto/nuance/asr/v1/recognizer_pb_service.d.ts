@@ -29,6 +29,7 @@ interface ResponseStream<T> {
   on(type: 'data', handler: (message: T) => void): ResponseStream<T>;
   on(type: 'end', handler: (status?: Status) => void): ResponseStream<T>;
   on(type: 'status', handler: (status: Status) => void): ResponseStream<T>;
+  on(type: 'error', handler: (error: Error) => void): ResponseStream<T>;
 }
 interface RequestStream<T> {
   write(message: T): RequestStream<T>;
@@ -36,6 +37,7 @@ interface RequestStream<T> {
   cancel(): void;
   on(type: 'end', handler: (status?: Status) => void): RequestStream<T>;
   on(type: 'status', handler: (status: Status) => void): RequestStream<T>;
+  on(type: 'error', handler: (error: Error) => void): RequestStream<T>;
 }
 interface BidirectionalStream<ReqT, ResT> {
   write(message: ReqT): BidirectionalStream<ReqT, ResT>;
@@ -44,6 +46,7 @@ interface BidirectionalStream<ReqT, ResT> {
   on(type: 'data', handler: (message: ResT) => void): BidirectionalStream<ReqT, ResT>;
   on(type: 'end', handler: (status?: Status) => void): BidirectionalStream<ReqT, ResT>;
   on(type: 'status', handler: (status: Status) => void): BidirectionalStream<ReqT, ResT>;
+  on(type: 'error', handler: (error: Error) => void): BidirectionalStream<ReqT, ResT>;
 }
 
 export class RecognizerClient {

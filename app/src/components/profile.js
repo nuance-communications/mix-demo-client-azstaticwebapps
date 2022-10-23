@@ -81,8 +81,13 @@ function ProfileView({
               <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; TTS Output</option>
             </optgroup>
             <optgroup label="IVR">
+              <option value={'ivrAudioInOut'}>IVR: ASR &amp; DTMF Input with TTS Output</option>
               <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
               <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with TTS Output (no ASR)</option>
+            </optgroup>
+            <optgroup label="IoT">
+              <option value={'smartSpeaker'}>SmartSpeaker: Voice Input with Voice Output</option>
+              <option value={'smartSpeakerWithScreen'}>SmartSpeaker: Voice + Text Input with Voice + HTML Output</option>
             </optgroup>
           </Form.Control>
           <Form.Label>Simulate Experience</Form.Label>

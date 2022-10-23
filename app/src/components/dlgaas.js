@@ -12,17 +12,23 @@ import moment from 'moment'
 import loadable from '@loadable/component'
 
 import { BaseClass, AuthForm } from "./shared"
-import { CLIENT_DATA, ROOT_URL, SIMULATED_EXPERIENCES } from "./shared"
+import { CLIENT_DATA, ROOT_URL, SIMULATED_EXPERIENCES, DLG_SERVICE_URL } from "./shared"
 import { LogEventsTable, LogEventsViz } from "./log"
 import ChatPanel from "./chat"
 import TTSaaS from "../components/ttsaas"
 import Form from 'react-bootstrap/Form'
+import { ASRaaS, ProcessingState } from "./asraas"
+
+import { 
+  DlgController, 
+} from "../lib/dlg"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Button = loadable(() => import('react-bootstrap/Button'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
 const Tab = loadable(() => import('react-bootstrap/Tab'))
 const TabContent = loadable(() => import('react-bootstrap/TabContent'))
+
 
 const ACTION_TYPES = [ 
   'qaAction',
@@ -33,6 +39,44 @@ const ACTION_TYPES = [
 ]
 
 // Data Handlers
+
+const USER_1 = {
+  'id': '0000',
+  'firstName': 'Nancy',
+  'lastName': 'Taylor',
+  'email': 'nancy.taylor@contoso.com',
+  'phoneNumber': '781-565-5000',
+  'accessLevels': [
+    'make-payment'
+  ],
+  'homeCity': 'New York',
+  'favoriteAssets': [
+    'AMD',
+    'NVDA',
+    'AAPL',
+    'NFLX',
+    'COIN'
+  ]
+}
+
+const USER_2 = {
+  'id': '2021',
+  'firstName': 'Matthew',
+  'lastName': 'Johnson',
+  'email': 'matthew.johnson@contoso.com',
+  'phoneNumber': '781-565-5000',
+  'accessLevels': [
+    'make-payment'
+  ],
+  'homeCity': 'Seattle',
+  'favoriteAssets': [
+    'NUAN',
+    'MSFT',
+    'DIS',
+    'TSLA',
+    'SQ'
+  ]
+}
 
 class ExternalFetchHandlers {
 
@@ -73,9 +117,26 @@ class ExternalFetchHandlers {
     return 'api/store-api-purchase'
   }
 
+  Channel_Transfer_SMS = () => {
+    return 'api/channel-transfer'
+  }
+
 }
 
 class ClientFetchHandlers {
+
+  UserAuth = () => {
+    return new Promise(resolve => {
+      let u = Math.random()*3 > 1 ? USER_1 : USER_2
+      resolve({
+        'response': {
+          'returnCode': '0',
+          'returnMessage': 'Authenticated user',
+          'USER': u
+        }
+      })
+    })
+  }
 
   Location = () => {
     // Get location from browser
@@ -258,7 +319,8 @@ export default class DLGaaS extends BaseClass {
     this.externalHandlers = new ExternalFetchHandlers()
 
     this.ttsClz = null
-
+    this._dlgController = null
+    
   }
 
   isStandalone(){
@@ -319,6 +381,7 @@ export default class DLGaaS extends BaseClass {
       if(this.ttsClz){
         this.ttsClz.onUnmount()
       }
+      this.eraseAuthTokenCookie()
     } catch(ex) {
       console.warn(ex)
     }
@@ -330,16 +393,32 @@ export default class DLGaaS extends BaseClass {
     this.onUnmount()
   }
 
-  async onTokenAcquired() {
+  async onTokenAcquired(token) {
     // noop
-    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
-      this.initTts()
-    }
+    this.warmupExperienceSimulation()
+    this.setAuthTokenCookie(token)
+  }
+
+  isVoiceInputExperience(){
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).voiceInput
+  }
+
+  isOrchestratedInteraction(){
+      return SIMULATED_EXPERIENCES(this.state.simulateExperience).isOutputVoice
+  }
+
+  isVoiceOutputExperience(){
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS 
   }
 
   warmupExperienceSimulation(){
-    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
+    if(this.isVoiceOutputExperience()){
       this.initTts()
+    }
+    if(this.isVoiceInputExperience()){
+      if(this.state.accessToken){
+        this.initDlgGrpcWeb()
+      }
     }
   }
 
@@ -358,6 +437,65 @@ export default class DLGaaS extends BaseClass {
         ttsVoices: res.response.payload.voices
       })
     })
+  }
+
+  initDlgGrpcWeb(){
+    if(this._dlgController){
+      console.log("DLG Controller already initialized")
+      return
+    }
+    const viewController = this
+    this._dlgController = new DlgController(DLG_SERVICE_URL, async function (){
+      await viewController.ensureTokenNotExpired()
+      return viewController.state.accessToken
+    })
+    this._dlgController.on('start-session', () => {
+      console.log('Recognition request initiated. Audio attached.')
+      this.setState({
+        error: false,
+        processing: ProcessingState.INITIALIZING // REVISIT
+      })
+    })
+    this._dlgController.on('start-audio', () => {
+      this.setState({
+        processing: ProcessingState.IN_FLIGHT // REVISIT
+      })
+    })
+    this._dlgController.on('stopped', () => {
+      console.log('DLG stopped.')
+      this.setState({
+        processing: ProcessingState.AWAITING_FINAL
+      })
+    })
+    this._dlgController.on('end', () => {
+      this.setState({
+        processing: ProcessingState.IDLE
+      })
+      this.eraseAuthTokenCookie()
+    })
+    this._dlgController.on('error', (err) => {
+      console.error('ASR error.', err)
+      this.setState({
+        error: err,
+        processing: ProcessingState.IDLE
+      })
+    })
+  }
+
+  setAuthTokenCookie(token){
+    let expiration = new Date()
+    let FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000
+    expiration.setTime(expiration.getTime() + FIFTEEN_MINUTES_IN_MS)
+    let cookieVal = `auth-token=${token.access_token}; ` + 
+                    `expires=${expiration.toUTCString()}; ` +
+                    `domain=.nuance.com; ` + 
+                    `path=/`
+    document.cookie = cookieVal
+    console.warn('!!!!! setting cookie', document.cookie)
+  }
+
+  eraseAuthTokenCookie(){
+    document.cookie = `auth-token=; domain=.nuance.com; Path=/; Max-Age=-99999999;`;
   }
 
   // DLGaaS API
@@ -380,11 +518,16 @@ export default class DLGaaS extends BaseClass {
     if(sessionId){
       fullPayload.session_id = sessionId
     }
-    return await this.request(`${ROOT_URL}/api/dlgaas-session-start`, {
-      token: this.state.accessToken,
-      modelUrn: this.state.modelUrn,
-      rawPayload: fullPayload
-    })
+    if(this.isVoiceInputExperience()){
+      this.setAuthTokenCookie(this.state.accessToken)
+      return await this._dlgController.start(fullPayload, this.state.modelUrn)
+    } else {
+      return await this.request(`${ROOT_URL}/api/dlgaas-session-start`, {
+        token: this.state.accessToken,
+        modelUrn: this.state.modelUrn,
+        rawPayload: fullPayload
+      })
+    }
   }
 
   async sessionExecute(payload) {
@@ -397,13 +540,41 @@ export default class DLGaaS extends BaseClass {
     })
   }
 
+  async executeStream(payload){
+
+    // asr params
+    // tts params 
+    // stream input
+    // execute stream
+    // on data/end/error
+    // latch audio source
+    // event: started
+    return true
+  }
+
+  async sessionExecuteStream(payload) {
+    // Leverage a stream, instead. 
+    await this.ensureTokenNotExpired()
+    return await this.executeStream({
+      token: this.state.accessToken,
+      sessionId: this.state.sessionId,
+      rawPayload: payload
+    })
+  }
+
   async sessionStop() {
     // Lastly, the Session is Stopped
     await this.ensureTokenNotExpired()
-    return await this.request(`${ROOT_URL}/api/dlgaas-session-stop`, {
-      token: this.state.accessToken,
-      sessionId: this.state.sessionId
-    })
+    if(this.isVoiceInputExperience()){
+      return await this._dlgController.stop({
+        sessionId: this.state.sessionId
+      })
+    } else {
+      return await this.request(`${ROOT_URL}/api/dlgaas-session-stop`, {
+        token: this.state.accessToken,
+        sessionId: this.state.sessionId
+      })
+    }
   }
 
   async clientFetchDaAction(daAction){
@@ -455,6 +626,7 @@ export default class DLGaaS extends BaseClass {
         this.state.startData,
         this.state.sessionId
       )
+      console.warn(res)
       // Error
       if(res.error){
         console.warn(res)
@@ -559,21 +731,24 @@ export default class DLGaaS extends BaseClass {
     if(consideredInput && this.recoTimeout !== -1){
       clearTimeout(this.recoTimeout)
     }
-    let r = await this.sessionExecute(payload)
-    rawResponses.unshift(r)
-    this.setState({
-      rawResponses: rawResponses,
-    })
-    if(!r.error){
-      this.parseResponse(r)
-      // Fetch records
-      this.doFetchRecords(2000)
+    if(this.voiceInput){
+      // TODO
     } else {
-      console.warn(r.error)
+      let r = await this.sessionExecute(payload)
+      rawResponses.unshift(r)
+      this.setState({
+        rawResponses: rawResponses,
+      })
+      if(!r.error){
+        this.parseResponse(r)
+        // Fetch records
+        this.doFetchRecords(2000)
+      } else {
+        console.warn(r.error)
+      }
     }
     return false
   }
-
 
   async processDataAction(daAction){
     let res = await this.clientFetchDaAction(daAction)
@@ -813,7 +988,7 @@ export default class DLGaaS extends BaseClass {
           clientId={this.state.clientId}
           clientSecret={this.state.clientSecret}
           onChangeTextInput={this.onChangeTextInput.bind(this)}
-          serviceScope="dlg tts log" />
+          serviceScope="asr dlg tts log" />
     )
   }
 
@@ -827,8 +1002,8 @@ export default class DLGaaS extends BaseClass {
         startData.userData = {location: {}}
       }
       startData.userData.location = {
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude
+        latitude: String(pos.coords.latitude),
+        longitude: String(pos.coords.longitude)
       }
       let fetchingLocation = false
       this.setState({
@@ -845,7 +1020,7 @@ export default class DLGaaS extends BaseClass {
   }
 
   getScope(){
-    return 'dlg tts log'
+    return 'dlg asr tts log'
   }
 
   getVoiceOptionsHTML(){
@@ -898,8 +1073,13 @@ export default class DLGaaS extends BaseClass {
                     <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; TTS Output</option>
                   </optgroup>
                   <optgroup label="IVR">
+                    <option value={'ivrAudioInOut'}>IVR: ASR &amp; DTMF Input with TTS Output</option>
                     <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
                     <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with TTS Output (no ASR)</option>
+                  </optgroup>
+                  <optgroup label="IoT">
+                    <option value={'smartSpeaker'}>SmartSpeaker: Voice Input with Voice Output</option>
+                    <option value={'smartSpeakerWithScreen'}>SmartSpeaker: Voice + Text Input with Voice + HTML Output</option>
                   </optgroup>
                 </Form.Control>
                 <Form.Label>Simulate Experience</Form.Label>

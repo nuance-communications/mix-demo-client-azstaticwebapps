@@ -102,7 +102,7 @@ containers-clean:
 
 # Native 
 native-build-app:
-	cd app/; npm install
+	cd app/; npm install --legacy-peer-deps --loglevel warn
 
 native-build-api:
 	cp resources/local.settings.json api/local.settings.json

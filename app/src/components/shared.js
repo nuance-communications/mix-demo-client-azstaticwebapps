@@ -11,7 +11,7 @@ import { navigate } from "gatsby"
 import axios from "axios"
 
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
-export const VERSION = '1.7.0'
+export const VERSION = '1.8.0'
 export const CLIENT_DATA = {
     "version": VERSION,
     "client": "Nuance Mix Demo Client",
@@ -20,6 +20,7 @@ export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at th
 export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
 export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
+export const DLG_SERVICE_URL = "https://dlg.api.nuance.com"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",
@@ -265,6 +266,14 @@ const EXPERIENCE_TYPES = {
     bindTimeouts: true,
     dtmfInput: true
   },
+  ivrAudioInOut: {
+    playTTS: true,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true,
+    voiceInput: true
+  },
   visualVA: {
     playTTS: false,
     isOutputHTML: true,
@@ -278,6 +287,25 @@ const EXPERIENCE_TYPES = {
     isOutputSSML: true,
     bindTimeouts: false,
     dtmfInput: false
+  },
+  smartSpeaker: {
+    voiceInput: true,
+    playTTS: false, // represents SEPARATE orchestration
+    isOutputHTML: true,
+    isOutputSSML: true,
+    isOutputVoice: true,
+    bindTimeouts: false,
+    dtmfInput: false
+  },
+  smartSpeakerWithScreen: {
+    voiceInput: true,
+    playTTS: false, // represents SEPARATE orchestration
+    isOutputHTML: true,
+    isOutputSSML: true,
+    isOutputVoice: true,
+    bindTimeouts: false,
+    dtmfInput: false,
+    hasVisual: true
   }
 }
 
@@ -453,7 +481,7 @@ export class BaseClass extends React.Component {
       accessToken: res.response.token,
       tokenError: null,
     }, async () => {
-      await this.onTokenAcquired()
+      await this.onTokenAcquired(res.response.token)
     })
     return !!res
   }
@@ -475,11 +503,13 @@ export class BaseClass extends React.Component {
       clientId: encodeURIComponent(this.state.clientId),
       token: this.state.accessToken,
     })
-    console.log("New log API consumer created")
-    this.setState({
-      logConsumerName: ret.response.consumerName,
-      logConsumerGroup: ret.response.consumerGroup,
-    })
+    if(ret && ret.response){
+      console.log("New log API consumer created")
+      this.setState({
+        logConsumerName: ret.response.consumerName,
+        logConsumerGroup: ret.response.consumerGroup,
+      })
+    }
     return ret
   }
 

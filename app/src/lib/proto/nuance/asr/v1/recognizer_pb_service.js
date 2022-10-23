@@ -30,12 +30,13 @@ RecognizerClient.prototype.recognize = function recognize(metadata) {
   var listeners = {
     data: [],
     end: [],
-    status: []
+    status: [],
+    error: []
   };
   var client = grpc.client(Recognizer.Recognize, {
     host: this.serviceHost,
     metadata: metadata,
-    transport: this.options.transport
+    transport: this.options.transport.bind(null, listeners.error)
   });
   client.onEnd(function (status, statusMessage, trailers) {
     listeners.status.forEach(function (handler) {

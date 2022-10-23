@@ -16,7 +16,7 @@
         "exclude": ["/images/*.{png,jpg,gif}", "/stylesheets/*"]
     },
     "globalHeaders": {
-        "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'; media-src 'self' data:; img-src 'self' data: https:; connect-src 'self' wss://asr.api.nuance.com;"
+        "content-security-policy": "default-src https: 'unsafe-eval' 'unsafe-inline'; object-src 'none'; media-src 'self' data:; img-src 'self' data: https:; connect-src 'self' wss://*.api.nuance.com;"
     },
     "mimeTypes": {
         ".json": "text/json"

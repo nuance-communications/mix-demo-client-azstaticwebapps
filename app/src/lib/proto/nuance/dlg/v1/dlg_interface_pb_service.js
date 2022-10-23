@@ -76,11 +76,14 @@ DialogServiceClient.prototype.start = function start(requestMessage, metadata, c
   if (arguments.length === 2) {
     callback = arguments[1];
   }
+  var listeners = {
+    error: []
+  };
   var client = grpc.unary(DialogService.Start, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
-    transport: this.options.transport,
+    transport: this.options.transport.bind(null, listeners.error),
     debug: this.options.debug,
     onEnd: function (response) {
       if (callback) {
@@ -169,12 +172,13 @@ DialogServiceClient.prototype.executeStream = function executeStream(metadata) {
   var listeners = {
     data: [],
     end: [],
-    status: []
+    status: [],
+    error: []
   };
   var client = grpc.client(DialogService.ExecuteStream, {
     host: this.serviceHost,
     metadata: metadata,
-    transport: this.options.transport
+    transport: this.options.transport.bind(null, listeners.error)
   });
   client.onEnd(function (status, statusMessage, trailers) {
     listeners.status.forEach(function (handler) {
