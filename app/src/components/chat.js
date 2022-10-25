@@ -21,12 +21,17 @@ import { faComments,
   faExternalLinkAlt,
   faWindowMinimize,
   faWindowMaximize, 
-  faPhoneSlash
+  faPhoneSlash,
+  faMicrophone,
+  faMicrophoneSlash,
+  faBug,
+  faBugSlash
 } from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
 
 import { STUB_SELECTABLE_IMAGES, SIMULATED_EXPERIENCES } from "./shared"
+import { AudioVisualizer } from '../lib/visualizer'
 
 const components = ReactSafeHtml.components.makeElements({})
 components.div = ReactSafeHtml.components.createSimpleElement('div', {style: true, class: true})
@@ -122,7 +127,7 @@ const Keypad = ({name, disabled, onKeypadInput, settings}) => {
     ['*',0,'#'],
   ]
   const handleClick = (e) => {
-    onKeypadInput(e.target.innerText, settings.dtmfMappings, settings.dtmfSettings, e)
+    onKeypadInput(e.target.innerText, e)
   }
 
   let optionsHtml = []
@@ -323,6 +328,7 @@ export default class ChatPanel extends React.Component {
       recognitionSettings: {},
       timeoutRemaining: 0,
       minimized: false,
+      showAdvanced: false
     }
     this.sessionTimeoutInterval = -1
     this.countdownTimer = null
@@ -331,17 +337,21 @@ export default class ChatPanel extends React.Component {
   componentDidMount(){
     this.focusInput()
     this.setState({
-      timeoutRemaining: this.props.sessionTimeout
+      timeoutRemaining: this.props.sessionTimeout,
+      showAdvanced: this.isVoiceOutputExperience()
     })
     this.sessionTimeoutInterval = window.setInterval(() => {
       this.dlgSessionTick()
     }, 1000)
   }
 
-  componentDidUpdate(){
+  componentDidUpdate(props, opts){
     this.triggerAutoScroll()
     if(!this.props.active && this.sessionTimeoutInterval !== -1){
       this.endSessionTimeoutInterval()
+    }
+    if(props.isProcessingInput){
+      this.focusInput()
     }
   }
 
@@ -378,7 +388,7 @@ export default class ChatPanel extends React.Component {
   }
 
   focusInput(){
-    document.getElementById('textInput').focus()
+    document.getElementById(this.isVoiceInputExperience() ? 'btnDialogSubmitAudio' : 'textInput').focus();
   }
 
   focusKeypad(){
@@ -404,7 +414,7 @@ export default class ChatPanel extends React.Component {
     // Handle a dtmf-like input
     let dtmfInput = {}
     let executed = false
-    mappings.forEach(mapping => {
+    this.props.recognitionSettings.dtmfMappingsList.forEach(mapping => {
       if(mapping.dtmfKey === value){
         dtmfInput[mapping.id] = mapping.value
       }
@@ -414,7 +424,7 @@ export default class ChatPanel extends React.Component {
       executed = true
     }
     let newInput = this.state.dtmfInput
-    if(!executed && value === settings.termChar){
+    if(!executed && value === this.props.recognitionSettings.dtmfSettings?.termChar){
       this.props.onExecute(newInput, null, null, true)
       executed = true
     } else {
@@ -429,7 +439,7 @@ export default class ChatPanel extends React.Component {
   }
 
   renderSelectables(view, selectables, idx){
-    switch(view.name){
+    switch(view?.name){
       case 'carousel':
         return (<ChatCarousel key={idx} view={view} index={idx} selectables={selectables} selectItem={this.selectItem.bind(this)}></ChatCarousel>)
       case 'colorpicker':
@@ -442,7 +452,7 @@ export default class ChatPanel extends React.Component {
 
   renderSpecialInput(qaAction, idx){
     let ret = null
-    let viewName = qaAction.view.name // Mix.dialog QA 'type' (id=css)
+    let viewName = qaAction.view?.name // Mix.dialog QA 'type' (id=css)
     switch(viewName){
       case 'currency':
         ret = (
@@ -499,13 +509,18 @@ export default class ChatPanel extends React.Component {
         console.log('unhandled use-case')
         break
     }
+    this.focusInput()
   }
 
   isVisualExperience(){
     return SIMULATED_EXPERIENCES(this.props.simulateExperience).isOutputHTML
   }
 
-  isVoiceExperience(){
+  isVoiceInputExperience(){
+    return SIMULATED_EXPERIENCES(this.props.simulateExperience).voiceInput
+  }
+
+  isVoiceOutputExperience(){
     return SIMULATED_EXPERIENCES(this.props.simulateExperience).isOutputSSML
   }
 
@@ -516,22 +531,23 @@ export default class ChatPanel extends React.Component {
   gatherAndPopulateMessages(action, resMessages){
     if(!action) return
     let m = action.message
-    if(this.isVisualExperience()){
-      m.visual.forEach((m, idx) => {
+    if(this.isVoiceOutputExperience()){
+      m.nlgList.forEach((m, idx) => {
         resMessages.push(
-          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
-            <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-              <ReactSafeHtml html={m.text} components={components} />
+          <dd key={`latency-nlg-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="nlg-text rounded rounded-3 bg-light msg text-dark p-2">
+              {m.text}
             </div>
           </dd>
         )
       })
-    } else if(this.isVoiceExperience()){
-      m.nlg.forEach((m, idx) => {
+    }
+    if(this.isVisualExperience()){
+      m.visualList.forEach((m, idx) => {
         resMessages.push(
-          <dd key={`latency-msg-${idx}`} className="d-flex justify-content-start">
-            <div className="rounded rounded-3 bg-light msg text-dark p-2">
-              {m.text}
+          <dd key={`latency-visual-msg-${idx}`} className="d-flex justify-content-start">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+              <ReactSafeHtml html={m.text} components={components} />
             </div>
           </dd>
         )
@@ -545,7 +561,6 @@ export default class ChatPanel extends React.Component {
       this.props.rawResponses.forEach((res, idx) => {
         const resMessages = []
         if(res.error){
-          // console.warn('this error i got', res, res.error)
           resMessages.push(<dd key={idx} className="badge bg-danger text-white text-wrap">{JSON.stringify(res.error.response.data.error)}</dd>)
         } else if(res.request){
           if(!res.request){
@@ -601,38 +616,37 @@ export default class ChatPanel extends React.Component {
               </dd>
             )
           }
-        } else if (!res.response){
-          return
-        } else if(res.response.payload) {
+        } else if(res.response?.payload) {
           // SYSTEM MESSAGE
           if(!res.response || res.error){
             return
           }
           // MESSAGES
-          const msgs = res.response.payload.messages
+          const msgs = res.response.payload.messagesList
           if(msgs){
             msgs.forEach((m,idx2) => {
-              if(this.isVisualExperience()){
-                m.visual.forEach((_m, idx3) => {
+              if(this.isVoiceOutputExperience()){
+                m.nlgList.forEach((_m, idx3) => {
                   let txt = _m.text
                   if(txt.length){
                     resMessages.push(
-                      <dd key={idx+'-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
-                        <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
-                          <ReactSafeHtml html={txt} components={components} />
+                      <dd key={`${idx}-nlg-msg-${idx2}-${idx3}`} className="">
+                        <div className="nlg-text rounded rounded-3 bg-light msg text-dark p-2">
+                          {txt}
                         </div>
                       </dd>
                     )
                   }
                 })
-              } else if(this.isVoiceExperience()){
-                m.nlg.forEach((_m, idx3) => {
+              }
+              if(this.isVisualExperience()){
+                m.visualList.forEach((_m, idx3) => {
                   let txt = _m.text
                   if(txt.length){
                     resMessages.push(
-                      <dd key={`${idx}-msg-${idx2}-${idx3}`} className="">
-                        <div className="rounded rounded-3 bg-light msg text-dark p-2">
-                          {txt}
+                      <dd key={idx+'-visual-msg-'+idx2+'-'+idx3} className="d-flex justify-content-start">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)} >
+                          <ReactSafeHtml html={txt} components={components} />
                         </div>
                       </dd>
                     )
@@ -650,10 +664,20 @@ export default class ChatPanel extends React.Component {
           const qaAction = res.response.payload.qaAction
           if(qaAction){
             let cardMsgs = []
+            if(this.isVoiceOutputExperience()){
+              cardMsgs = []
+              if(qaAction.message){
+                qaAction.message.nlgList.forEach((m, idx2) => {
+                  cardMsgs.push(m.text)
+                })
+              }
+              resMessages.push(<dd key={'qa-nlg-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 nlg-text bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
+            }
             if(this.isVisualExperience()){
+              cardMsgs = []
               // Text
               if(qaAction.message){
-                qaAction.message.visual.forEach((m, idx2) => {
+                qaAction.message.visualList.forEach((m, idx2) => {
                   cardMsgs.push(
                     <ReactSafeHtml key={'msg-safe-'+idx2} html={m.text} components={components} />
                   )
@@ -667,35 +691,25 @@ export default class ChatPanel extends React.Component {
                 }
                 // Selectable
                 if(qaAction.selectable){
-                  const selectables = qaAction.selectable.selectableItems
+                  const selectables = qaAction.selectable.selectableItemsList
                   if(selectables && selectables.length){
                     cardMsgs.push(<div className="mt-3 mb-2" key={'msg-selectable-'+idx}>{this.renderSelectables(qaAction.view, selectables, idx)}</div>)
 
                   }
                 }
               }
-              resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)}>{cardMsgs}</div></dd>)
-            } else if(this.isVoiceExperience()){
-              if(qaAction.message){
-                qaAction.message.nlg.forEach((m, idx2) => {
-                  cardMsgs.push(m.text)
+              resMessages.push(<dd key={'qa-visual-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2" onClick={this.onClickEvent.bind(this)}>{cardMsgs}</div></dd>)
+            }
+            if(this.isIVRExperience() && idx === 0 && this.props.active){
+              const dtmfMappings = qaAction.recognitionSettings?.dtmfMappingsList
+              const dtmfMappingKeys = Object.keys(dtmfMappings)
+              if(dtmfMappingKeys.length){
+                let dtmfTable = []
+                dtmfMappingKeys.forEach(m => {
+                  let mapping = dtmfMappings[m]
+                  dtmfTable.unshift(<tr key={'dtmf-'+idx+'-'+m}><td>{mapping.dtmfKey}</td><td>{mapping.value}</td><td>{mapping.id}</td></tr>)
                 })
-              }
-              resMessages.push(<dd key={'qa-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
-              if(idx === 0 && this.props.active){
-                const dtmfMappings = qaAction.recognitionSettings.dtmfMappings
-                const dtmfMappingKeys = Object.keys(dtmfMappings)
-                if(dtmfMappingKeys.length){
-                  let dtmfTable = []
-                  dtmfMappingKeys.forEach(m => {
-                    let mapping = dtmfMappings[m]
-                    dtmfTable.unshift(<tr key={'dtmf-'+idx+'-'+m}><td>{mapping.dtmfKey}</td><td>{mapping.value}</td><td>{mapping.id}</td></tr>)
-                  })
-                  resMessages.push(<dd key={'da-'+idx}><div className="w-100 rounded rounded-3 bg-transparent msg text-secondary p-2"><table className='table table-sm'><thead><tr><th>Key</th><th>Value</th><th>ID</th></tr></thead><tbody>{dtmfTable}</tbody></table></div></dd>)
-                }
-                this.setState({
-                  recognitionSettings: qaAction.recognitionSettings
-                })
+                resMessages.push(<dd key={'da-'+idx}><div className="w-100 rounded rounded-3 bg-transparent msg text-secondary p-2"><table className='table table-sm'><thead><tr><th>Key</th><th>Value</th><th>ID</th></tr></thead><tbody>{dtmfTable}</tbody></table></div></dd>)
               }
             }
           }
@@ -713,9 +727,17 @@ export default class ChatPanel extends React.Component {
           // END ACTION
           const endAction = res.response.payload.endAction
           if(endAction){
-            resMessages.push(<dd key={'end-'+idx}><div className="badge rounded rounded-3 bg-danger text-dark p-2">{endAction.id}</div></dd>)
+            resMessages.push(<dd key={'end-'+idx}><div className="badge rounded rounded-3 bg-danger text-white p-2">{endAction.id}</div></dd>)
           }
-        }
+        } else if(res.asr){
+          resMessages.push(
+            <dd key={idx} className="d-flex justify-content-end">
+              <div className="rounded rounded-3 text-primary bg-white msg-asr p-2 d-inline-flex flex-row-reverse">
+                {res.asr.hypothesesList[0].formattedText}
+              </div>
+            </dd>
+          )
+        } 
         messages = [resMessages, ...messages]
       })
     }
@@ -741,8 +763,8 @@ export default class ChatPanel extends React.Component {
     })
   }
 
-  executeTextInput(){
-    this.props.onExecute(this.state.textInput)
+  async executeTextInput(){
+    await this.props.onExecute(this.state.textInput)
     this.setState({
       textInput: '',
       timeoutRemaining: this.props.sessionTimeout,
@@ -761,6 +783,12 @@ export default class ChatPanel extends React.Component {
     this.props.onToggleMinMax(minimized)
   }
 
+  toggleAdvanced(){
+    this.setState({
+      showAdvanced: !this.state.showAdvanced
+    })
+  }
+
   launchPopup(){
     const searchParams = new URLSearchParams(window.location.search.substring(1))
     searchParams.set('sessionId', this.props.sessionId)
@@ -774,7 +802,7 @@ export default class ChatPanel extends React.Component {
 
   render() {
     let inputDisabled = this.state.timeoutRemaining < 1 || !this.props.active
-    return (<div className={`chat-panel border rounded border-light border-2 ` + (this.state.minimized ? ' chat-panel-minimized ' : '')}>
+    return (<div className={`chat-panel border rounded border-light border-2 ` + (this.state.minimized ? ' chat-panel-minimized ' : ' ') + (this.state.showAdvanced ? ' show-nlg-text ' : ' ')}>
       <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
         style={{
           'width': (this.state.minimized ? 'auto' : this.props.width),
@@ -796,6 +824,11 @@ export default class ChatPanel extends React.Component {
                 timeoutRemaining={this.state.timeoutRemaining}/>
             ) : '' }
             <MinMaxToggle toggle={this.minMax.bind(this)}/>
+            { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
+                <Button variant="link" className="text-decoration-none float-end expand-collapse-button" onClick={this.toggleAdvanced.bind(this)}>
+                  <FontAwesomeIcon icon={this.state.showAdvanced ? faBugSlash : faBug}/>
+                </Button>
+              ) : '' }
           </div>
         </div>
         <div className="card-body" style={chatPanelContainerStyles}>
@@ -806,24 +839,53 @@ export default class ChatPanel extends React.Component {
           </div>
         </div>
         <div className="card-footer px-2 pb-2 border-0">
+          {inputDisabled ? '' : (<AudioVisualizer 
+            audioDataSource={this.props.microphone}
+            options={{
+              width: 350,
+              height: 45,
+              color: 'rgb(52,182,199)',
+              barWidthFactor: 1.65
+            }} />)}
           <form className="form" onSubmit={
               (evt) => {
                 evt.preventDefault();
-                this.executeTextInput()
               }
             }>
             <div className="input-group">
               <input type="text"
+                id='textInput'
                 className="form-control"
                 autoComplete="off"
                 name="textInput"
                 style={{'height': '50px'}}
                 value={this.state.textInput}
-                disabled={inputDisabled}
-                id='textInput'
+                disabled={inputDisabled || this.props.isListening}
+                focus={!this.isVoiceInputExperience()}
                 placeholder="Type or ask me something"
                 onChange={this.onChangeTextInput.bind(this)}
-                onFocus={this.triggerAutoScroll.bind(this)} />
+                onFocus={this.triggerAutoScroll.bind(this)} 
+                onKeyPress={event => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    this.executeTextInput()
+                  }
+                }}/>
+              { this.isVoiceInputExperience() ? (
+                <button type="button"
+                  id='btnDialogSubmitAudio' 
+                  className={`btn ` + (this.props.isListening ? 'btn-danger' : 'btn-dark')}
+                  disabled={inputDisabled || this.props.isProcessingInput || !this.props.microphone} 
+                  focus={this.isVoiceInputExperience()}
+                  // onFocus={this._onFocusHandler} 
+                  // onBlur={this._onBlurHandler}
+                  onClick={(evt) => {
+                    evt.preventDefault();
+                    this.props.onToggleMicrophone(evt)
+                  }}>
+                  <FontAwesomeIcon icon={this.props.isListening ? faMicrophoneSlash : faMicrophone}/>
+                </button>): ''
+              }
             </div>
           </form>
           { (!inputDisabled && this.isIVRExperience()) ? (
@@ -833,7 +895,7 @@ export default class ChatPanel extends React.Component {
                   name="dtmfInput" 
                   disabled={inputDisabled}
                   onKeypadInput={this.onChangeKeypadInput.bind(this)} 
-                  settings={this.state.recognitionSettings} />
+                  settings={this.props.recognitionSettings} />
                </div>
                <div className="col-md-12 text-center mb-3">
                   <button 

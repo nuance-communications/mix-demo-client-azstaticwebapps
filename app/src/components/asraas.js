@@ -47,7 +47,7 @@ export const ProcessingState = {
   IDLE: 1, // PENDING
   IN_FLIGHT: 2, // LISTENING
   AWAITING_FINAL: 3,
-  INITIALIZING: 4
+  INITIALIZING: 4,
 }
 
 //
@@ -414,6 +414,7 @@ export default class ASRaaS extends BaseClass {
   }
 
   initAudioIn(){
+    // REFACTOR into SHARED LIB?
     this._micAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,

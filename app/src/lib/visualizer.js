@@ -34,9 +34,13 @@ export class AudioVisualizer extends React.Component {
     this.options = props.options || {
       width: 256,
       height: 256,
-      tickWidth: 0.5
+      color: BASE_COLOR,
+      barWidthFactor: 2.24
     }
-    this.colors = [
+    if(!this.options.barWidthFactor){
+      this.options.barWidthFactor = 2.24
+    }
+    this.colors = props.options.color ? [props.options.color] : [
       BASE_COLOR
     ]
     this.canvasId = `eq-viz-${new Date()}`
@@ -105,7 +109,7 @@ export class AudioVisualizer extends React.Component {
         this.props.audioDataSource.analyzer.getByteFrequencyData(data)
 
         const length = data.length
-        const barWidth = Math.floor((this.options.width / (length * 2.24)))
+        const barWidth = Math.floor((this.options.width / (length * this.options.barWidthFactor)))
         const midPoint = Math.floor(this.options.width / 2)
 
         for(let i = 0; i < length; i++){

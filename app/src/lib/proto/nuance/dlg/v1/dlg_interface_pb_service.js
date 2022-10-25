@@ -76,14 +76,11 @@ DialogServiceClient.prototype.start = function start(requestMessage, metadata, c
   if (arguments.length === 2) {
     callback = arguments[1];
   }
-  var listeners = {
-    error: []
-  };
   var client = grpc.unary(DialogService.Start, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
-    transport: this.options.transport.bind(null, listeners.error),
+    transport: this.options.transport,
     debug: this.options.debug,
     onEnd: function (response) {
       if (callback) {

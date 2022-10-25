@@ -314,10 +314,10 @@ export default class TTSaaS extends BaseClass {
     })
     let res = await this.synthesize(payload)
     rawResponses.unshift(res);
-    if(res.response?.payload.status.code !== 200){
+    if(res.response?.payload.status?.code !== 200){
       this.setState({
         rawResponses: rawResponses,
-        error: res.response.payload.status.details,
+        error: res.response?.payload?.status.details,
         processing: ProcessingState.IDLE,
       })
     } else {

@@ -95,25 +95,45 @@ main .tab-content {
 .chat-panel > .card > .card-header.bg-dark .badge.bg-dark { 
   background: rgb(52,182,199) !important;
 }
+.col-12.blurred {
+  transition: all 0.2s ease-out;
+  filter: blur(1.5px);
+}
+.col-12.blurred:hover {
+  filter: blur(0px);
+}
 .chat-panel > .card-body {
   margin: 0px 8px;
+}
+.chat-panel .bg-light.nlg-text {
+  display: none;
+}
+.chat-panel.show-nlg-text .bg-light.nlg-text {
+  display: block;
+  color: #999 !important;
+  font-size:0.75rem;
+  font-style: italic;
+  background-color: transparent !important;
 }
 #messagesHnd .msg .rounded {
   border-radius: 10px!important;
   line-height: 20px;
 }
-#messagesHnd .bg-light.msg {
-  background: #efefef !important;
-  color: #414141;
-  line-height: 25px;
-}
 #messagesHnd .bg-white.msg {
   /*background: rgb(24,88,133) !important; */
+  background: rgb(52,182,199) !important; 
+  color: white !important;
+  line-height: 25px;
+}
+#messagesHnd .bg-white.msg-asr {
   background: rgb(52,182,199) !important; 
   color: white !important;
 }
 #messagesHnd dd {
   font-size: 15px;
+}
+#btnDialogSubmitAudio {
+  width: 40px;
 }
 #cy {
   width: 1200px;
@@ -181,7 +201,7 @@ pre {
 .react-json-view,
 .pretty-json-container {
   font-family: Roboto, sans-serif, serif;
-  font-size: 0.85em;
+  font-size: 0.95em;
 }
 
 .asrWord {

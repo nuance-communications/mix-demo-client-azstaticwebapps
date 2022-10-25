@@ -528,9 +528,7 @@ export class LogEventsTable extends React.Component {
   renderEventsTable(events){
     const ret = []
     let e = events
-    if(this.state.eventsReversed){
-      e = e.reverse()
-    }
+    const listMethod = this.state.eventsReversed ? 'unshift' : 'push' 
     e.forEach((evt, idx) => {
       evt.value.data.events.forEach(niiEvt => {
         if(this.state.filterTypes.indexOf(niiEvt.name) > -1){
@@ -538,7 +536,7 @@ export class LogEventsTable extends React.Component {
         }
         let ts = moment(evt.value.timestamp).format('HH:mm:ss.SSS')
         let badgeBg = this.getBadgeClz(niiEvt.name)
-        ret.push(
+        ret[listMethod](
           <tr key={'event-'+idx} className={niiEvt.name === 'session-start' ? 'bg-dark' : ''}>
             <td><span className={`badge ` + badgeBg}>{evt.value.data.seqid}</span></td>
             <td><span className={`badge ` + badgeBg}>{ts}</span></td>

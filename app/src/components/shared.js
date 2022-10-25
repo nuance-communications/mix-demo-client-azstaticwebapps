@@ -14,10 +14,11 @@ export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://lo
 export const VERSION = '1.8.0'
 export const CLIENT_DATA = {
     "version": VERSION,
-    "client": "Nuance Mix Demo Client",
+    "client": "Mix.demo",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
-export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const URN_REGEX_DIALOG = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.dialog/
+export const URN_REGEX_NLU = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
 export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
 export const DLG_SERVICE_URL = "https://dlg.api.nuance.com"
@@ -274,6 +275,22 @@ const EXPERIENCE_TYPES = {
     dtmfInput: true,
     voiceInput: true
   },
+  ivrAudioInTextOut: {
+    playTTS: false,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true,
+    voiceInput: true
+  },
+  audioAndTextInTextOut: {
+    playTTS: false,
+    isOutputHTML: true,
+    isOutputSSML: false,
+    bindTimeouts: false,
+    dtmfInput: false,
+    voiceInput: true
+  },
   visualVA: {
     playTTS: false,
     isOutputHTML: true,
@@ -290,8 +307,8 @@ const EXPERIENCE_TYPES = {
   },
   smartSpeaker: {
     voiceInput: true,
-    playTTS: false, // represents SEPARATE orchestration
-    isOutputHTML: true,
+    playTTS: true, // represents SEPARATE orchestration
+    isOutputHTML: false,
     isOutputSSML: true,
     isOutputVoice: true,
     bindTimeouts: false,
@@ -299,13 +316,13 @@ const EXPERIENCE_TYPES = {
   },
   smartSpeakerWithScreen: {
     voiceInput: true,
-    playTTS: false, // represents SEPARATE orchestration
+    playTTS: true, // represents SEPARATE orchestration
     isOutputHTML: true,
     isOutputSSML: true,
     isOutputVoice: true,
     bindTimeouts: false,
     dtmfInput: false,
-    hasVisual: true
+    autoListen: true
   }
 }
 
@@ -370,15 +387,21 @@ export class BaseClass extends React.Component {
         }
       });
     }
-    let title = 'Nuance Mix Demo Client -'
-    if(toUpdate.channel){
-      title += ` ${toUpdate.channel}`
+    let title = 'Nuance Mix Demo Client'
+    if(toUpdate.clientId){
+      title += ` - AppID: ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    }
+    if(toUpdate.modelUrn){
+      title += ` - Tag: ${this.parseContextTag(toUpdate.modelUrn, URN_REGEX_DIALOG)}`
     }
     if(toUpdate.language){
-      title += ` ${toUpdate.language}`
+      title += ` - Language: ${toUpdate.language}`
     }
-    if(toUpdate.clientId){
-      title += `  ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    if(toUpdate.channel){
+      title += ` - Channel: ${toUpdate.channel}`
+    }
+    if(toUpdate.simulateExperience){
+      title += ` - Simulate: ${toUpdate.simulateExperience}`
     }
     document.title = title
     return { 
@@ -832,9 +855,9 @@ export class BaseClass extends React.Component {
     }
   }
 
-  parseContextTag(urn){
+  parseContextTag(urn, pattern){
     try {
-      const results = urn.match(URN_REGEX)
+      const results = urn.match(pattern || URN_REGEX_NLU)
       console.log('parsed', results)
       if(results && results.length){
         return results[1]
