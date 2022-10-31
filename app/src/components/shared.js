@@ -10,8 +10,10 @@ import React from "react"
 import { navigate } from "gatsby"
 import axios from "axios"
 
+export const VERSION = '2.0.0'
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
-export const VERSION = '1.8.0'
+export const ASR_SERVICE_URL = process.env.ASR_SERVICE_URL || "https://asr.api.nuance.com"
+export const DLG_SERVICE_URL = process.env.DLG_SERVICE_URL || "https://dlg.api.nuance.com"
 export const CLIENT_DATA = {
     "version": VERSION,
     "client": "Mix.demo",
@@ -20,8 +22,6 @@ export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at th
 export const URN_REGEX_DIALOG = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.dialog/
 export const URN_REGEX_NLU = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
-export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
-export const DLG_SERVICE_URL = "https://dlg.api.nuance.com"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",
@@ -485,7 +485,8 @@ export class BaseClass extends React.Component {
   async ensureTokenNotExpired(){
     const accessToken = this.state.accessToken
     const one_minute = 60 * 1000
-    if((accessToken.expires_at * 1000) - Date.now() < one_minute){
+    if(!accessToken || 
+      ((accessToken.expires_at * 1000) - Date.now() < one_minute)){
       return await this.initToken(this.getScope())
     }
     return false
@@ -858,7 +859,7 @@ export class BaseClass extends React.Component {
   parseContextTag(urn, pattern){
     try {
       const results = urn.match(pattern || URN_REGEX_NLU)
-      console.log('parsed', results)
+      // console.log('parsed', results)
       if(results && results.length){
         return results[1]
       }

@@ -25,7 +25,14 @@ import { faComments,
   faMicrophone,
   faMicrophoneSlash,
   faBug,
-  faBugSlash
+  faBugSlash,
+  faPaperPlane,
+  faReply,
+  faReplyAll,
+  faGear,
+  faGears,
+  faEye,
+  faEyeSlash
 } from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
@@ -328,7 +335,8 @@ export default class ChatPanel extends React.Component {
       recognitionSettings: {},
       timeoutRemaining: 0,
       minimized: false,
-      showAdvanced: false
+      showAdvanced: false,
+      autoScroll: true
     }
     this.sessionTimeoutInterval = -1
     this.countdownTimer = null
@@ -338,7 +346,7 @@ export default class ChatPanel extends React.Component {
     this.focusInput()
     this.setState({
       timeoutRemaining: this.props.sessionTimeout,
-      showAdvanced: this.isVoiceOutputExperience()
+      showAdvanced: !this.isVisualExperience()
     })
     this.sessionTimeoutInterval = window.setInterval(() => {
       this.dlgSessionTick()
@@ -346,7 +354,9 @@ export default class ChatPanel extends React.Component {
   }
 
   componentDidUpdate(props, opts){
-    this.triggerAutoScroll()
+    if(this.state.autoScroll){
+      this.triggerAutoScroll()
+    }
     if(!this.props.active && this.sessionTimeoutInterval !== -1){
       this.endSessionTimeoutInterval()
     }
@@ -507,7 +517,7 @@ export default class ChatPanel extends React.Component {
         break
       default:
         console.log('unhandled use-case')
-        break
+        return
     }
     this.focusInput()
   }
@@ -534,8 +544,8 @@ export default class ChatPanel extends React.Component {
     if(this.isVoiceOutputExperience()){
       m.nlgList.forEach((m, idx) => {
         resMessages.push(
-          <dd key={`latency-nlg-msg-${idx}`} className="d-flex justify-content-start">
-            <div className="nlg-text rounded rounded-3 bg-light msg text-dark p-2">
+          <dd key={`latency-nlg-msg-${idx}`} className="d-flex justify-content-start nlg-text">
+            <div className="rounded rounded-3 bg-light msg text-dark p-2">
               {m.text}
             </div>
           </dd>
@@ -561,7 +571,7 @@ export default class ChatPanel extends React.Component {
       this.props.rawResponses.forEach((res, idx) => {
         const resMessages = []
         if(res.error){
-          resMessages.push(<dd key={idx} className="badge bg-danger text-white text-wrap">{JSON.stringify(res.error.response.data.error)}</dd>)
+          resMessages.push(<dd key={idx} className="badge bg-danger text-white text-wrap">{JSON.stringify(res.error.message || res.error.response.data.error)}</dd>)
         } else if(res.request){
           if(!res.request){
             return
@@ -630,8 +640,8 @@ export default class ChatPanel extends React.Component {
                   let txt = _m.text
                   if(txt.length){
                     resMessages.push(
-                      <dd key={`${idx}-nlg-msg-${idx2}-${idx3}`} className="">
-                        <div className="nlg-text rounded rounded-3 bg-light msg text-dark p-2">
+                      <dd key={`${idx}-nlg-msg-${idx2}-${idx3}`} className="d-flex justify-content-start nlg-text">
+                        <div className="rounded rounded-3 bg-light msg text-dark p-2">
                           {txt}
                         </div>
                       </dd>
@@ -671,7 +681,7 @@ export default class ChatPanel extends React.Component {
                   cardMsgs.push(m.text)
                 })
               }
-              resMessages.push(<dd key={'qa-nlg-'+idx} className="d-flex justify-content-start"><div className="rounded rounded-3 nlg-text bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
+              resMessages.push(<dd key={'qa-nlg-'+idx} className="d-flex justify-content-start nlg-text"><div className="rounded rounded-3 bg-light msg text-dark p-2">{cardMsgs}</div></dd>)
             }
             if(this.isVisualExperience()){
               cardMsgs = []
@@ -764,11 +774,11 @@ export default class ChatPanel extends React.Component {
   }
 
   async executeTextInput(){
-    await this.props.onExecute(this.state.textInput)
     this.setState({
       textInput: '',
       timeoutRemaining: this.props.sessionTimeout,
     })
+    await this.props.onExecute(this.state.textInput)
   }
 
   selectItem(evt, value){
@@ -800,121 +810,157 @@ export default class ChatPanel extends React.Component {
     this.props.onLaunchedStandalone(url)
   }
 
+  stopAutoScroll(){
+    this.setState({
+      autoScroll: false
+    })
+  }
+
+  resumeAutoScroll(){
+    this.setState({
+      autoScroll: true
+    })
+  }
+
   render() {
     let inputDisabled = this.state.timeoutRemaining < 1 || !this.props.active
-    return (<div className={`chat-panel border rounded border-light border-2 ` + (this.state.minimized ? ' chat-panel-minimized ' : ' ') + (this.state.showAdvanced ? ' show-nlg-text ' : ' ')}>
-      <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
-        style={{
-          'width': (this.state.minimized ? 'auto' : this.props.width),
-          'height': (this.state.minimized ? '56px' : this.props.height),
-          'overflow': 'hidden'
-        }}>
-        <div className={'card-header ' + (this.state.minimized ? 'bg-dark text-white' : '')}>
-          <div className="card-header-bg">
-            <FontAwesomeIcon icon={faComments}/> Chat 
-            { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
-                <small>
-                  &nbsp;&nbsp;
-                  <Button variant="link" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></Button>
-                </small>
+    let brandVizColor = window.getComputedStyle(document.documentElement).getPropertyValue('--brand-color')
+    return (
+      <div id="ChatPanel" className={`chat-panel rounded ` + (this.state.minimized ? ' chat-panel-minimized ' : ' ') + (this.state.showAdvanced ? ' show-nlg-text ' : ' ')}>
+        <div className={'handle card shadow-lg ' + (this.state.minimized ? 'border-dark' : 'border-light') }
+          style={{
+            'width': (this.state.minimized ? 'auto' : this.props.width),
+            'height': (this.state.minimized ? '56px' : this.props.height),
+            'overflow': 'hidden'
+          }}>
+          <div className={'card-header ' + (this.state.minimized ? 'bg-dark text-white' : '')}>
+            <div className="card-header-bg">
+              { true ? (
+                <div className="chat-header-img" style={{marginTop: '-3px'}} width={'9%'}></div>
+              ) : (
+                <FontAwesomeIcon icon={faComments}/>
+              ) }
+              { this.state.minimized && !(window.opener || window.top !== window.self) ? (
+                  <small style={{position: 'relative', top: '-5px'}}>
+                    &nbsp;&nbsp;
+                    <Button variant="link" className="text-decoration-none" onClick={this.launchPopup.bind(this)}><FontAwesomeIcon icon={faExternalLinkAlt}/></Button>
+                  </small>
+                ) : '' }
+              { this.props.active ? (
+                <CountdownTimer
+                  sessionTimeout={this.props.sessionTimeout}
+                  timeoutRemaining={this.state.timeoutRemaining}/>
               ) : '' }
-            { this.props.active ? (
-              <CountdownTimer
-                sessionTimeout={this.props.sessionTimeout}
-                timeoutRemaining={this.state.timeoutRemaining}/>
-            ) : '' }
-            <MinMaxToggle toggle={this.minMax.bind(this)}/>
-            { !this.state.minimized && !(window.opener || window.top !== window.self) ? (
-                <Button variant="link" className="text-decoration-none float-end expand-collapse-button" onClick={this.toggleAdvanced.bind(this)}>
-                  <FontAwesomeIcon icon={this.state.showAdvanced ? faBugSlash : faBug}/>
-                </Button>
-              ) : '' }
-          </div>
-        </div>
-        <div className="card-body" style={chatPanelContainerStyles}>
-          <div className="row" style={{height: '100%'}}>
-            <dl id="messagesHnd" className="col" style={chatPanelMessagesStyles}>
-              {this.renderMessages()}
-            </dl>
-          </div>
-        </div>
-        <div className="card-footer px-2 pb-2 border-0">
-          {inputDisabled ? '' : (<AudioVisualizer 
-            audioDataSource={this.props.microphone}
-            options={{
-              width: 350,
-              height: 45,
-              color: 'rgb(52,182,199)',
-              barWidthFactor: 1.65
-            }} />)}
-          <form className="form" onSubmit={
-              (evt) => {
-                evt.preventDefault();
-              }
-            }>
-            <div className="input-group">
-              <input type="text"
-                id='textInput'
-                className="form-control"
-                autoComplete="off"
-                name="textInput"
-                style={{'height': '50px'}}
-                value={this.state.textInput}
-                disabled={inputDisabled || this.props.isListening}
-                focus={!this.isVoiceInputExperience()}
-                placeholder="Type or ask me something"
-                onChange={this.onChangeTextInput.bind(this)}
-                onFocus={this.triggerAutoScroll.bind(this)} 
-                onKeyPress={event => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    this.executeTextInput()
-                  }
-                }}/>
-              { this.isVoiceInputExperience() ? (
-                <button type="button"
-                  id='btnDialogSubmitAudio' 
-                  className={`btn ` + (this.props.isListening ? 'btn-danger' : 'btn-dark')}
-                  disabled={inputDisabled || this.props.isProcessingInput || !this.props.microphone} 
-                  focus={this.isVoiceInputExperience()}
-                  // onFocus={this._onFocusHandler} 
-                  // onBlur={this._onBlurHandler}
-                  onClick={(evt) => {
-                    evt.preventDefault();
-                    this.props.onToggleMicrophone(evt)
-                  }}>
-                  <FontAwesomeIcon icon={this.props.isListening ? faMicrophoneSlash : faMicrophone}/>
-                </button>): ''
-              }
+              <MinMaxToggle toggle={this.minMax.bind(this)}/>
+              { this.isVoiceOutputExperience() && !this.state.minimized && !(window.opener || window.top !== window.self) ? (
+                  <Button variant="link" className="text-decoration-none float-end expand-collapse-button" onClick={this.toggleAdvanced.bind(this)}>
+                    <FontAwesomeIcon icon={this.state.showAdvanced ? faEyeSlash : faEye}/>
+                  </Button>
+                ) : '' }
             </div>
-          </form>
-          { (!inputDisabled && this.isIVRExperience()) ? (
-            <div className="row border-top border-2 mt-2">
-              <div className="col-md-12 mt-2 mb-1">
-                <Keypad 
-                  name="dtmfInput" 
-                  disabled={inputDisabled}
-                  onKeypadInput={this.onChangeKeypadInput.bind(this)} 
-                  settings={this.props.recognitionSettings} />
-               </div>
-               <div className="col-md-12 text-center mb-3">
-                  <button 
-                    className="btn btn-danger btn-sm px-3 py-3 rounded-circle"
-                    disabled={inputDisabled}
-                    onClick={(evt) => {
+          </div>
+          <div className="card-body" style={chatPanelContainerStyles}>
+            <div className="row" style={{height: '100%'}}>
+              <dl id="messagesHnd" 
+                className="col" 
+                style={chatPanelMessagesStyles}
+                onMouseDown={this.stopAutoScroll.bind(this)}
+                onMouseUp={this.resumeAutoScroll.bind(this)}>
+                <dt className="text-center pb-4 border-bottom mb-4"><div className="chat-header-img" width={'25%'}></div></dt>
+                {this.renderMessages()}
+              </dl>
+            </div>
+          </div>
+          <div className="card-footer px-2 pb-2 border-0">
+            {(!inputDisabled && (this.isVoiceInputExperience() && this.props.microphone) ? (
+              <AudioVisualizer 
+                audioDataSource={this.props.microphone}
+                options={{
+                  width: this.props.width-15, // window.outerWidth * 0.25,
+                  height: 45,
+                  color: brandVizColor,
+                  barWidthFactor: 1.65
+                }} />
+              ) : ''
+            )}
+            <form className="form" onSubmit={
+                (evt) => {
+                  evt.preventDefault();
+                }
+              }>
+              <div className="input-group">
+                <input type="text"
+                  id='textInput'
+                  className="form-control"
+                  autoComplete="off"
+                  name="textInput"
+                  style={{'height': '50px'}}
+                  value={this.state.textInput}
+                  disabled={inputDisabled || this.props.isListening}
+                  focus={!this.isVoiceInputExperience()?'focus':''}
+                  placeholder="Type or ask me something"
+                  onChange={this.onChangeTextInput.bind(this)}
+                  onFocus={this.triggerAutoScroll.bind(this)} 
+                  onKeyPress={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      this.executeTextInput()
+                    }
+                  }}/>
+                  <button type="button" 
+                    className="btn btn-light border"
+                    disabled={inputDisabled || this.props.isListening || this.state.textInput.length < 1}
+                    onFocus={this.triggerAutoScroll.bind(this)}
+                    onClick={evt => {
                       evt.preventDefault()
-                      this.executeEventInput('HANGUP', 'User initiated.')
+                      this.executeTextInput()
                     }}>
-                      <FontAwesomeIcon icon={faPhoneSlash}/>
+                    <FontAwesomeIcon icon={faPaperPlane}/>
                   </button>
-               </div>
+                { this.isVoiceInputExperience() ? (
+                  <button type="button"
+                    id='btnDialogSubmitAudio' 
+                    className={`btn ` + (this.props.isListening ? 'btn-danger' : 'btn-dark')}
+                    disabled={inputDisabled || this.props.isProcessingInput || !this.props.microphone} 
+                    focus={this.isVoiceInputExperience()?'focus':''}
+                    onFocus={this.triggerAutoScroll.bind(this)} 
+                    onClick={(evt) => {
+                      evt.preventDefault();
+                      this.props.onToggleMicrophone(evt)
+                    }}>
+                    <FontAwesomeIcon icon={this.props.isListening ? faMicrophoneSlash : faMicrophone}/>
+                  </button>): ''
+                }
+              </div>
+            </form>
+            { (!inputDisabled && this.isIVRExperience()) ? (
+              <div className="row border-top border-2 mt-2">
+                <div className="col-md-12 mt-2 mb-1">
+                  <Keypad 
+                    name="dtmfInput" 
+                    disabled={inputDisabled}
+                    onKeypadInput={this.onChangeKeypadInput.bind(this)} 
+                    settings={this.props.recognitionSettings} />
+                </div>
+                <div className="col-md-12 text-center mb-3">
+                    <button 
+                      className="btn btn-danger btn-sm px-3 py-3 rounded-circle"
+                      disabled={inputDisabled}
+                      onClick={(evt) => {
+                        evt.preventDefault()
+                        this.executeEventInput('HANGUP', 'User initiated.')
+                      }}>
+                        <FontAwesomeIcon icon={faPhoneSlash}/>
+                    </button>
+                </div>
 
-             </div>
-             ) : ''
-          }
+              </div>
+              ) : ''
+            }
+          </div>
         </div>
       </div>
-    </div>)
+    )
   }
 
 }

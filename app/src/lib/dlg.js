@@ -59,6 +59,10 @@ export class DlgClient extends EventEmitter {
   connect(){
     const client = this
     return new Promise((resolve, reject) => {
+      if(this._dlgaas){
+        resolve()
+        return
+      }
       client._tokenResolver().then(token => {
         client._dlgaas = new DialogServiceClient(client._serviceUrl)
         client._dlgaas_stream = new DialogServiceClient(client._serviceUrl, {
@@ -197,7 +201,6 @@ export class DlgClient extends EventEmitter {
           'Authorization': `Bearer ${token.access_token}`,
           'x-nuance-client-id': clientID
         }
-        console.warn('metadata', metadata)
         // CONNECT
         client._call = client._dlgaas_stream.executeStream(metadata)
         client._call.on('data', client.messageHandler.bind(this))
@@ -273,52 +276,57 @@ export class DlgController extends EventEmitter {
     this._onAudioHandler = this.onAudio.bind(this)
     this._client = new DlgClient(serviceUrl, tokenResolver)
     this.wireUpClientEvents()
-    // CONNECT
-    this._client.connect().then(() => {
-      console.info("DLG Client Ready.")
-    })
+  }
+
+  connect(){
+    return this._client.connect()
   }
 
   wireUpClientEvents(){
+    const controller = this
     this._client.on('start', () => {
-      this.emit('start')
+      controller.emit('start')
     })
     this._client.on('data', data => {
-      this.emit('data', data)
+      controller.emit('data', data)
       if(data.response){
-        this.emit('result', data)
+        controller.emit('result', data)
       }
     })
     this._client.on('result', data => {
-      this.emit('stream-result', data)
+      controller.emit('stream-result', data)
     })
     this._client.on('finish', () => {
-      this.emit('finish')
-      if(this._audioSource){
-        this._audioSource.off('audio', this._onAudioHandler)
-      }
-      this.stop()
+      controller.emit('finish')
+      controller.clearAudioHandler()
+      controller.stop()
     })
-    this._client.on('end', () => {
-      this.emit('end')
+    this._client.on('end', (status) => {
+      // stream ended
+      controller.emit('end', status)
     })
     this._client.on('status', status => {
       console.log('received status', status)
       if(status.code === 2){
-        if(this._audioSource){
-          this._audioSource.off('audio', this._onAudioHandler)
-        }
+        controller.clearAudioHandler()
       }
-      this.emit('status', status)
+      controller.emit('status', status)
     })
     this._client.on('error', err => {
-      this.setAudioSource(null)
-      this.emit('error', err)
+      controller.setAudioSource(null)
+      controller.emit('error', err)
     })
   }
 
   setAudioSource(source){
+    this.clearAudioHandler()
     this._audioSource = source
+  }
+
+  clearAudioHandler(){
+    if(this._audioSource){
+      this._audioSource.off('audio', this._onAudioHandler)
+    }
   }
 
   onAudio(audio){
@@ -351,7 +359,6 @@ export class DlgController extends EventEmitter {
     startReq.setSelector(selector)
     startReq.setPayload(payload)
     startReq.setSessionTimeoutSec(req.session_timeout_sec)
-    // startReq.setUserId("user@domain.com");
 
     let ret = null
     await this._client.start(startReq).then(res => {

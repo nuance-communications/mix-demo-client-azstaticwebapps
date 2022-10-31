@@ -1,0 +1,30 @@
+/* Brand Assets */
+@font-face {
+  font-family: 'Speedee';
+  src: url('./Speedee-Bold.woff2') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Speedee';
+  src: url('./Speedee-Regular.woff2') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  /* McDonalds*/
+  --skin-logo: url("./brands/mcdonalds/logo.svg");
+  --skin-logo-header-width: 30px;
+  --skin-logo-header-height: 30px;
+  --skin-logo-main-width: 25%;
+  --skin-logo-main-height: auto;
+  --skin-color: #FFC72C;
+  --skin-font: 'Speedee', 'Segoe UI', 'Roboto', 'Helvetica';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #27251F;
+  --skin-footer-bg-color: #fff;
+  --skin-message-text-color: #27251F;
+}

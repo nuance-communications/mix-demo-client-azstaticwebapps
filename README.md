@@ -20,11 +20,12 @@
 
 This demo client offers a sample integration to [Nuance Mix](https://www.nuance.com/mix?src=demo)'s Conversational AI [Runtime Services](https://docs.mix.nuance.com/runtime-services/#runtime-apis-quick-reference), specifically
 * [Dialog (DLGaaS)](https://docs.mix.nuance.com/dialog-grpc/v1/)
+* [Speech Recognition (ASRaaS)](https://docs.mix.nuance.com/asr-grpc/v1/)
 * [Natural Language Understanding (NLUaaS)](https://docs.mix.nuance.com/nlu-grpc/v1/?src=demo)
 * [Text to Speech (TTSaaS)](https://docs.mix.nuance.com/tts-grpc/v1/?src=demo) and the
 * [Runtime Event Log API](https://docs.mix.nuance.com/runtime-event-logs/?src=demo)
 
-The client uses the HTTP/1.1 transcoded version of the APIs (rather than the native HTTP/2 gRPC versions).
+The client uses the HTTP/1.1 transcoded, or WebSocket transport version of the APIs (rather than the native HTTP/2 gRPC versions).
 
 The prime purpose of this tool is to assist in Bot development and troubleshooting, including offering controlled hosted availability using [Azure StaticWebApps](https://azure.microsoft.com/en-us/services/app-service/static/).
 
@@ -46,13 +47,14 @@ Please see the [Exchanging data](https://docs.mix.nuance.com/data-access/?src=de
 
 ## Functionality
 
-* [x] Bot engagements using Nuance Mix's [DLGaaS](https://docs.mix.nuance.com/dialog-grpac/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
-  * Text-Only (no Streams, ie. ASR/TTS orchestration yet)
+* [x] Bot engagements using Nuance Mix's [DLGaaS](https://docs.mix.nuance.com/dialog-grpac/v1/?src=demo) **HTTP/1.1** or **WebSockets** (web-gRPC) API (_not_ HTTP/2 gRPC)
+  * Audio or Text Input, Audio or Text Output
   * PRESENTATION LAYER: Rich UI through conventions
   * DATA: Functions for development through Client Fetch, and when deployed, enables External Fetch usage
   * DATA: Client Fetch handler for Location Data supplied in userData
   * LOGS: Log Events, Filtering and Timeline Visualization
-  * CHANNEL SIMULATION: Web VA and IVR with DTMF input and TTS Output
+  * CHANNEL SIMULATION: Visual VA, IVR, SmartSpeaker, SMS (audio in/out, text in/out, or any permutation)
+* [x] Speech Recognition using [ASRaaS](https://docs.mix.nuance.com/asr-grpc/v1/?src=demo) **WebSockets** API (web-gRPC)
 * [x] Natural Language Understanding using [NLUaaS](https://docs.mix.nuance.com/nlu-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
 * [x] Text to Speech Synthesis using [TTSaaS](https://docs.mix.nuance.com/tts-grpc/v1/?src=demo) **HTTP/1.1** API (not HTTP/2 gRPC)
 * [x] Event data using the [Log Events](https://docs.mix.nuance.com/runtime-event-logs/?src=demo) **HTTP/1.1** API
@@ -453,7 +455,10 @@ This integration illustrates the use of Dynamic Wordsets, consistently filtering
    * `POST /api/store-api-request-purchase`
    * `POST /api/store-api-purchase`
 
-## Publishing to Azure
+
+## Deployment
+
+### Publishing to Azure
 
 To deploy this client, follow the [Azure StaticWebApps deployment guide](https://docs.microsoft.com/en-us/azure/static-web-apps/publish-gatsby) to publish. Update `app/static/staticwebapp.config.json` as needed.
 
@@ -464,6 +469,12 @@ Essentially:
 3. Configure accordingly in Azure
    * Create a [Application Insights](https://docs.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview) resource and link to StaticWebApp (`APPINSIGHTS_INSTRUMENTATIONKEY`)
    * Add environment variables (`sengrid_api_key`, `sendgrid_from_email`)
+
+### Considerations 
+
+1. update content-security-policy for client - `staticwebapp.config.json`
+2. update client host (ASR_SERVICE_URL, DLG_SERVICE_URL) - `shared.js`
+3. update environment variables for functions - `.env`
 
 ## License
 

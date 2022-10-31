@@ -11,6 +11,7 @@ import React from "react"
 import { AuthForm } from "./shared"
 import ChatPanel from "./chat"
 import DLGaaS from "./dlgaas"
+import { ProcessingState } from "./asraas"
 
 //
 // DLGaaS Standalone
@@ -35,7 +36,7 @@ export default class DlgStandalone extends DLGaaS {
             clientId={this.state.clientId}
             clientSecret={this.state.clientSecret}
             onChangeTextInput={this.onChangeTextInput.bind(this)}
-            serviceScope="dlg tts log" />
+            serviceScope={this.getScope()} />
       </div>
     )
   }
@@ -66,6 +67,11 @@ export default class DlgStandalone extends DLGaaS {
             sessionTimeout={this.state.sessionTimeout}
             active={this.state.isSessionActive}
             onSessionTimeoutEnded={this.stop.bind(this)}
+            recognitionSettings={this.state.recognitionSettings}
+            onToggleMicrophone={this.onToggleMicrophone.bind(this)}
+            microphone={this.state.microphone}
+            isListening={ProcessingState.IN_FLIGHT===this.state.processingState}
+            isProcessingInput={ProcessingState.AWAITING_FINAL===this.state.processingState}
             onToggleMinMax={this.onToggleMinMax.bind(this)}/>
         </div>
       </div>

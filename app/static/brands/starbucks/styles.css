@@ -1,0 +1,36 @@
+/* Brand Assets */
+@font-face {
+  font-family: 'SoDoSans';
+  src: url('./SoDoSans-Bold.49f6eaa3.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SoDoSans';
+  src: url('./SoDoSans-Regular.fb96a065.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'SoDoSans';
+  src: url('./SoDoSans-SemiBold.6aebdeb6.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+:root {
+  /* Starbucks */
+  --skin-logo: url("./brands/starbucks/logo.svg");
+  --skin-logo-header-width: 30px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: auto;
+  --skin-logo-main-height: 100px;
+  --skin-color: #006241;
+  --skin-font: 'SoDoSans', 'Helvetica';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #27251F;
+  --skin-footer-bg-color: #fff; 
+  --skin-message-text-color: white;
+}

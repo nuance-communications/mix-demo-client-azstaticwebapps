@@ -1,0 +1,17 @@
+/* Brand Assets */
+:root {
+  /* FedEx */
+  --skin-logo: url("./brands/fedex/logo.svg");
+  --skin-logo-header-width: 45px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: 60%;
+  --skin-logo-main-height: auto;
+  --skin-color: #4D148C;
+  --skin-font: 'Roboto', 'Helvetica';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #fff;
+  --skin-footer-bg-color: #fff; 
+  --skin-message-text-color: white;  
+}

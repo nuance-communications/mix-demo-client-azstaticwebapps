@@ -188,6 +188,10 @@ export default class TTSaaS extends BaseClass {
       this.setState(toUpdate)
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
+    this.initAudioSink()
+  }
+
+  initAudioSink(){
     this.audioSink = new Audio()
     this.audioSink.onended = this.onAudioEnded.bind(this)
   }
@@ -337,12 +341,15 @@ export default class TTSaaS extends BaseClass {
   playAudio(audio) {
     let audioclipRaw = "data:audio/ogg;base64," + audio
     this.audioSink.src = audioclipRaw;
-    this.audioSink.play();
+    this.audioSink.play().catch((err) => {
+      console.error('audio out error', err)
+      this.audioSink = null
+    });
   }
 
   parseResponse(res){
     if(res.response.payload){
-      if(this.audioSink.paused){
+      if(this.audioSink && this.audioSink.paused){
         this.playAudio(res.response.payload.audio)
       } else {
         this.playQueue.push(res.response.payload.audio)

@@ -9,6 +9,8 @@
 import React from "react"
 import { Link } from "gatsby"
 import { Location } from '@reach/router'
+import { Helmet } from 'react-helmet'
+import { BaseClass } from '../components/shared'
 
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.min.js"
@@ -29,7 +31,8 @@ const headingImageStyles = {
   objectFit: 'contain',
 }
 
-export default class Layout extends React.Component {
+export default class Layout extends BaseClass {
+
   render() {
     return (<Location>
       {({ location, navigate }) => (
@@ -47,11 +50,14 @@ export default class Layout extends React.Component {
   }
 }
 
-export class StandaloneLayout extends React.Component {
+export class StandaloneLayout extends Layout {
   render() {
     return (<Location>
       {({ location, navigate }) => (
         <main style={{padding: "6px 10px"}}>
+          <Helmet>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+          </Helmet>
           <div className="container standalone">
             {this.props.children}
           </div>

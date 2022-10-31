@@ -181,7 +181,7 @@ class ClientFetchHandlers {
 // DLGaaS
 //
 
-function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
+function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, className}){
   const [key, setKey] = useState('raw_payloads')
   return (
     <Tabs fill onSelect={(k) => setKey(k)}
@@ -189,7 +189,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
       transition={false}
       id="noanim-tab-example">
       <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={'bg-light px-2 py-2 overflow-auto h-75 ' + className}>
           { key === 'raw_payloads' ? (
             <ReactJson
               className="mb-2"
@@ -218,17 +218,17 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab className="h-100" eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 h-100">
+        <TabContent className={"bg-light px-2 py-2 h-100 " + className}>
           { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents} simulateExperience={simulateExperience}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="viz_log_events" title={(<div>Log Events Viz</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-100">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-100 " + className}>
           {logEvents.length && key === 'viz_log_events' ? (<LogEventsViz events={logEvents}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="raw_log_events" title={(<div>Log Events JSON <small className="badge bg-light text-secondary">{logEvents.length}</small></div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-75 " + className}>
           { key === 'raw_log_events' ? (
             <ReactJson
               className="mb-2"
@@ -249,7 +249,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab eventKey="raw_api_events" title={(<div>API Events JSON <small className="badge bg-light text-secondary">{apiEvents.length}</small></div>)} className="bg-light" disabled={apiEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-75 " + className}>
           { key === 'raw_api_events' ? (
             <ReactJson
               className="mb-2"
@@ -280,6 +280,8 @@ export default class DLGaaS extends BaseClass {
   constructor(){
     super()
     this.state = {
+      brand: null,
+      chatPanelHidden: false,
       error: null,
       clientId: '',
       clientSecret: '',
@@ -289,7 +291,7 @@ export default class DLGaaS extends BaseClass {
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
-      simulateExperience: 'visualVA',
+      simulateExperience: 'audioAndTextInTextOut',
       ttsVoice: {name: 'Evan', model: 'enhanced'},
       ttsVoices: [],
       rawResponses: [],
@@ -339,6 +341,16 @@ export default class DLGaaS extends BaseClass {
     return false
   }
 
+  includeBrandTheme(brand){
+    brand = brand || 'default'
+    console.log("Loading brand: ", brand)
+    let link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.type = 'text/css'
+    link.href = `/brands/${brand}/styles.css`
+    document.head.appendChild(link);
+  }
+
   componentDidMount(){
     const params = this.initStateFromQueryParams([
       'clientId',
@@ -349,17 +361,26 @@ export default class DLGaaS extends BaseClass {
       'sessionTimeout',
       'simulateExperience',
       'ttsVoice',
-      'sessionId'
+      'sessionId',
+      'brand'
     ])
     if(Object.keys(params).length){
       this.setState(params)
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
+    const viewController = this
+    this.initDlgGrpcWeb()
+    this.includeBrandTheme(params.brand)
     this.initStartData(() => {
-      if(this.isStandalone()){
-        this.initToken().then(() => {
-          this.go()
-        })
+      if(viewController.isStandalone()){
+        viewController.initToken()
+          .then(() => {
+            return viewController._dlgController
+              .connect().then(() => {
+                console.info("DLG Client Ready.")
+                viewController.start()
+              })
+          })
       }
     })
   }
@@ -379,7 +400,7 @@ export default class DLGaaS extends BaseClass {
       if(newData.startData || newData.clientData){
         this.setState(newData, after)
       }
-    } catch (ex) {
+  } catch (ex) {
       console.error(ex)
     }
   }
@@ -415,6 +436,9 @@ export default class DLGaaS extends BaseClass {
     // noop
     this.warmupExperienceSimulation()
     this.setAuthTokenCookie(token)
+    if(this.isStandalone()){
+      return await this.go()
+    }
   }
 
   isGrpcWeb(){
@@ -426,7 +450,7 @@ export default class DLGaaS extends BaseClass {
   }
 
   isOrchestratedInteraction(){
-      return SIMULATED_EXPERIENCES(this.state.simulateExperience).isOutputVoice
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).isOutputVoice
   }
 
   isVoiceOutputExperience(){
@@ -437,11 +461,9 @@ export default class DLGaaS extends BaseClass {
     if(this.isVoiceOutputExperience()){
       this.initTts()
     }
-    // if(this.isVoiceInputExperience()){
     if(this.state.accessToken){
-      this.initDlgGrpcWeb()
+      this._dlgController.connect()
     }
-    // }
   }
 
   initTts(){
@@ -462,6 +484,9 @@ export default class DLGaaS extends BaseClass {
   }
 
   initAudioInput(){
+    if(this._micAudioSource){
+      return this._micAudioSource
+    }
     this._micAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,
@@ -505,6 +530,22 @@ export default class DLGaaS extends BaseClass {
     }
   }
 
+  initMic(){
+    if(this._micAudioSource){
+      return
+    }
+    let viewController = this
+    return viewController.initAudioInput()
+      .init()
+      .then(() => {
+        // start mic & feed controller
+        viewController._dlgController.setAudioSource(viewController._micAudioSource)
+        viewController.setState({
+          processingState: ProcessingState.IDLE
+        })
+      })
+  }
+
   initDlgGrpcWeb(){
     if(this._dlgController){
       console.log("DLG Controller already initialized")
@@ -517,18 +558,6 @@ export default class DLGaaS extends BaseClass {
     })
     this._dlgController.on('start-session', () => {
       console.log('start-session')
-      viewController.setState({
-        error: false,
-        processingState: ProcessingState.IDLE // REVISIT
-      })
-      // START AUDIO INPUT
-      if(viewController.isVoiceInputExperience()){
-        let audioIn = viewController.initAudioInput() // mic-based
-        audioIn.init().then(() => {
-          // start mic & feed controller
-          viewController._dlgController.setAudioSource(viewController._micAudioSource)
-        })
-      }
     })
     this._dlgController.on('start-audio', () => {
       console.log('start-audio')
@@ -575,12 +604,11 @@ export default class DLGaaS extends BaseClass {
         processingState: ProcessingState.IDLE
       })
     })
-    this._dlgController.on('end', () => {
-      console.log('end')
+    this._dlgController.on('end', (status) => {
+      console.log('end', status)
       viewController.setState({
         processingState: ProcessingState.IDLE
       })
-      viewController.eraseAuthTokenCookie()
       // if(SIMULATED_EXPERIENCES(viewController.state.simulateExperience).autoListen){
       //   viewController.ttsClz.whenAudioEnds(() => {
       //     viewController.sessionExecuteStream()
@@ -608,6 +636,9 @@ export default class DLGaaS extends BaseClass {
   }
 
   setAuthTokenCookie(token){
+    if(!token){
+      return
+    }
     let expiration = new Date()
     let FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000
     expiration.setTime(expiration.getTime() + FIFTEEN_MINUTES_IN_MS)
@@ -757,6 +788,7 @@ export default class DLGaaS extends BaseClass {
       let res = await this.sessionStart(fullPayload)
                           .catch((err) => {
                             alert(err)
+                            console.error(err)
                           })
       // Error
       if(res.error){
@@ -856,7 +888,7 @@ export default class DLGaaS extends BaseClass {
     this.setState({
       rawResponses: rawResponses
     })
-    if(this.ttsClz){
+    if(this.ttsClz){ // TODO: re-evaluate
       this.ttsClz.resetAudio()
     }
     if(consideredInput && this.recoTimeout !== -1){
@@ -919,8 +951,8 @@ export default class DLGaaS extends BaseClass {
   async playTtsMessage(playStr, playSettings){
     this.ttsClz.state.accessToken = this.state.accessToken
     this.ttsClz.state.voice = playSettings ? {
-      name: playSettings.voice.name, 
-      model: playSettings.voice.model
+      name: playSettings.voice.name || this.state.ttsVoice.name, 
+      model: playSettings.voice.model || this.state.ttsVoice.model
     } : this.state.ttsVoice
     this.ttsClz.state.textInput = playStr
     let req = await this.ttsClz.executeTextInput({
@@ -948,8 +980,11 @@ export default class DLGaaS extends BaseClass {
     // let incompleteTimeout = timeouts.incompleteTimeout
     // let maxSpeechInput = timeouts.maxSpeechTimeout
     if(this.recoTimeout !== -1){
+      console.log("Clearing last collection timeout.")
       clearTimeout(this.recoTimeout)
     }
+    let t = parseInt(mainTimeout.substring(0, mainTimeout.length-2))
+    console.log("Queuing collection timeout.", t)
     this.recoTimeout = setTimeout(() => {
       Promise.resolve().then(() => {
         this.execute(null, false, {
@@ -957,7 +992,7 @@ export default class DLGaaS extends BaseClass {
             message: `Standard reco timeout kicked in after ${mainTimeout}.`,
         })
       })
-    }, parseInt(mainTimeout.substring(0, mainTimeout.length-2))) // chop the `ms`
+    }, t) // chop the `ms`
   }
 
   parseResponse(res){
@@ -1001,10 +1036,11 @@ export default class DLGaaS extends BaseClass {
             }
           })
         })
-      }
-      // TODO: more precise
-      if(collectionSettings){
-        this.bindCollectionTimeouts(collectionSettings)
+      } else {
+        // TODO: more precise
+        if(collectionSettings){
+          this.bindCollectionTimeouts(collectionSettings)
+        }
       }
       if(dataAction){
         setTimeout(() => {
@@ -1062,6 +1098,9 @@ export default class DLGaaS extends BaseClass {
     }
     if(this.ttsClz){
       this.ttsClz.resetAudio()
+    }
+    if(this._micAudioSource){
+      this.stopAudioInput()
     }
     this.stopCapturingLogs()
     return false
@@ -1124,8 +1163,11 @@ export default class DLGaaS extends BaseClass {
     })
   }
 
-  go(){
-    this.start()
+  async go(){
+    if(this.isVoiceInputExperience()){
+      await this.initMic()
+    }
+    return await this.start()
   }
 
   getAuthHtml(){
@@ -1135,7 +1177,7 @@ export default class DLGaaS extends BaseClass {
           clientId={this.state.clientId}
           clientSecret={this.state.clientSecret}
           onChangeTextInput={this.onChangeTextInput.bind(this)}
-          serviceScope="asr dlg tts log" />
+          serviceScope={this.getScope()} />
     )
   }
 
@@ -1185,7 +1227,9 @@ export default class DLGaaS extends BaseClass {
   }
 
   onToggleMinMax(minimized){
-    
+    this.setState({
+      chatPanelHidden: minimized
+    })
   }
   
   startRecognizing(){
@@ -1251,8 +1295,8 @@ export default class DLGaaS extends BaseClass {
                     <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; Voice Output</option>
                   </optgroup>
                   <optgroup label="IVR">
-                    <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
                     <option value={'ivrAudioInOut'}>IVR: Voice &amp; DTMF Input with Voice Output</option>
+                    <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
                     <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
                     <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with Voice Output</option>
                   </optgroup>
@@ -1272,6 +1316,18 @@ export default class DLGaaS extends BaseClass {
                 <p>
                   See <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">Languages and Voices</a>
                 </p>
+                <div className="form-floating">
+                  <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
+                </div>
+                <div className="form-floating">
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="channel" className="form-label">Channel</label>
+                </div>
+                <div className="form-floating">
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="language" className="form-label">Language</label>
+                </div>
                 {SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS ? (
                   <div className="form-floating">
                     <Form.Control 
@@ -1282,21 +1338,9 @@ export default class DLGaaS extends BaseClass {
                       onChange={this.onChangeSelectInput.bind(this)}>
                       {this.getVoiceOptionsHTML()}
                     </Form.Control>
-                    <Form.Label>TTS Voice (default)</Form.Label>
+                    <Form.Label>Fallback TTS Voice (default)</Form.Label>
                   </div>
                   ) : ''}
-                <div className="form-floating">
-                  <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
-                </div>
-                <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="language" className="form-label">Language</label>
-                </div>
-                <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="channel" className="form-label">Channel</label>
-                </div>
                 <div className="form-floating">
                   <input type="number" className="form-control" name="sessionTimeout" value={this.state.sessionTimeout} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
@@ -1409,17 +1453,18 @@ export default class DLGaaS extends BaseClass {
                 </Button>
               ) : ('')}
             { this.state.logConsumerName && !this.state.isSessionActive ? (
-              <button className="btn-sm btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
+              <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
             ) : ('')}
           </div>
         </div>
         <div className="row h-100 mt-1">
-          <div className={`col-12 h-100 ` + (this.state.isSessionActive?`blurred`:'')}>
+          <div className={`col-12 h-100`}>
             <DlgTabs
               simulateExperience={this.state.simulateExperience}
               logEvents={logEvents}
               apiEvents={apiEvents}
               rawResponses={this.state.rawResponses}
+              className={this.state.isSessionActive && !this.state.chatPanelHidden ?'blurred':''}
             />
           </div>
           <div className={`col-3 float-end`}>
@@ -1430,7 +1475,7 @@ export default class DLGaaS extends BaseClass {
               rawResponses={chatResponses}
               autoScrollChatPanel={this.state.autoScrollChatPanel}
               width={365}
-              height={window.innerHeight-125}
+              height={window.innerHeight-150}
               sessionTimeout={this.state.sessionTimeout}
               sessionId={this.state.sessionId}
               active={this.state.isSessionActive}

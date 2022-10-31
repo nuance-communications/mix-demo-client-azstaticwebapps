@@ -82,8 +82,8 @@ function ProfileView({
               <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; Voice Output</option>
             </optgroup>
             <optgroup label="IVR">
-              <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
               <option value={'ivrAudioInOut'}>IVR: Voice &amp; DTMF Input with Voice Output</option>
+              <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
               <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
               <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with Voice Output</option>
             </optgroup>

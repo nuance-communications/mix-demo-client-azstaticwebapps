@@ -1,0 +1,30 @@
+/* Brand Assets */
+@font-face {
+  font-family: 'JDSansPro';
+  src: url('./JDSansPro-Bold.woff2') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'JDSansPro';
+  src: url('./JDSansPro-Semibold.woff2') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  /* John Deere */
+  --skin-logo: url("./brands/johndeere/logo.svg");
+  --skin-logo-header-width: 45px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: 35%;
+  --skin-logo-main-height: auto;
+  --skin-color: #367C2B;
+  --skin-font: 'JDSansPro', 'Segoe UI', 'Roboto', 'Helvetica';
+  --skin-font-size: 15px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #27251F;
+  --skin-footer-bg-color: #fff;
+  --skin-message-text-color: #FFDE00;
+}

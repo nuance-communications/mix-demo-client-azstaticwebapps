@@ -1,0 +1,36 @@
+/* Brand Assets */
+@font-face {
+  font-family: 'UPSRoboto';
+  src: url('./Roboto-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'UPSRoboto';
+  src: url('./Roboto-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'UPSRoboto';
+  src: url('./Roboto-Medium.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+:root {
+  /* UPS */
+  --skin-logo: url("./brands/ups/logo.svg");
+  --skin-logo-header-width: 30px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: auto;
+  --skin-logo-main-height: 100px;
+  --skin-color: #351C15;
+  --skin-font: 'UPSRoboto', 'Helvetica';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #351C15;
+  --skin-footer-bg-color: #fff; 
+  --skin-message-text-color: white;  
+}

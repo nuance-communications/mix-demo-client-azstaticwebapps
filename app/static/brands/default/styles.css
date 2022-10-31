@@ -1,0 +1,18 @@
+/* Brand Assets */
+:root {
+  /* Default Brand - Override as Needed */
+  --skin-logo: url("./brands/default/logo.png");
+  --skin-logo-header-width: 120px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: 70%;
+  --skin-logo-main-height: auto;
+  --skin-color: #27251F;
+  --skin-font: 'Roboto', 'Helvetica';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #fff;
+  --skin-footer-bg-color: #fff; 
+  --skin-message-text-color: white;  
+}
+

@@ -1,0 +1,36 @@
+/* Brand Assets */
+@font-face {
+  font-family: 'Gilroy-Bold';
+  src: url('./Gilroy-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Gilroy-Regular';
+  src: url('./Gilroy-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Gilroy-SemiBold';
+  src: url('./Gilroy-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+:root {
+  /* UPS */
+  --skin-logo: url("./brands/bnc/logo.svg");
+  --skin-logo-header-width: 100px;
+  --skin-logo-header-height: auto;
+  --skin-logo-main-width: 60%;
+  --skin-logo-main-height: auto;
+  --skin-color: rgb(190, 23, 29);;
+  --skin-font: 'UPSRoboto', 'Arial';
+  --skin-font-size: 14px;
+  --skin-chat-bg-color: #fff;
+  --skin-header-text-color: #fff;
+  --skin-header-bg-color: #fff;
+  --skin-footer-bg-color: #fff; 
+  --skin-message-text-color: white;  
+}
