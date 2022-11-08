@@ -679,11 +679,11 @@ export default class ASRaaS extends BaseClass {
                       <div className="col-9">
                         <AudioVisualizer 
                           audioDataSource={this.state.microphone}
-                          options={{
-                            width: 785,
-                            height: 70,
-                            tickWidth: 100
-                          }} />
+                          width={785}
+                          height={70}
+                          tickWidth={100}
+                          color={'#333333'}
+                          barWidthFactor={2.4} />
                       </div>
                       <div className="col-1">
                         <button title="Mute/Unmute" className={"float-end fs-4 mt-2 btn " + (this._micAudioSource ? 'text-dark' : 'text-danger')}
