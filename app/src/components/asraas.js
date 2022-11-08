@@ -42,12 +42,12 @@ const Alert = loadable(() => import('react-bootstrap/Alert'))
 const Table = loadable(() => import('react-bootstrap/Table'))
 const TabContent = loadable(() => import('react-bootstrap/TabContent'))
 
-const ProcessingState = {
+export const ProcessingState = {
   DISCONNECTED: 0, 
   IDLE: 1, // PENDING
   IN_FLIGHT: 2, // LISTENING
   AWAITING_FINAL: 3,
-  INITIALIZING: 4
+  INITIALIZING: 4,
 }
 
 //
@@ -166,7 +166,7 @@ function RecoRequestView({request, error}){
   return (
     <Card className="asr vh-100 min-vh-100 overflow-hidden">
       <div className="card-body pl-0 pr-0 vh-100 min-vh-100">
-        <Alert className="bg-light text-center">
+        <Alert variant="light" className="bg-light text-center">
           {(request.wasSuccess() && !error) ? (
             <div className="row">
               <div className="col-12">
