@@ -894,12 +894,19 @@ export default class DLGaaS extends BaseClass {
                   value={this.state.simulateExperience} 
                   onChange={this.onChangeSelectInput.bind(this)}>
                   <optgroup label="Visual VA">
+                    <option value={'audioAndTextInTextOut'}>Visual VA: Voice &amp; Text Input with HTML Output</option>
                     <option value={'visualVA'}>Visual VA: Text Input with HTML Output</option>
-                    <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; TTS Output</option>
+                    <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; Voice Output</option>
                   </optgroup>
                   <optgroup label="IVR">
+                    <option value={'ivrAudioInOut'}>IVR: Voice &amp; DTMF Input with Voice Output</option>
+                    <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
                     <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
-                    <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with TTS Output (no ASR)</option>
+                    <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with Voice Output</option>
+                  </optgroup>
+                  <optgroup label="IoT">
+                    <option value={'smartSpeaker'}>SmartSpeaker: Voice Input with Voice Output</option>
+                    <option value={'smartSpeakerWithScreen'}>SmartSpeaker: Voice &amp; Text Input with Voice &amp; HTML Output</option>
                   </optgroup>
                 </Form.Control>
                 <Form.Label>Simulate Experience</Form.Label>

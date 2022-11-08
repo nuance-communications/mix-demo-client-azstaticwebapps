@@ -265,6 +265,30 @@ const EXPERIENCE_TYPES = {
     bindTimeouts: true,
     dtmfInput: true
   },
+  ivrAudioInOut: {
+    playTTS: true,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true,
+    voiceInput: true
+  },
+  ivrAudioInTextOut: {
+    playTTS: false,
+    isOutputHTML: false,
+    isOutputSSML: true,
+    bindTimeouts: true,
+    dtmfInput: true,
+    voiceInput: true
+  },
+  audioAndTextInTextOut: {
+    playTTS: false,
+    isOutputHTML: true,
+    isOutputSSML: false,
+    bindTimeouts: false,
+    dtmfInput: false,
+    voiceInput: true
+  },
   visualVA: {
     playTTS: false,
     isOutputHTML: true,
@@ -278,6 +302,25 @@ const EXPERIENCE_TYPES = {
     isOutputSSML: true,
     bindTimeouts: false,
     dtmfInput: false
+  },
+  smartSpeaker: {
+    voiceInput: true,
+    playTTS: true, // represents SEPARATE orchestration
+    isOutputHTML: false,
+    isOutputSSML: true,
+    isOutputVoice: true,
+    bindTimeouts: false,
+    dtmfInput: false
+  },
+  smartSpeakerWithScreen: {
+    voiceInput: true,
+    playTTS: true, // represents SEPARATE orchestration
+    isOutputHTML: true,
+    isOutputSSML: true,
+    isOutputVoice: true,
+    bindTimeouts: false,
+    dtmfInput: false,
+    autoListen: true
   }
 }
 
