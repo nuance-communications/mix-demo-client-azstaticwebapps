@@ -171,9 +171,15 @@ export class Hypothesis extends jspb.Message {
   getGrammarId(): string;
   setGrammarId(value: string): void;
 
+  hasDetectedWakeupWord(): boolean;
+  clearDetectedWakeupWord(): void;
+  getDetectedWakeupWord(): string;
+  setDetectedWakeupWord(value: string): void;
+
   getOptionalHypothesisConfidenceCase(): Hypothesis.OptionalHypothesisConfidenceCase;
   getOptionalHypothesisAverageConfidenceCase(): Hypothesis.OptionalHypothesisAverageConfidenceCase;
   getOptionalHypothesisGrammarIdCase(): Hypothesis.OptionalHypothesisGrammarIdCase;
+  getOptionalDetectedWuwCase(): Hypothesis.OptionalDetectedWuwCase;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Hypothesis.AsObject;
   static toObject(includeInstance: boolean, msg: Hypothesis): Hypothesis.AsObject;
@@ -194,6 +200,7 @@ export namespace Hypothesis {
     wordsList: Array<Word.AsObject>,
     encryptedTokenization: string,
     grammarId: string,
+    detectedWakeupWord: string,
   }
 
   export enum OptionalHypothesisConfidenceCase {
@@ -209,6 +216,11 @@ export namespace Hypothesis {
   export enum OptionalHypothesisGrammarIdCase {
     OPTIONAL_HYPOTHESIS_GRAMMAR_ID_NOT_SET = 0,
     GRAMMAR_ID = 9,
+  }
+
+  export enum OptionalDetectedWuwCase {
+    OPTIONAL_DETECTED_WUW_NOT_SET = 0,
+    DETECTED_WAKEUP_WORD = 10,
   }
 }
 

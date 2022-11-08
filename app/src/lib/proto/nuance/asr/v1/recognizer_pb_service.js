@@ -1,17 +1,17 @@
 // package: nuance.asr.v1
 // file: nuance/asr/v1/recognizer.proto
 
-var nuance_asr_v1_recognizer_pb = require('../../../nuance/asr/v1/recognizer_pb');
-var grpc = require('@improbable-eng/grpc-web').grpc;
+var nuance_asr_v1_recognizer_pb = require("../../../nuance/asr/v1/recognizer_pb");
+var grpc = require("@improbable-eng/grpc-web").grpc;
 
 var Recognizer = (function () {
   function Recognizer() {}
-  Recognizer.serviceName = 'nuance.asr.v1.Recognizer';
+  Recognizer.serviceName = "nuance.asr.v1.Recognizer";
   return Recognizer;
 }());
 
 Recognizer.Recognize = {
-  methodName: 'Recognize',
+  methodName: "Recognize",
   service: Recognizer,
   requestStream: true,
   responseStream: true,
@@ -50,7 +50,7 @@ RecognizerClient.prototype.recognize = function recognize(metadata) {
   client.onMessage(function (message) {
     listeners.data.forEach(function (handler) {
       handler(message);
-    });
+    })
   });
   client.start(metadata);
   return {
