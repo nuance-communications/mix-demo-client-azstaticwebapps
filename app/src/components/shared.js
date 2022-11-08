@@ -17,7 +17,8 @@ export const CLIENT_DATA = {
     "client": "Nuance Mix Demo Client",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
-export const URN_REGEX = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
+export const URN_REGEX_DIALOG = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.dialog/
+export const URN_REGEX_NLU = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
 export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
 export const LANG_EMOJIS = {
@@ -385,15 +386,21 @@ export class BaseClass extends React.Component {
         }
       });
     }
-    let title = 'Nuance Mix Demo Client -'
-    if(toUpdate.channel){
-      title += ` ${toUpdate.channel}`
+    let title = 'Nuance Mix Demo Client'
+    if(toUpdate.clientId){
+      title += ` - AppID: ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    }
+    if(toUpdate.modelUrn){
+      title += ` - Tag: ${this.parseContextTag(toUpdate.modelUrn, URN_REGEX_DIALOG)}`
     }
     if(toUpdate.language){
-      title += ` ${toUpdate.language}`
+      title += ` - Language: ${toUpdate.language}`
     }
-    if(toUpdate.clientId){
-      title += `  ${this.getAppIDFromClientID(toUpdate['clientId'])}`
+    if(toUpdate.channel){
+      title += ` - Channel: ${toUpdate.channel}`
+    }
+    if(toUpdate.simulateExperience){
+      title += ` - Simulate: ${toUpdate.simulateExperience}`
     }
     document.title = title
     return { 
@@ -845,10 +852,9 @@ export class BaseClass extends React.Component {
     }
   }
 
-  parseContextTag(urn){
+  parseContextTag(urn, pattern){
     try {
-      const results = urn.match(URN_REGEX)
-      console.log('parsed', results)
+      const results = urn.match(pattern || URN_REGEX_NLU)
       if(results && results.length){
         return results[1]
       }
