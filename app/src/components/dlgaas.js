@@ -1227,8 +1227,8 @@ export default class DLGaaS extends BaseClass {
         startData.userData = {location: {}}
       }
       startData.userData.location = {
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude
+        latitude: String(pos.coords.latitude),
+        longitude: String(pos.coords.longitude)
       }
       let fetchingLocation = false
       this.setState({
