@@ -217,6 +217,7 @@ export default class DLGaaS extends BaseClass {
   constructor(){
     super()
     this.state = {
+      brand: null,
       error: null,
       clientId: '',
       clientSecret: '',
@@ -265,6 +266,16 @@ export default class DLGaaS extends BaseClass {
     return false
   }
 
+  includeBrandTheme(brand){
+    brand = brand || 'default'
+    console.log("Loading brand: ", brand)
+    let link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.type = 'text/css'
+    link.href = `/brands/${brand}/styles.css`
+    document.head.appendChild(link);
+  }
+
   componentDidMount(){
     const params = this.initStateFromQueryParams([
       'clientId',
@@ -275,7 +286,8 @@ export default class DLGaaS extends BaseClass {
       'sessionTimeout',
       'simulateExperience',
       'ttsVoice',
-      'sessionId'
+      'sessionId',
+      'brand'
     ])
     if(Object.keys(params).length){
       this.setState(params)

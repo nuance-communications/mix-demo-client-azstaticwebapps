@@ -1,3 +1,20 @@
+:root {
+  --brand-color: var(--skin-color);
+  --brand-logo: var(--skin-logo);
+  --brand-logo-header-width: var(--skin-logo-header-width);
+  --brand-logo-header-height: var(--skin-logo-header-height);
+  --brand-logo-main-width: var(--skin-logo-main-width);
+  --brand-logo-main-height: var(--skin-logo-main-height);
+  --chat-font: var(--skin-font);
+  --chat-font-size: var(--skin-font-size);
+  --chat-background-color: var(--skin-chat-bg-color);
+  --chat-header-background-color: var(--skin-header-bg-color);
+  --chat-header-text-color: var(--skin-header-text-color);
+  --chat-footer-background-color: var(--skin-footer-bg-color);
+  --chat-user-message-text-color: var(--skin-message-text-color);
+}
+
+/* Core */
 body {
   background: #E4E5E7;
   height: 100%;
@@ -8,6 +25,10 @@ main .tab-content {
 .container-fluid > div,
 .tab-pane {
   height: 100%;
+}
+.table-fixedLayout {
+  table-layout: fixed;
+  overflow-wrap: break-word;
 }
 .nav-tabs .nav-item .nav-link, 
 .nav-pills .nav-link {
@@ -71,52 +92,106 @@ main .tab-content {
   left: 0;
   bottom: 0;
   right: 0;
-  /*top: 0;*/
 }
 .chat-panel.chat-panel-minimized {
   height: 56px;
+}
+.chat-panel.chat-panel-minimized canvas {
+  display: none;
 }
 .chat-panel > .card > .card-header {
   height: 56px;
   padding: 15px 18px 20px 18px;
   position:relative;
-  /*overflow:hidden;*/
   color: #222;
   border-radius: 6px 6px 0px 0px;
 }
+.chat-panel.chat-panel-minimized > .card > .card-header {
+  background: var(--chat-header-background-color) !important;
+}
+.chat-panel > .card > .card-footer {
+  background-color: var(--chat-footer-background-color);
+}
 .chat-panel > .card > .card-header:not(.bg-dark) { 
-  background: #f5f8fa !important;   
+  background-color: var(--chat-header-background-color) !important;
+  color: var(--chat-header-text-color) !important;
 }
 .chat-panel > .card > .card-header.bg-dark .badge.bg-dark { 
-  background: rgb(52,182,199) !important;
+  background: var(--brand-color) !important;
+}
+.chat-header-img {
+  content: var(--brand-logo);
+}
+.card-header-bg .chat-header-img {
+  width: var(--brand-logo-header-width);
+  height: var(--brand-logo-header-height);
+  display: inline-block;
+}
+.card-body .chat-header-img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: var(--brand-logo-main-width);
+  height: var(--brand-logo-main-height);
+}
+.blurred {
+  transition: all 0.05s ease-out;
+  filter: blur(8px);
+}
+.blurred:hover {
+  filter: blur(0px);
 }
 .chat-panel > .card-body {
   margin: 0px 8px;
+}
+.chat-panel dd.nlg-text {
+  display: none !important;
+}
+.chat-panel.show-nlg-text dd.nlg-text {
+  display: block !important;
+}
+.chat-panel .nlg-text .bg-light {
+  color: #999 !important;
+  font-size:0.75rem;
+  font-style: italic;
+  background-color: transparent !important;
+}
+.card.handle {
+  border: 0px;
+}
+#messagesHnd {
+  transition: 0.3s ease-in-out all;
+  background: var(--chat-background-color);
+}
+#messagesHnd dd {
+  font-size: var(--chat-font-size);
+  font-family: var(--chat-font);
 }
 #messagesHnd .msg .rounded {
   border-radius: 10px!important;
   line-height: 20px;
 }
-#messagesHnd .bg-light.msg {
-  background: #efefef !important;
-  color: #414141;
+#messagesHnd .bg-white.msg {
+  background: var(--brand-color) !important; 
+  color: var(--chat-user-message-text-color) !important;
   line-height: 25px;
 }
-#messagesHnd .bg-white.msg {
-  /*background: rgb(24,88,133) !important; */
-  background: rgb(52,182,199) !important; 
-  color: white !important;
+#messagesHnd .bg-white.msg-asr {
+  background: var(--brand-color) !important; 
+  color: var(--chat-user-message-text-color) !important;
 }
-#messagesHnd dd {
-  font-size: 15px;
+#btnDialogSubmitAudio.btn-dark,
+#btnDialogSubmitAudio.btn-danger {
+  width: 60px;
+}
+#btnDialogSubmitAudio.btn-dark {
+  background-color: var(--brand-color);
+  border-color: var(--brand-color);
 }
 #cy {
   width: 1200px;
   height: 800px;
   display: block;
-}
-#messagesHnd {
-  transition: 1s ease-in-out all;
 }
 .carousel-control-next-icon, 
 .carousel-control-prev-icon {
@@ -127,6 +202,10 @@ main .tab-content {
 input[name=textInput] {
   height:46px;
   font-size: 15px;
+  font-family: var(--chat-font);
+}
+input[name=textInput] + button {
+  color: var(--brand-color);
 }
 .expand-collapse-button {
   position: relative;
@@ -151,18 +230,22 @@ td .badge.bg-primary.text-white,
 td .badge.text-primary {
   color: #333 !important;
 }
-.dlgaas td .badge.bg-success {
-  background-color: rgb(52,182,199) !important;
-}
-.dlgaas td .badge.bg-light.text-success {
-  background-color: rgb(52,182,199) !important;
-}
-.dlgaas td .badge.border-success {
-  border-color: rgb(52,182,199) !important;
-}
+
 .dlgaas td .badge.text-success,
 .dlgaas td .badge.text-danger {
   color: white !important;
+}
+.dlgaas td .badge.bg-success {
+  background-color: var(--brand-color) !important;
+  color: var(--chat-user-message-text-color) !important;
+}
+.dlgaas td .badge.bg-light.text-success {
+  background-color: var(--brand-color) !important;
+  color: var(--chat-user-message-text-color) !important;
+}
+.dlgaas td .badge.border-success {
+  border-color: var(--brand-color) !important;
+  color: var(--chat-user-message-text-color) !important;
 }
 
 .log-viewer .form-check-inline {
@@ -176,9 +259,16 @@ pre {
 .react-json-view,
 .pretty-json-container {
   font-family: Roboto, sans-serif, serif;
-  font-size: 0.85em;
+  font-size: 0.95em;
 }
 
+.asr .bg-primary {
+  background-color: #EFEFEF !important;
+}
+.asr .table,
+.asr .bg-primary {
+  color: #333;
+}
 .asrWord {
   position:relative;
   min-width: 30px;
@@ -210,11 +300,8 @@ pre {
   background: transparent !important;
   text-color: #222;
 }
-.asr .bg-primary {
-  background-color: #EFEFEF !important;
-}
-.asr .table,
-.asr .bg-primary {
-  color: #333;
-}
 
+.visualizer {
+  margin: 0 auto;
+  text-align: center;
+}
