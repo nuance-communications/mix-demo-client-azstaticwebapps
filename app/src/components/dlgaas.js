@@ -12,17 +12,23 @@ import moment from 'moment'
 import loadable from '@loadable/component'
 
 import { BaseClass, AuthForm } from "./shared"
-import { CLIENT_DATA, ROOT_URL, SIMULATED_EXPERIENCES } from "./shared"
+import { CLIENT_DATA, ROOT_URL, SIMULATED_EXPERIENCES, DLG_SERVICE_URL } from "./shared"
 import { LogEventsTable, LogEventsViz } from "./log"
 import ChatPanel from "./chat"
 import TTSaaS from "../components/ttsaas"
 import Form from 'react-bootstrap/Form'
+import { ProcessingState } from "./asraas"
+
+import { DlgController } from "../lib/dlg"
+import { MicrophoneAudioSource } from "../lib/audio"
+import { AsrResponse, AsrResponseType } from "../lib/asr"
 
 const ReactJson = loadable(() => import('react-json-view'))
 const Button = loadable(() => import('react-bootstrap/Button'))
 const Tabs = loadable(() => import('react-bootstrap/Tabs'))
 const Tab = loadable(() => import('react-bootstrap/Tab'))
 const TabContent = loadable(() => import('react-bootstrap/TabContent'))
+
 
 const ACTION_TYPES = [ 
   'qaAction',
@@ -118,7 +124,7 @@ class ClientFetchHandlers {
 // DLGaaS
 //
 
-function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
+function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, className}){
   const [key, setKey] = useState('raw_payloads')
   return (
     <Tabs fill onSelect={(k) => setKey(k)}
@@ -126,7 +132,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
       transition={false}
       id="noanim-tab-example">
       <Tab eventKey="raw_payloads" title={(<div>Client Payloads <small className="badge bg-light text-secondary">{rawResponses.length}</small></div>)}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={'bg-light px-2 py-2 overflow-auto h-75 ' + className}>
           { key === 'raw_payloads' ? (
             <ReactJson
               className="mb-2"
@@ -155,17 +161,17 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab className="h-100" eventKey="table_log_events" title={(<div>Log Events Table</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 h-100">
+        <TabContent className={"bg-light px-2 py-2 h-100 " + className}>
           { logEvents.length && key === 'table_log_events' ? (<LogEventsTable events={logEvents} simulateExperience={simulateExperience}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="viz_log_events" title={(<div>Log Events Viz</div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-100">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-100 " + className}>
           {logEvents.length && key === 'viz_log_events' ? (<LogEventsViz events={logEvents}/>) : ''}
         </TabContent>
       </Tab>
       <Tab eventKey="raw_log_events" title={(<div>Log Events JSON <small className="badge bg-light text-secondary">{logEvents.length}</small></div>)} disabled={logEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-75 " + className}>
           { key === 'raw_log_events' ? (
             <ReactJson
               className="mb-2"
@@ -186,7 +192,7 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses}){
         </TabContent>
       </Tab>
       <Tab eventKey="raw_api_events" title={(<div>API Events JSON <small className="badge bg-light text-secondary">{apiEvents.length}</small></div>)} className="bg-light" disabled={apiEvents.length === 0}>
-        <TabContent className="bg-light px-2 py-2 overflow-auto h-75">
+        <TabContent className={"bg-light px-2 py-2 overflow-auto h-75 " + className}>
           { key === 'raw_api_events' ? (
             <ReactJson
               className="mb-2"
@@ -218,6 +224,7 @@ export default class DLGaaS extends BaseClass {
     super()
     this.state = {
       brand: null,
+      chatPanelHidden: false,
       error: null,
       clientId: '',
       clientSecret: '',
@@ -227,7 +234,7 @@ export default class DLGaaS extends BaseClass {
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
-      simulateExperience: 'visualVA',
+      simulateExperience: 'audioAndTextInTextOut',
       ttsVoice: {name: 'Evan', model: 'enhanced'},
       ttsVoices: [],
       rawResponses: [],
@@ -249,7 +256,15 @@ export default class DLGaaS extends BaseClass {
       logConsumerGroup: null,
       logConsumerName: null,
       fetchRecordsTimeout: -1,
-      fetchingLocation: false
+      fetchingLocation: false,
+      recognitionSettings: null,
+      processingState: ProcessingState.DISCONNECTED,
+      microphone: null,
+      asrUtteranceDetection: 'single',
+      asrResultType: 'partial',
+      asrSampleRateHz: 16000,
+      asrNoInputTimeout: 3000,
+      asrSpeechDetectionSensitivity: 0.5
     }
     this.logTimer = -1
     this.recoTimeout = -1
@@ -259,6 +274,12 @@ export default class DLGaaS extends BaseClass {
     this.externalHandlers = new ExternalFetchHandlers()
 
     this.ttsClz = null
+    this._dlgController = null
+    this.startRequestInitiated = false
+    
+    this._micAudioSource = null
+    this.domElement = null
+    this.chatWidth = null
 
   }
 
@@ -289,17 +310,36 @@ export default class DLGaaS extends BaseClass {
       'sessionId',
       'brand'
     ])
-    if(Object.keys(params).length){
-      this.setState(params)
-    }
     window.addEventListener('beforeunload', this.onUnmount, false)
-    this.initStartData(() => {
-      if(this.isStandalone()){
-        this.initToken().then(() => {
-          this.go()
+    this.initStartData()
+    this.initDlgGrpcWeb()
+    if(Object.keys(params).length){
+      this.setState(params, this.init)
+    }
+  }
+
+  init(){
+    // standalone init means init token,
+    // connect to dlgaas
+    // start any simulation needs
+    // and trigger a startRequest
+    if(this.isStandalone() 
+      && this.state.clientId && this.state.clientSecret){
+      this.initToken(this.getScope())
+        .then(() => {
+          console.info("DLG Client Ready.")
+          if(this.state.clientId 
+            && this.state.clientSecret){
+            return this.go()
+          }
         })
-      }
-    })
+    }
+  }
+
+  componentDidUpdate(){
+    if(this.domElement?.current){
+      this.chatWidth = this.domElement.current.offsetWidth
+    }
   }
 
   initStartData(after){
@@ -307,7 +347,6 @@ export default class DLGaaS extends BaseClass {
     const clientDataLocalStorage = window.localStorage.getItem('clientData')
     try{
       let newData = {}
-
       if(startDataLocalStorage){
         newData.startData = JSON.parse(startDataLocalStorage)
       }
@@ -316,8 +355,10 @@ export default class DLGaaS extends BaseClass {
       }
       if(newData.startData || newData.clientData){
         this.setState(newData, after)
+      } else if(after) {
+        after.call(this)
       }
-    } catch (ex) {
+  } catch (ex) {
       console.error(ex)
     }
   }
@@ -328,8 +369,15 @@ export default class DLGaaS extends BaseClass {
         this.destroyConsumer()
       }
       this.stopCapturingLogs()
+      if(this._micAudioSource){
+        this.stopAudioInput()
+      }
       if(this.ttsClz){
         this.ttsClz.onUnmount()
+      }
+      this.eraseAuthTokenCookie()
+      if(this._dlgController){
+        this._dlgController.dispose()
       }
     } catch(ex) {
       console.warn(ex)
@@ -342,20 +390,55 @@ export default class DLGaaS extends BaseClass {
     this.onUnmount()
   }
 
-  async onTokenAcquired() {
-    // noop
-    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
-      this.initTts()
+  async onTokenAcquired(token) {
+    console.info("[token acquired]")
+    this.setAuthTokenCookie(token)
+    if(this.ttsClz){
+      this.ttsClz.state.accessToken = token.accessToken
     }
   }
 
-  warmupExperienceSimulation(){
-    if(SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS){
-      this.initTts()
-    }
+  isGrpcWeb(){
+    return true
+  }
+
+  isVoiceInputExperience(){
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).voiceInput
+  }
+
+  isOrchestratedInteraction(){
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).isOutputVoice
+  }
+
+  isVoiceOutputExperience(){
+    return SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS 
+  }
+
+  warmupExperienceSimulation(audioIn){
+    console.log('warmup simulation experience')
+    return new Promise((resolve, reject) => {
+      if(this.isVoiceOutputExperience()){
+        console.log('[simulation] TTS/AudioOut needed')
+        this.initTts()
+      }
+      if(!audioIn){
+        resolve()
+        return
+      }
+      if(this.isVoiceInputExperience()){
+        console.log('[simulation] MIC/AudioIn needed')
+        this.initMic().then(() => {
+          console.log('[simulation] warmed up -- mic ready!')
+          resolve()
+        })
+      } else {
+        resolve()
+      }
+    })
   }
 
   initTts(){
+    console.log("[tts] init")
     if(this.ttsClz){
       console.log("TTS already initialized.")
       return
@@ -369,54 +452,275 @@ export default class DLGaaS extends BaseClass {
       this.setState({
         ttsVoices: res.response.payload.voices
       })
+    }).catch(err => {
+      console.warn("couldnt get voices", err)
     })
+  }
+
+  initAudioInput(){
+    console.log("[mic] init audio input")
+    const viewController = this
+    if(viewController._micAudioSource){
+      if(this.state.microphone){
+        console.info("[mic] already initd and is in state")
+        return viewController._micAudioSource
+      }
+    }
+    viewController._micAudioSource = new MicrophoneAudioSource({
+      targetSampleRate: 16000,
+      monitorAudio: false,
+      captureAudio: true
+    })
+    viewController._micAudioSource.on('microphone:connected', () => {
+      console.log('**** mic connected ****', viewController._micAudioSource)
+      viewController.setState({
+        microphone: viewController._micAudioSource
+      })
+    })
+    return viewController._micAudioSource
+  }
+
+  stopAudioInput(){
+    console.warn("[mic] disposing")
+    if(this._micAudioSource){
+      this._micAudioSource.dispose()
+      this._micAudioSource = undefined
+    }
+    this.setState({
+      microphone: null
+    })
+  }
+
+  storePartialResult(res){
+    if(this.state.rawResponses.length < 1){
+      return
+    }
+    let lastResponse = this.state.rawResponses[0]
+    if(lastResponse.asr){
+      lastResponse.asr = res.raw
+    } else {
+      this.state.rawResponses.unshift({
+        asr: res.raw
+      })
+    }
+  }
+
+  storeFinalResult(res){
+    if(this.state.rawResponses.length > 1){
+      this.state.rawResponses[0].asr = res.raw
+    }
+  }
+
+  initMic(){
+    console.info("[mic] init")
+    if(this.state.microphone){
+      console.info("[mic] exists")
+      return
+    }
+    let viewController = this
+    return viewController
+      .initAudioInput()
+      .init()
+      .then(() => {
+        // start mic & feed controller
+        console.log('[mic] ready', viewController._micAudioSource)
+        viewController._dlgController.setAudioSource(viewController._micAudioSource)
+        viewController.setState({
+          processingState: ProcessingState.IDLE
+        })
+      })
+  }
+
+  initDlgGrpcWeb(){
+    if(this._dlgController){
+      console.log("DLG Controller already initialized")
+      return
+    }
+    const viewController = this
+    this._dlgController = new DlgController(DLG_SERVICE_URL, async function (){
+      await viewController.ensureTokenNotExpired()
+      return viewController.state.accessToken
+    })
+    this._dlgController.on('started', () => {
+      console.log('started')
+      viewController.setState({
+        processingState: ProcessingState.IDLE
+      })
+    })
+    this._dlgController.on('stream:audio', () => {
+      console.log('stream:audio')
+      viewController.setState({
+        processingState: ProcessingState.IN_FLIGHT
+      })
+    })
+    this._dlgController.on('result', (data, err) => {
+      console.log('result', data)
+      viewController.state.rawResponses.unshift(data)
+      viewController.setState({
+        rawResponses: viewController.state.rawResponses,
+        processingState: ProcessingState.IDLE
+      }, () => {
+        viewController.parseResponse(data)
+      })
+    })
+    this._dlgController.on('stream:result', (data, err) => {
+      // TODO: only handling TEXT at this time - not AUDIO
+      console.log('stream:result', data)
+      let updateState = false
+      let res = new AsrResponse(data)
+      switch(res.getType()){
+        case AsrResponseType.PARTIAL:
+          updateState = true
+          viewController.storePartialResult(res)
+          break
+        case AsrResponseType.FINAL:
+          console.info('[stream] got final asr response')
+          updateState = true
+          viewController.storeFinalResult(res)
+          viewController.stopRecognizing()
+          break
+        default:
+          break
+      }
+      if(updateState){
+        viewController.setState({
+          rawResponses: viewController.state.rawResponses
+        })
+      }
+    })
+    this._dlgController.on('stream:finish', (res) => {
+      console.log('stream:finish', res)
+      viewController.setState({
+        processingState: ProcessingState.AWAITING_FINAL
+      })
+    })
+    this._dlgController.on('stream:stopped', () => {
+      console.log('stream:stopped')
+      viewController.setState({
+        processingState: ProcessingState.AWAITING_FINAL 
+      })
+    })
+    this._dlgController.on('stopped', () => {
+      console.log('DLG session stopped')
+    })
+    this._dlgController.on('end', (status) => {
+      console.log('end', status)
+      viewController.setState({
+        processingState: ProcessingState.IDLE
+      })
+    })
+    this._dlgController.on('error', (err) => {
+      console.error('DLG Stream error.', err)
+      viewController.state.rawResponses.unshift({"error": err})
+      viewController.setState({
+        rawResponses: viewController.state.rawResponses,
+      })
+      viewController.setState({
+        error: err ? err.message : 'Unknown error occurred',
+        processingState: ProcessingState.IDLE
+      })
+    })
+    console.log("DLG initialized.")
+    return this._dlgController
+  }
+
+  setAuthTokenCookie(token){
+    if(!token){
+      return
+    }
+    let expiration = new Date()
+    let FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000
+    expiration.setTime(expiration.getTime() + FIFTEEN_MINUTES_IN_MS)
+    let cookieVal = `auth-token=${token.access_token}; ` + 
+                    `expires=${expiration.toUTCString()}; ` +
+                    `domain=.nuance.com; ` + 
+                    `path=/`
+    document.cookie = cookieVal
+  }
+
+  eraseAuthTokenCookie(){
+    document.cookie = `auth-token=; domain=.nuance.com; Path=/; Max-Age=-99999999;`;
   }
 
   // DLGaaS API
 
-  async sessionStart(language, channel, sessionTimeout, clientData, startData, sessionId) {
+  async sessionStart(fullPayload) {
     // Second, the Session is Started
     await this.ensureTokenNotExpired()
-    let fullPayload = {
-      selector: {
-        language: language,
-        channel: channel,
-        library: 'default',
-      },
-      payload: {
-        data: startData
-      },
-      session_timeout_sec: sessionTimeout,
-      client_data: clientData,
+    if(this.isGrpcWeb() || this.isVoiceInputExperience()){
+      // web-gRPC
+      this.setAuthTokenCookie(this.state.accessToken)
+      return await this._dlgController.start(
+        this.state.modelUrn,
+        fullPayload
+      )
+    } else {
+      // Proxy
+      return await this.request(`${ROOT_URL}/api/dlgaas-session-start`, {
+        token: this.state.accessToken,
+        modelUrn: this.state.modelUrn,
+        rawPayload: fullPayload
+      })
     }
-    if(sessionId){
-      fullPayload.session_id = sessionId
-    }
-    return await this.request(`${ROOT_URL}/api/dlgaas-session-start`, {
-      token: this.state.accessToken,
-      modelUrn: this.state.modelUrn,
-      rawPayload: fullPayload
-    })
   }
 
   async sessionExecute(payload) {
     // Third, transactions are Executed within the Session
     await this.ensureTokenNotExpired()
-    return await this.request(`${ROOT_URL}/api/dlgaas-session-execute`, {
-      token: this.state.accessToken,
-      sessionId: this.state.sessionId,
-      rawPayload: payload
-    })
+    this.cancelRecoTimeout()
+    if(this.isGrpcWeb() || this.isVoiceInputExperience()){
+      this.setAuthTokenCookie(this.state.accessToken)
+      return await this._dlgController.execute(
+        this.state.sessionId,
+        payload
+      )
+    } else {
+      return await this.request(`${ROOT_URL}/api/dlgaas-session-execute`, {
+        token: this.state.accessToken,
+        sessionId: this.state.sessionId,
+        rawPayload: payload
+      })
+    }
+  }
+
+  async sessionExecuteStream(payload) {
+    // Leverage a stream, instead. requires web-gRPC
+    if(this.isGrpcWeb()){
+      await this.ensureTokenNotExpired()
+      this.cancelRecoTimeout()
+      this.setAuthTokenCookie(this.state.accessToken)
+      return await this._dlgController.executeStream({
+        sessionId: this.state.sessionId,
+        asrSettings: {
+          utteranceDetection: this.state.asrUtteranceDetection,
+          resultType: this.state.asrResultType,
+          sampleRateHz: this.state.asrSampleRateHz,
+          noInputTimeout: this.state.asrNoInputTimeout,
+          speechDetectionSensitivity: this.state.asrSpeechDetectionSensitivity
+        },
+        clientID: this.state.clientId,
+        rawPayload: payload
+      })
+    }
   }
 
   async sessionStop() {
     // Lastly, the Session is Stopped
     await this.ensureTokenNotExpired()
-    return await this.request(`${ROOT_URL}/api/dlgaas-session-stop`, {
-      token: this.state.accessToken,
-      sessionId: this.state.sessionId
-    })
+    this.cancelRecoTimeout()
+    if(this.isGrpcWeb() || this.isVoiceInputExperience()){
+      return await this._dlgController.stop({
+        sessionId: this.state.sessionId
+      })
+    } else {
+      return await this.request(`${ROOT_URL}/api/dlgaas-session-stop`, {
+        token: this.state.accessToken,
+        sessionId: this.state.sessionId
+      })
+    }
   }
+
+  // Data Abstraction
 
   async clientFetchDaAction(daAction){
     //
@@ -451,6 +755,9 @@ export default class DLGaaS extends BaseClass {
   // App
 
   async start() {
+    if(this.startRequestInitiated){
+      return
+    }
     if(this.state.sessionId && this.state.sessionId.length > 0){
       this.setState({
         isSessionActive: true,
@@ -459,14 +766,28 @@ export default class DLGaaS extends BaseClass {
       })
     } else {
       // Starts a session
-      let res = await this.sessionStart(
-        this.state.language,
-        this.state.channel,
-        this.state.sessionTimeout,
-        this.state.clientData,
-        this.state.startData,
-        this.state.sessionId
-      )
+      let fullPayload = {
+        selector: {
+          language: this.state.language,
+          channel: this.state.channel,
+          library: 'default',
+        },
+        payload: {
+          data: this.state.startData
+        },
+        session_timeout_sec: this.state.sessionTimeout,
+        client_data: this.state.clientData,
+      }
+      if(this.state.sessionId){
+        fullPayload.session_id = this.state.sessionId
+      }
+      this.startRequestInitiated = true
+      let res = await this.sessionStart(fullPayload)
+                          .catch((err) => {
+                            alert(err)
+                            console.error(err)
+                          })
+      this.startRequestInitiated = false
       // Error
       if(res.error){
         console.warn(res)
@@ -474,7 +795,7 @@ export default class DLGaaS extends BaseClass {
           sessionId: null,
           isSessionActive: false,
           logConsumerName: null,
-          error: res.error.response.data.error
+          error: res.error.response ? res.error.response.data.error : res.error.message
         })
         return false
       }
@@ -586,7 +907,6 @@ export default class DLGaaS extends BaseClass {
     return false
   }
 
-
   async processDataAction(daAction){
     let res = await this.clientFetchDaAction(daAction)
     console.log('client fetch resulted in', res)
@@ -605,32 +925,50 @@ export default class DLGaaS extends BaseClass {
 
   collectNlgMessages(res){
     let msgs = []
-    res.messages.forEach(msgSegments => {
-      msgSegments.nlg.forEach(msgSeg => {
-        msgs.push(msgSeg)
+    res.messagesList.forEach(msgSegments => {
+      msgSegments.nlgList.forEach(msgSeg => {
+        msgs.push({
+          seg: msgSeg, 
+          ttsParams: msgSegments.ttsParameters
+        })
       })
     })
     ACTION_TYPES.forEach(action => {
       if(res[action] && res[action].message){
-        res[action].message.nlg.forEach(msgSeg => {
-          msgs.push(msgSeg)
+        res[action].message.nlgList.forEach(msgSeg => {
+          msgs.push({
+            seg: msgSeg, 
+            ttsParams: res[action].message.ttsParameters
+          })
         })
       }
     })
     return msgs
   }
 
-  async playTtsMessage(playStr){
-    this.ttsClz.state.accessToken = this.state.accessToken
-    this.ttsClz.state.voice = this.state.ttsVoice
-    this.ttsClz.state.textInput = playStr
-    let req = await this.ttsClz.executeTextInput({
-      'x-nuance-dialog-session-id': this.state.sessionId
-    })
-    this.state.rawResponses.unshift({'tts-request': req.payload})
-    this.state.rawResponses.unshift({'tts-response': req.res})
-    this.setState({
-      rawResponses: this.state.rawResponses
+  async playTtsMessage(playStr, playSettings){
+    let viewController = this
+    return new Promise(async (resolve) => {
+      viewController.ttsClz.state.accessToken = viewController.state.accessToken
+      viewController.ttsClz.state.voice = playSettings ? {
+        name: playSettings.voice.name || viewController.state.ttsVoice.name, 
+        model: playSettings.voice.model || viewController.state.ttsVoice.model
+      } : viewController.state.ttsVoice
+      viewController.ttsClz.state.textInput = playStr
+      console.log('[audio-out] play tts', playStr)
+      let req = await viewController.ttsClz.executeTextInput({
+        'x-nuance-dialog-session-id': viewController.state.sessionId
+      })
+      viewController.state.rawResponses.unshift({
+        'tts-request': req.payload
+      })
+      viewController.state.rawResponses.unshift({
+        'tts-response': req.res
+      })
+      viewController.setState({
+        rawResponses: viewController.state.rawResponses
+      })
+      resolve()
     })
   }
 
@@ -649,8 +987,13 @@ export default class DLGaaS extends BaseClass {
     // let incompleteTimeout = timeouts.incompleteTimeout
     // let maxSpeechInput = timeouts.maxSpeechTimeout
     if(this.recoTimeout !== -1){
+      console.log("Clearing last collection timeout.")
       clearTimeout(this.recoTimeout)
     }
+    let t = mainTimeout.endsWith('ms') ?
+      parseInt(mainTimeout.substring(0, mainTimeout.length-2))
+      : parseInt(mainTimeout)
+    console.log("Queuing collection timeout.", t)
     this.recoTimeout = setTimeout(() => {
       Promise.resolve().then(() => {
         this.execute(null, false, {
@@ -658,13 +1001,14 @@ export default class DLGaaS extends BaseClass {
             message: `Standard reco timeout kicked in after ${mainTimeout}.`,
         })
       })
-    }, parseInt(mainTimeout.substring(0, mainTimeout.length-2))) // chop the `ms`
+    }, t)
   }
 
   parseResponse(res){
     try{
       let dataAction
       let collectionSettings
+      let recognitionSettings
       let latencySettings
       const qaAction = res.response.payload?.qaAction
       const daAction = res.response.payload?.daAction
@@ -678,33 +1022,38 @@ export default class DLGaaS extends BaseClass {
       } else if (endAction){
         this.stop(true)
       } else if (qaAction){
-        collectionSettings = qaAction.recognitionSettings.collectionSettings
+        recognitionSettings = qaAction.recognitionSettings
+        collectionSettings = recognitionSettings.collectionSettings
       } else if (continueAction){
         latencySettings = continueAction.backendConnectionSettings
       }
 
       let exp = SIMULATED_EXPERIENCES(this.state.simulateExperience)
       if(exp.playTTS){
-        let nlgMessages = this.collectNlgMessages(res.response.payload)
+        let nlgMessageSegments = this.collectNlgMessages(res.response.payload)
         let promiseChain = Promise.resolve()
-        nlgMessages.forEach(msg => {
+        nlgMessageSegments.forEach(msgSeg => {
+          console.log('[dlg response] chain segment')
           promiseChain = promiseChain.then(() => {
-            return this.playTtsMessage(msg.text)
+            console.log('[dlg response] play')
+            return this.playTtsMessage(msgSeg.seg.text, 
+              msgSeg.ttsParams)
           })
         })
-        promiseChain = promiseChain.then(() => {
-          this.ttsClz.whenAudioEnds(() => {
-            if(exp.bindTimeouts){
+        if(exp.bindTimeouts){
+          promiseChain = promiseChain.then(() => {
+            console.log('[dlg response] assign collection timeout handler')
+            this.ttsClz.whenAudioEnds(() => {
+              console.log('[dlg response] assigning collection settings')
               this.bindCollectionTimeouts(collectionSettings)
-            }
+            })
           })
-        })
+        }
       } else {
         if(collectionSettings){
           this.bindCollectionTimeouts(collectionSettings)
         }
       }
-
       if(dataAction){
         setTimeout(() => {
           this.processDataAction(dataAction)
@@ -713,20 +1062,34 @@ export default class DLGaaS extends BaseClass {
       if(continueAction){
         setTimeout(() => {
           this.processContinueAction(continueAction, latencySettings)
+        }, 0)
+      }
+      if(recognitionSettings){
+        this.setState({
+          recognitionSettings: recognitionSettings
         })
       }
-
     } catch (ex) {
       console.error('bad response parsing', ex)
     }
   }
 
-  async stop(ended) {
-    // Stop the session
+  cancelRecoTimeout() {
     if(this.recoTimeout !== -1){
       clearTimeout(this.recoTimeout)
+      if(this.ttsClz){
+        this.ttsClz.whenAudioEnds(null)
+      }
     }
-    if(!ended && this.ttsClz){
+  }
+
+  async stop(ended) {
+    // Stop the session
+    this.cancelRecoTimeout()
+    if(this._micAudioSource){
+      this.stopAudioInput()
+    }
+    if(this.ttsClz){
       this.ttsClz.resetAudio()
     }
     if(!ended){
@@ -734,7 +1097,9 @@ export default class DLGaaS extends BaseClass {
     }
     this.setState({
       isSessionActive: false,
-      autoScrollChatPanel: false
+      autoScrollChatPanel: false,
+      recognitionSettings: null,
+      microphone: null
     })
     // this.stopCapturingLogs() // Enable this to reduce requests
     return false
@@ -746,12 +1111,17 @@ export default class DLGaaS extends BaseClass {
       rawResponses: [],
       rawEvents: [],
       sessionId: '',
+      error: null,
+      microphone: null
     })
     if(this.state.logConsumerName){
       await this.destroyConsumer()
     }
     if(this.ttsClz){
       this.ttsClz.resetAudio()
+    }
+    if(this._micAudioSource){
+      this.stopAudioInput()
     }
     this.stopCapturingLogs()
     return false
@@ -814,18 +1184,36 @@ export default class DLGaaS extends BaseClass {
     })
   }
 
-  go(){
-    this.start()
+  async go(){
+    console.info("[GO] Warming up simulations, brand, and starting.")
+    await this._dlgController.connect()
+      .then(() => {
+        console.info("Warmup")
+        return this.warmupExperienceSimulation(this.isVoiceInputExperience())
+      })
+      .then(() => {
+        console.info("Brand Init")
+        this.includeBrandTheme(this.state.brand)
+      })
+    console.info("Let's get this started...")
+    return await this.start()
+  }
+
+  initTokenPrepConfig(){
+    this.initToken(this.getScope())
+      .then(() => {
+        this.warmupExperienceSimulation()
+      })
   }
 
   getAuthHtml(){
     return (
       <AuthForm tokenError={this.state.tokenError}
-          initToken={this.initToken.bind(this)}
+          initToken={this.initTokenPrepConfig.bind(this)}
           clientId={this.state.clientId}
           clientSecret={this.state.clientSecret}
           onChangeTextInput={this.onChangeTextInput.bind(this)}
-          serviceScope="dlg tts log" />
+          serviceScope={this.getScope()} />
     )
   }
 
@@ -857,7 +1245,7 @@ export default class DLGaaS extends BaseClass {
   }
 
   getScope(){
-    return 'dlg tts log'
+    return 'dlg asr tts log'
   }
 
   getVoiceOptionsHTML(){
@@ -875,7 +1263,54 @@ export default class DLGaaS extends BaseClass {
   }
 
   onToggleMinMax(minimized){
-    
+    this.setState({
+      chatPanelHidden: minimized
+    })
+  }
+  
+  startRecognizing(){
+    console.log("[dlgaas] start voice input stream")
+    if(!this._micAudioSource){
+      console.warn("No microphone.")
+      return
+    }
+    if(this.ttsClz){
+      this.ttsClz.resetAudio()
+    }
+    this._micAudioSource.init().then(() => {
+      this.sessionExecuteStream()
+    })
+  }
+
+  stopRecognizing(){
+    if(this._dlgController){
+      this._dlgController.stopExecuteStream()
+    }
+  }
+
+  cancelRecognizing(){
+    console.log("[dlgaas] canceling recognition request")
+    if(this._dlgController){
+      let cancelled = this._dlgController.cancel()
+      if(cancelled){
+        console.log('cancelled executeStream request')
+      }
+    }
+  }
+
+  onToggleMicrophone(){
+    switch(this.state.processingState){
+      case ProcessingState.DISCONNECTED:
+      case ProcessingState.IDLE:
+        this.startRecognizing()
+        break
+      case ProcessingState.AWAITING_FINAL:
+        this.cancelRecognizing()
+        break
+      default:
+        this.stopRecognizing()
+        break
+    }
   }
 
   onLaunchedStandalone(url){
@@ -892,12 +1327,11 @@ export default class DLGaaS extends BaseClass {
     return (
       <div className="h-100">
         <div className="col-12 h-100 overflow-auto">
-          <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
           {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
           <div className="row">
-
-            <div className={(this.isStandalone() ? `col-12` : `col-8 offset-md-2`) + ` bg-light rounded-3 px-4 py-1 pt-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-8 offset-md-2`) + ` bg-light rounded-0 px-4 py-1 pt-4`}>
+              <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
               <div className="form-floating">
                 <Form.Control 
                   name="simulateExperience"
@@ -932,6 +1366,18 @@ export default class DLGaaS extends BaseClass {
                 <p>
                   See <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">Languages and Voices</a>
                 </p>
+                <div className="form-floating">
+                  <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
+                </div>
+                <div className="form-floating">
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="channel" className="form-label">Channel</label>
+                </div>
+                <div className="form-floating">
+                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="language" className="form-label">Language</label>
+                </div>
                 {SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS ? (
                   <div className="form-floating">
                     <Form.Control 
@@ -942,21 +1388,9 @@ export default class DLGaaS extends BaseClass {
                       onChange={this.onChangeSelectInput.bind(this)}>
                       {this.getVoiceOptionsHTML()}
                     </Form.Control>
-                    <Form.Label>TTS Voice</Form.Label>
+                    <Form.Label>Fallback TTS Voice (default)</Form.Label>
                   </div>
                   ) : ''}
-                <div className="form-floating">
-                  <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="modelUrn" className="form-label">App Model URN</label>
-                </div>
-                <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="language" className="form-label">Language</label>
-                </div>
-                <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="channel" className="form-label">Channel</label>
-                </div>
                 <div className="form-floating">
                   <input type="number" className="form-control" name="sessionTimeout" value={this.state.sessionTimeout} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
@@ -1069,17 +1503,18 @@ export default class DLGaaS extends BaseClass {
                 </Button>
               ) : ('')}
             { this.state.logConsumerName && !this.state.isSessionActive ? (
-              <button className="btn-sm btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
+              <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
             ) : ('')}
           </div>
         </div>
         <div className="row h-100 mt-1">
-          <div className="col-12 h-100">
+          <div className={`col-12 h-100`}>
             <DlgTabs
               simulateExperience={this.state.simulateExperience}
               logEvents={logEvents}
               apiEvents={apiEvents}
               rawResponses={this.state.rawResponses}
+              className={this.state.isSessionActive && !this.state.chatPanelHidden ?'blurred':''}
             />
           </div>
           <div className={`col-3 float-end`}>
@@ -1090,11 +1525,17 @@ export default class DLGaaS extends BaseClass {
               rawResponses={chatResponses}
               autoScrollChatPanel={this.state.autoScrollChatPanel}
               width={365}
-              height={window.innerHeight-250}
+              height={window.innerHeight-150}
               sessionTimeout={this.state.sessionTimeout}
               sessionId={this.state.sessionId}
               active={this.state.isSessionActive}
               onSessionTimeoutEnded={this.stop.bind(this)}
+              recognitionSettings={this.state.recognitionSettings}
+              onToggleMicrophone={this.onToggleMicrophone.bind(this)}
+              microphone={this.state.microphone}
+              micVizWidth={365}
+              isListening={ProcessingState.IN_FLIGHT===this.state.processingState}
+              isProcessingInput={ProcessingState.AWAITING_FINAL===this.state.processingState}
               onToggleMinMax={this.onToggleMinMax.bind(this)}/>
           </div>
         </div>
@@ -1125,7 +1566,7 @@ export default class DLGaaS extends BaseClass {
       html = body
     }
     return (
-      <div className="dlgaas row h-100">
+      <div className="dlgaas row h-100" ref={this.domElement}>
         {html}
       </div>
     )
