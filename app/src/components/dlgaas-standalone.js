@@ -11,6 +11,7 @@ import React from "react"
 import { AuthForm } from "./shared"
 import ChatPanel from "./chat"
 import DLGaaS from "./dlgaas"
+import { ProcessingState } from "./asraas"
 
 //
 // DLGaaS Standalone
@@ -19,6 +20,15 @@ import DLGaaS from "./dlgaas"
 // Client
 
 export default class DlgStandalone extends DLGaaS {
+
+  constructor(){
+    super()
+    this.domElement = React.createRef()
+  }
+
+  componentDidMount(){
+    super.componentDidMount()
+  }
 
   isStandalone(){
     return true
@@ -35,7 +45,7 @@ export default class DlgStandalone extends DLGaaS {
             clientId={this.state.clientId}
             clientSecret={this.state.clientSecret}
             onChangeTextInput={this.onChangeTextInput.bind(this)}
-            serviceScope="dlg tts log" />
+            serviceScope={this.getScope()} />
       </div>
     )
   }
@@ -45,9 +55,10 @@ export default class DlgStandalone extends DLGaaS {
   }
 
   getBotSessionHtml(){
+    const chatResponses = this.getChatResponses()
     return (
       <div className="col">
-        <div className="row mt-4">
+        <div className="row mt-4" ref={this.domElement}>
           <strong id="dlgaas-session-id">Session ID <span className='badge bg-light text-dark'>{this.state.sessionId}</span></strong>
           { this.state.isSessionActive ? (
               <button className="btn btn-danger mt-3" onClick={(evt) => {this.stop(); evt.preventDefault(); }}>Stop Session</button>
@@ -58,7 +69,7 @@ export default class DlgStandalone extends DLGaaS {
           <ChatPanel
             simulateExperience={this.state.simulateExperience}
             onExecute={this.execute.bind(this)}
-            rawResponses={this.state.rawResponses}
+            rawResponses={chatResponses}
             autoScrollChatPanel={this.state.autoScrollChatPanel}
             width={`100%`}
             height={`100%`}
@@ -66,6 +77,12 @@ export default class DlgStandalone extends DLGaaS {
             sessionTimeout={this.state.sessionTimeout}
             active={this.state.isSessionActive}
             onSessionTimeoutEnded={this.stop.bind(this)}
+            recognitionSettings={this.state.recognitionSettings}
+            onToggleMicrophone={this.onToggleMicrophone.bind(this)}
+            microphone={this.state.microphone}
+            micVizWidth={this.chatWidth}
+            isListening={ProcessingState.IN_FLIGHT===this.state.processingState}
+            isProcessingInput={ProcessingState.AWAITING_FINAL===this.state.processingState}
             onToggleMinMax={this.onToggleMinMax.bind(this)}/>
         </div>
       </div>
