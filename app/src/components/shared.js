@@ -12,15 +12,16 @@ import axios from "axios"
 
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
 export const VERSION = '1.7.0'
+export const ASR_SERVICE_URL = process.env.ASR_SERVICE_URL || "https://asr.api.nuance.com"
+export const DLG_SERVICE_URL = process.env.DLG_SERVICE_URL || "https://dlg.api.nuance.com"
 export const CLIENT_DATA = {
     "version": VERSION,
-    "client": "Nuance Mix Demo Client",
+    "client": "Mix.demo",
 }
 export const LOG_TIMER_DURATION = 8 * 1000 // log get records will trigger at this interval
 export const URN_REGEX_DIALOG = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.dialog/
 export const URN_REGEX_NLU = /urn:nuance-mix:tag:model\/(?<tag>[^/].*)\/mix.nlu\?=language=(?<language>.*)/
 export const CLIENT_ID_REGEX = "appID:([^ $^%:]*)(:geo:)*([^ $^%:]*)?(:clientName:)*([^ $]*)?"
-export const ASR_SERVICE_URL = "https://asr.api.nuance.com"
 export const LANG_EMOJIS = {
     "en-us": "🇺🇸",
     "ja-jp": "🇯🇵",
@@ -484,28 +485,34 @@ export class BaseClass extends React.Component {
   async ensureTokenNotExpired(){
     const accessToken = this.state.accessToken
     const one_minute = 60 * 1000
-    if((accessToken.expires_at * 1000) - Date.now() < one_minute){
-      return await this.initToken(this.getScope())
+    if(!accessToken || 
+      ((accessToken.expires_at * 1000) - Date.now() < one_minute)){
+        console.info('token refresh needed')
+        return await this.initToken(this.getScope())
     }
     return false
   }
 
   async initToken(scope){
-    // Grabs the token
-    let res = await this.getToken(scope)
-    if(res.error){
+    return new Promise(async(resolve, reject) => {
+      // Grabs the token
+      let res = await this.getToken(scope)
+      if(res.error){
+        this.setState({
+          tokenError: res.error.response ? res.error.response.data.error : JSON.stringify(res.error),
+        })
+        reject()
+        return false
+      }
       this.setState({
-        tokenError: res.error.response ? res.error.response.data.error : JSON.stringify(res.error),
+        accessToken: res.response.token,
+        tokenError: null,
+      }, async () => {
+        await this.onTokenAcquired(res.response.token)
+        resolve()
       })
-      return false
-    }
-    this.setState({
-      accessToken: res.response.token,
-      tokenError: null,
-    }, async () => {
-      await this.onTokenAcquired()
+      return !!res
     })
-    return !!res
   }
 
   async onTokenAcquired() {
@@ -525,11 +532,13 @@ export class BaseClass extends React.Component {
       clientId: encodeURIComponent(this.state.clientId),
       token: this.state.accessToken,
     })
-    console.log("New log API consumer created")
-    this.setState({
-      logConsumerName: ret.response.consumerName,
-      logConsumerGroup: ret.response.consumerGroup,
-    })
+    if(ret && ret.response){
+      console.log("New log API consumer created")
+      this.setState({
+        logConsumerName: ret.response.consumerName,
+        logConsumerGroup: ret.response.consumerGroup,
+      })
+    }
     return ret
   }
 
