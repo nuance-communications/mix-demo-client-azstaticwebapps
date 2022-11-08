@@ -25,7 +25,7 @@ const MESSAGE_EVENTS = ['message']
 const INPUT_EVENTS = ['input-received', 'input-required', 'input-processed']
 const TRANSFER_EVENTS = ['transfer-initiated']
 const DATA_EVENTS = ['data-required', 'data-received']
-const END_EVENTS = ['application-ended']
+const END_EVENTS = ['application-ended','session-stopped']
 const ERROR_EVENTS = ['error']
 const EVENTS_SORTED_LIST = [
   'session-start',
@@ -48,6 +48,7 @@ const EVENTS_SORTED_LIST = [
   'transfer-completed',
   'reporting-vars',
   'application-ended',
+  'session-stopped',
   'error',
 ]
 const EVENTS_SORTED = (a, b) => {
@@ -398,6 +399,10 @@ export class LogEventsTable extends React.Component {
           {/*<br/><span className="badge bg-dark text-white text-start">channel={val.selector.channel} language={val.selector.language}</span>*/}
           </div>)
         break
+      case 'session-stopped':
+        ret = (<span className="badge bg-danger text-white text-start">done.</span>)
+        // TODO: add table to value=>language + data
+        break
       case 'selector':
         ret = (<span className="badge bg-light text-dark text-start">channel={val.channel}, language={val.language}</span>)
         break
@@ -520,7 +525,7 @@ export class LogEventsTable extends React.Component {
           INPUT_EVENTS.indexOf(e) > -1 ? 'border bg-success text-success' :
           TRANSFER_EVENTS.indexOf(e) > -1 ? 'border bg-warning text-dark' :
           DATA_EVENTS.indexOf(e) > -1 ? 'border bg-warning text-dark' :
-          END_EVENTS.indexOf(e) > -1 ? 'border bg-danger text-danger' :
+          END_EVENTS.indexOf(e) > -1 ? 'bg-danger text-danger' :
           ERROR_EVENTS.indexOf(e) > -1 ? 'border bg-danger text-danger' :
           'bg-light text-dark'
   }
@@ -548,7 +553,7 @@ export class LogEventsTable extends React.Component {
     })
     return (
       <div className="table-responsive h-75 overflow-auto">
-        <table className="table table-sm table-hover">
+        <table className="table table-sm table-hover table-fixedLayout">
           <thead className="">
             <tr>
               <th style={{'width': '5%'}}><Button variant="link" onClick={this.toggleAllEventsSeqId.bind(this)}>SeqID</Button></th>
