@@ -550,7 +550,7 @@ export class LogEventsTable extends React.Component {
     })
     return (
       <div className="table-responsive h-75 overflow-auto">
-        <table className="table table-sm table-hover">
+        <table className="table table-sm table-hover table-fixedLayout">
           <thead className="">
             <tr>
               <th style={{'width': '5%'}}><Button variant="link" onClick={this.toggleAllEventsSeqId.bind(this)}>SeqID</Button></th>
