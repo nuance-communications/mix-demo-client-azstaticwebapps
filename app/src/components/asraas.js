@@ -722,7 +722,7 @@ export default class ASRaaS extends BaseClass {
                       <span className="input-group-text" htmlFor="language">Language</span>
                       <select className="form-control" name="language"
                         value={this.state.language} 
-                        onBlur={this.onChangeLanguage.bind(this)}>
+                        onChange={this.onChangeLanguage.bind(this)}>
                         { langOptions }
                       </select>
                     </div>
