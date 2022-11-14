@@ -1,4 +1,7 @@
 {
+    "platform": {
+        "apiRuntime": "python:3.9"
+    },
     "routes": [
         {
             "route": "/app/*"

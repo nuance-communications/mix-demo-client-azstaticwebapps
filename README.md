@@ -86,8 +86,8 @@ This simplifies the client handling, deferring to the Functions themselves, and 
 * If using Docker..
   * [Docker Engine](https://docs.docker.com/engine/install/) 20.10.0+
 * If using a Native Host..
-  * [Node.js](https://nodejs.org/en/download/) 14.3+ (Client Toolchain)
-  * [Python](https://www.python.org/downloads/) 3.7+ (Functions)
+  * [Node.js](https://nodejs.org/en/download/) 18+ (Client Toolchain)
+  * [Python](https://www.python.org/downloads/) 3.9+ (Functions)
   * [Azure Functions Core Tools](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local)
 
 ## Quick Start 🚀

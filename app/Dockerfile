@@ -1,11 +1,11 @@
-FROM node:14-alpine3.12
+FROM node:18.12-alpine3.16
 
 ENV INTERNAL_STATUS_PORT=8001
 
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --loglevel warn
+RUN npm install ----legacy-peer-deps --loglevel warn
 
 COPY src ./src
 COPY static ./static
