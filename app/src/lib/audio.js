@@ -74,6 +74,7 @@ export class MicrophoneAudioSource extends AudioSource {
     this._mic.connect(this._analyzer)
     this._analyzer.connect(this._processor)
     this._processor.connect(this._audioContext.destination)
+    this._audioContext.resume()
     this.emit('microphone:connected') 
   }
 
@@ -98,10 +99,11 @@ export class MicrophoneAudioSource extends AudioSource {
           return this.onAccessGranted.call(this, stream)
         })
         .catch((err) => {
-          console.error(err)
-          reject('Mic init failed.')
+          console.error('[mic] error', err)
+          reject('Mic init failed.', err)
         })
         .then(() => {
+          console.log('[mic] connected')
           resolve('Mic ready.')
         })
     })

@@ -212,7 +212,7 @@ class LogApi(OAuthApi):
             "auto.offset.reset": "latest",
             "auto.commit.enable": "true",
             "fetch.min.bytes": "-1",
-            "consumer.request.timeout.ms": "0",
+            "consumer.request.timeout.ms": "1000",
         })
 
     def consumer_subscribe_to_topic(self, topic):

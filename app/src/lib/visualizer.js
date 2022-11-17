@@ -9,7 +9,6 @@
 
 import React from "react"
 
-const BASE_COLOR = 'rgb(33,33,33)'
 const FACTOR = 13
 
 if(typeof window !== 'undefined'){
@@ -31,15 +30,7 @@ export class AudioVisualizer extends React.Component {
 
   constructor(props){
     super(props)
-    this.options = props.options || {
-      width: 256,
-      height: 256,
-      tickWidth: 0.5
-    }
-    this.colors = [
-      BASE_COLOR
-    ]
-    this.canvasId = `eq-viz-${new Date()}`
+    this.canvasId = `eq-viz-${new Date().toISOString()}`
     this.canvas = null
     this.canvasContext = null
     this._onAudioSourceVolumeHandler = this.onAudioVolume.bind(this)
@@ -85,10 +76,10 @@ export class AudioVisualizer extends React.Component {
   }
 
   clear(){
-    const width = this.options.width
-    const height = this.options.height
+    const w = parseInt(this.props.width, 10)
+    const h = parseInt(this.props.height, 10)
     if(this.canvasContext){
-      this.canvasContext.clearRect(0, 0, width, height)
+      this.canvasContext.clearRect(0, 0, w, h)
     }
   }
 
@@ -98,37 +89,39 @@ export class AudioVisualizer extends React.Component {
         this.clear()
         this._reset = false
       }
-      this.canvasContext.fillStyle = this.colors[0]
-      this.canvasContext.clearRect(0, 0, this.options.width, this.options.height)
+      const w = parseInt(this.props.width, 10)
+      const h = parseInt(this.props.height, 10)
+      this.canvasContext.fillStyle = this.props.color
+      this.canvasContext.clearRect(0, 0, w, h)
       if(this.props.audioDataSource){
         const data = new Uint8Array(this.props.audioDataSource.analyzerSamples)
         this.props.audioDataSource.analyzer.getByteFrequencyData(data)
 
         const length = data.length
-        const barWidth = Math.floor((this.options.width / (length * 2.24)))
-        const midPoint = Math.floor(this.options.width / 2)
+        const barWidth = Math.floor((w / (length * this.props.barWidthFactor)))
+        const midPoint = Math.floor(w / 2)
 
         for(let i = 0; i < length; i++){
           const value = data[i]
-          let top = this.options.height - Math.floor((this.options.height * (value * 1.0) / 216.0))
+          let top = h - Math.floor((h * (value * 1.0) / 216.0))
           const left1 = midPoint + i * barWidth
           const left2 = midPoint - i * barWidth
           const width = barWidth - 3
 
-          if(top < (this.options.height / 4)){
-            top = Math.floor((this.options.height / FACTOR)) 
-          } else if (top < (1 * this.options.height / 4)){
-            top = Math.floor(3 * (this.options.height / FACTOR))
-          } else if (top < (2 * this.options.height / 4)){
-            top = Math.floor(5 * (this.options.height / FACTOR))
-          } else if (top < (3 * this.options.height / 4)){
-            top = Math.floor(8 * (this.options.height / FACTOR))
-          } else if (top < (this.options.height - (this.options.height/10))){
-            top = Math.floor(10 * (this.options.height / FACTOR)) 
+          if(top < (h / 4)){
+            top = Math.floor((h / FACTOR)) 
+          } else if (top < (1 * h / 4)){
+            top = Math.floor(3 * (h / FACTOR))
+          } else if (top < (2 * h / 4)){
+            top = Math.floor(5 * (h / FACTOR))
+          } else if (top < (3 * h / 4)){
+            top = Math.floor(8 * (h / FACTOR))
+          } else if (top < (h - (h/10))){
+            top = Math.floor(10 * (h / FACTOR)) 
           } else {
-            top = this.options.height - (this.options.height/7)
+            top = h - (h/7)
           }
-          const height = this.options.height - top
+          const height = h - top
           top = Math.floor(top / 2)
 
           this.canvasContext.roundRect(left1, top, width, height, 3).fill()
@@ -144,8 +137,8 @@ export class AudioVisualizer extends React.Component {
       <div className="visualizer">
         <canvas 
           id={this.canvasId}
-          height={this.options.height}
-          width={this.options.width}>
+          height={this.props.height}
+          width={this.props.width}>
         </canvas>
       </div>
     )

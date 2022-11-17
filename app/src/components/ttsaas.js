@@ -174,9 +174,10 @@ export default class TTSaaS extends BaseClass {
       processing: ProcessingState.IDLE,
       voices: [],
     }
-    this.audioSink = null
     this.playQueue = []
-    this.onAudioEndFunctions = []
+    this.onAudioEnd = null
+    this.audioContext = null
+    this.audioSource = null
   }
 
   componentDidMount(){
@@ -188,29 +189,32 @@ export default class TTSaaS extends BaseClass {
       this.setState(toUpdate)
     }
     window.addEventListener('beforeunload', this.onUnmount, false)
-    this.audioSink = new Audio()
-    this.audioSink.onended = this.onAudioEnded.bind(this)
+    this.initAudioSink()
+  }
+
+  initAudioSink(){
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)
+    this.audioContext.onstatechange = (evt) => {
+      console.log('[tts] audio context', evt)
+    }
   }
 
   onAudioEnded() {
     let audioData = this.playQueue.shift()
     if(audioData){
-      this.playAudio(audioData)
+      console.log('[audio ended] playing queued audio')
+      this.playAudio(audioData.data, audioData.whenDone)
     } else {
-      if(this.audioSink){
-        this.audioSink.currentTime = 0
-      }
-      if(this.onAudioEndFunctions.length){
-        let f 
-        while(f = this.onAudioEndFunctions.shift()){
-          f.call()
-        }
+      if(this.onAudioEnd){
+        console.log('[audio ended] calling event handler')
+        this.onAudioEnd.call()
       }
     }
   }
 
   whenAudioEnds(func) {
-    this.onAudioEndFunctions.push(func)
+    console.log('[audio end] new function defined')
+    this.onAudioEnd = func
   }
 
   async initVoices() {
@@ -222,7 +226,8 @@ export default class TTSaaS extends BaseClass {
 
   onUnmount = (e) => {
     try{
-      this.audioSink = null
+      this.stopAudio()
+      this.audioSource = null
     } catch(ex) {
       console.warn(ex)
     }
@@ -243,10 +248,7 @@ export default class TTSaaS extends BaseClass {
 
   resetAudio(){
     this.playQueue.length = 0
-    if(this.audioSink){
-      this.audioSink.pause()
-      this.audioSink.currentTime = 0
-    }
+    this.stopAudio()
   }
 
 
@@ -293,8 +295,8 @@ export default class TTSaaS extends BaseClass {
         volume_percentage: 80, 
         audio_chunk_duration_ms: 2000,
         audio_format: {
-          ogg_opus: {
-            sample_rate_hz: 24000
+          pcm: {
+            sample_rate_hz: 22050
           }
         }
       }, 
@@ -314,10 +316,10 @@ export default class TTSaaS extends BaseClass {
     })
     let res = await this.synthesize(payload)
     rawResponses.unshift(res);
-    if(res.response?.payload.status.code !== 200){
+    if(res.response?.payload.status?.code !== 200){
       this.setState({
         rawResponses: rawResponses,
-        error: res.response.payload.status.details,
+        error: res.response?.payload?.status.details,
         processing: ProcessingState.IDLE,
       })
     } else {
@@ -334,20 +336,70 @@ export default class TTSaaS extends BaseClass {
     return { payload, res }
   }
 
-  playAudio(audio) {
-    let audioclipRaw = "data:audio/ogg;base64," + audio
-    this.audioSink.src = audioclipRaw;
-    this.audioSink.play();
-  }
-
   parseResponse(res){
-    if(res.response.payload){
-      if(this.audioSink.paused){
-        this.playAudio(res.response.payload.audio)
+    if(res.response.payload){ 
+      console.log('[audio player] source, context state', this.audioSource, this.audioContext)
+      let callback = () => {
+        console.warn("[audio player] segment finished playing")
+        this.audioSource = null
+        this.onAudioEnded()
+      }
+      if(this.audioContext){
+        if(this.audioContext.state === 'suspended'){
+          console.log('[tts] audio context suspended, resuming and playing audio')
+          this.audioContext.resume().then(() => {
+            this.playAudio(res.response.payload.audio, callback)
+          })
+        } else if (this.audioContext.state === 'running' && !this.audioSource) {
+          console.log('[tts] playing audio')
+          this.playAudio(res.response.payload.audio, callback)
+        } else {
+          console.warn('[tts] queuing audio')
+          this.playQueue.push({
+            data: res.response.payload.audio,
+            whenDone: callback
+          })
+        }
       } else {
-        this.playQueue.push(res.response.payload.audio)
+        console.error('[tts] bad -- audioContext not defined - nothing to use to play audio')
       }
     }
+  }
+
+  playAudio(audio, whenDone) {
+    this.playTtsMessage(audio, whenDone)
+  }
+
+  stopAudio(){
+    if(this.audioSource){
+      this.audioSource.stop()
+    }
+  }
+
+  playTtsMessage(audio, whenDone){
+    if(!this.audioContext){
+      console.error("[tts] no audio context to play tts")
+      return
+    }
+    console.log('[tts] play')
+    let decodedData = window.atob(audio)
+    if(this.audioContext?.state !== 'running'){
+      this.audioContext.close()
+      this.initAudioSink()
+    }
+    let frameCount = decodedData.length/2
+    let audioBuffer = this.audioContext.createBuffer(1, frameCount, 22050)
+    let nowBuffering = audioBuffer.getChannelData(0, 8, 22050)
+    for(let i=0; i<frameCount; i++){
+      let segment = (decodedData.charCodeAt(i*2)&0xff) 
+                  + ((decodedData.charCodeAt(i*2+1)&0xff) << 8)
+      nowBuffering[i] = (((segment+32768) % 65536) - 32768) / 32768.0
+    }
+    this.audioSource = this.audioContext.createBufferSource()
+    this.audioSource.buffer = audioBuffer
+    this.audioSource.connect(this.audioContext.destination)
+    this.audioSource.addEventListener('ended', whenDone)
+    this.audioSource.start()
   }
 
   getAuthHtml(){

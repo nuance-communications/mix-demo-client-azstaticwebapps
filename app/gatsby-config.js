@@ -3,6 +3,7 @@ module.exports = {
     title: "mix-demo-client",
   },
   plugins: [
+    "gatsby-plugin-react-helmet",
     {
       resolve: "gatsby-plugin-manifest",
       options: {

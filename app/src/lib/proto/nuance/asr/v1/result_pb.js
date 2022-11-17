@@ -13,7 +13,7 @@
 
 var jspb = require('google-protobuf');
 var goog = jspb;
-var global = Function('return this')();
+var global = (function() { return this || window || global || self || Function('return this')(); }).call(null);
 
 var nuance_rpc_error_details_pb = require('../../../nuance/rpc/error_details_pb.js');
 goog.object.extend(proto, nuance_rpc_error_details_pb);
@@ -22,6 +22,7 @@ goog.exportSymbol('proto.nuance.asr.v1.Dsp', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.EnumResultType', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.EnumSeverityType', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.Hypothesis', null, global);
+goog.exportSymbol('proto.nuance.asr.v1.Hypothesis.OptionalDetectedWuwCase', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.Hypothesis.OptionalHypothesisAverageConfidenceCase', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.Hypothesis.OptionalHypothesisConfidenceCase', null, global);
 goog.exportSymbol('proto.nuance.asr.v1.Hypothesis.OptionalHypothesisGrammarIdCase', null, global);
@@ -1180,7 +1181,7 @@ proto.nuance.asr.v1.Hypothesis.repeatedFields_ = [6];
  * @private {!Array<!Array<number>>}
  * @const
  */
-proto.nuance.asr.v1.Hypothesis.oneofGroups_ = [[1],[2],[9]];
+proto.nuance.asr.v1.Hypothesis.oneofGroups_ = [[1],[2],[9],[10]];
 
 /**
  * @enum {number}
@@ -1227,6 +1228,21 @@ proto.nuance.asr.v1.Hypothesis.prototype.getOptionalHypothesisGrammarIdCase = fu
   return /** @type {proto.nuance.asr.v1.Hypothesis.OptionalHypothesisGrammarIdCase} */(jspb.Message.computeOneofCase(this, proto.nuance.asr.v1.Hypothesis.oneofGroups_[2]));
 };
 
+/**
+ * @enum {number}
+ */
+proto.nuance.asr.v1.Hypothesis.OptionalDetectedWuwCase = {
+  OPTIONAL_DETECTED_WUW_NOT_SET: 0,
+  DETECTED_WAKEUP_WORD: 10
+};
+
+/**
+ * @return {proto.nuance.asr.v1.Hypothesis.OptionalDetectedWuwCase}
+ */
+proto.nuance.asr.v1.Hypothesis.prototype.getOptionalDetectedWuwCase = function() {
+  return /** @type {proto.nuance.asr.v1.Hypothesis.OptionalDetectedWuwCase} */(jspb.Message.computeOneofCase(this, proto.nuance.asr.v1.Hypothesis.oneofGroups_[3]));
+};
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1266,7 +1282,8 @@ proto.nuance.asr.v1.Hypothesis.toObject = function(includeInstance, msg) {
     wordsList: jspb.Message.toObjectList(msg.getWordsList(),
     proto.nuance.asr.v1.Word.toObject, includeInstance),
     encryptedTokenization: jspb.Message.getFieldWithDefault(msg, 7, ""),
-    grammarId: jspb.Message.getFieldWithDefault(msg, 9, "")
+    grammarId: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    detectedWakeupWord: jspb.Message.getFieldWithDefault(msg, 10, "")
   };
 
   if (includeInstance) {
@@ -1335,6 +1352,10 @@ proto.nuance.asr.v1.Hypothesis.deserializeBinaryFromReader = function(msg, reade
     case 9:
       var value = /** @type {string} */ (reader.readString());
       msg.setGrammarId(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDetectedWakeupWord(value);
       break;
     default:
       reader.skipField();
@@ -1419,6 +1440,13 @@ proto.nuance.asr.v1.Hypothesis.serializeBinaryToWriter = function(message, write
   if (f != null) {
     writer.writeString(
       9,
+      f
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 10));
+  if (f != null) {
+    writer.writeString(
+      10,
       f
     );
   }
@@ -1640,6 +1668,42 @@ proto.nuance.asr.v1.Hypothesis.prototype.clearGrammarId = function() {
  */
 proto.nuance.asr.v1.Hypothesis.prototype.hasGrammarId = function() {
   return jspb.Message.getField(this, 9) != null;
+};
+
+
+/**
+ * optional string detected_wakeup_word = 10;
+ * @return {string}
+ */
+proto.nuance.asr.v1.Hypothesis.prototype.getDetectedWakeupWord = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.nuance.asr.v1.Hypothesis} returns this
+ */
+proto.nuance.asr.v1.Hypothesis.prototype.setDetectedWakeupWord = function(value) {
+  return jspb.Message.setOneofField(this, 10, proto.nuance.asr.v1.Hypothesis.oneofGroups_[3], value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.nuance.asr.v1.Hypothesis} returns this
+ */
+proto.nuance.asr.v1.Hypothesis.prototype.clearDetectedWakeupWord = function() {
+  return jspb.Message.setOneofField(this, 10, proto.nuance.asr.v1.Hypothesis.oneofGroups_[3], undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.nuance.asr.v1.Hypothesis.prototype.hasDetectedWakeupWord = function() {
+  return jspb.Message.getField(this, 10) != null;
 };
 
 

@@ -9,6 +9,8 @@
 import React from "react"
 import { Link } from "gatsby"
 import { Location } from '@reach/router'
+import { Helmet } from 'react-helmet'
+import { BaseClass } from '../components/shared'
 
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap/dist/js/bootstrap.min.js"
@@ -29,13 +31,14 @@ const headingImageStyles = {
   objectFit: 'contain',
 }
 
-export default class Layout extends React.Component {
+export default class Layout extends BaseClass {
+
   render() {
     return (<Location>
       {({ location, navigate }) => (
         <main className="h-100" style={pageStyles}>
           <title>Nuance Mix Demo Client</title>
-          <Link to={`/`+location.search} className="text-decoration-none text-dark">
+          <Link to={`/`+location.search} className="text-decoration-none text-dark d-block position-relative">
             <img alt={`Nuance Mix`} className="text-center display-4" style={headingImageStyles} src={Header}/>
           </Link>
           <div className="container-fluid gx-0 h-100">
@@ -47,12 +50,15 @@ export default class Layout extends React.Component {
   }
 }
 
-export class StandaloneLayout extends React.Component {
+export class StandaloneLayout extends Layout {
   render() {
     return (<Location>
       {({ location, navigate }) => (
-        <main style={{padding: "6px 10px"}}>
-          <div className="container standalone">
+        <main className="h-100" style={{padding: "6px 10px", position: "fixed", left: 0, right:0}}>
+          <Helmet>
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+          </Helmet>
+          <div className="container standalone gx-0 h-100">
             {this.props.children}
           </div>
         </main>
