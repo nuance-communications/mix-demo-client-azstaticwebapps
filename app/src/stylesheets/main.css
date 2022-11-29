@@ -1,6 +1,7 @@
 :root {
   --brand-color: var(--skin-color);
   --brand-logo: var(--skin-logo);
+  --brand-logo-header: var(--skin-logo-header);
   --brand-logo-header-width: var(--skin-logo-header-width);
   --brand-logo-header-height: var(--skin-logo-header-height);
   --brand-logo-main-width: var(--skin-logo-main-width);
@@ -125,6 +126,7 @@ main .tab-content {
 .card-header-bg .chat-header-img {
   width: var(--brand-logo-header-width);
   height: var(--brand-logo-header-height);
+  content: var(--brand-logo-header);
   display: inline-block;
 }
 .card-body .chat-header-img {

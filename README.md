@@ -497,6 +497,7 @@ Here is a sample CSS, assuming that the font files are also located in the direc
 :root {
   /* MyBrand*/
   --skin-logo: url("/brands/mybrand/logo.svg");
+  --skin-logo-header: url("/brands/mybrand/logo-header.svg");
   --skin-logo-header-width: 30px;
   --skin-logo-header-height: 30px;
   --skin-logo-main-width: 25%;
