@@ -27,7 +27,9 @@ import { faComments,
   faPaperPlane,
   faEye,
   faEyeSlash,
-  faCircleNotch
+  faCircleNotch,
+  faDownLeftAndUpRightToCenter,
+  faUpRightAndDownLeftFromCenter
 } from '@fortawesome/free-solid-svg-icons'
 
 import moment from 'moment'
@@ -91,8 +93,8 @@ const chatPanelMessagesStyles = {
   "maxHeight": "100%",
   "minHeight": "100%",
   "paddingTop": "50px",
-  "paddingLeft": "15px",
-  "paddingRight": "15px",
+  "paddingLeft": "25px",
+  "paddingRight": "25px",
 }
 
 const CountdownTimer = ({sessionTimeout, timeoutRemaining}) => {
@@ -112,7 +114,7 @@ const MinMaxToggle = ({ toggle }) => {
   }
   return (
     <Button variant="link" className="badge text-primary float-end fw-light text-decoration-none expand-collapse-button" onClick={handleClick}>
-      { minimized ? (<FontAwesomeIcon icon={faWindowMaximize}/>) : (<FontAwesomeIcon icon={faWindowMinimize}/>) }
+      { minimized ? (<FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter}/>) : (<FontAwesomeIcon icon={faDownLeftAndUpRightToCenter}/>) }
     </Button>
   )
 }
@@ -808,7 +810,7 @@ export default class ChatPanel extends React.Component {
     searchParams.set('sessionId', this.props.sessionId)
 
     let url = `${window.location.origin}/chat/?${searchParams.toString()}`
-    let params = `width=350,height=600,menubar=false,toolbar=false,location=false,status=false,resiable=true,scrollbars=false`
+    let params = `width=365,height=600,menubar=0,toolbar=0,location=0,status=0,resizable=1,scrollbars=0`
     window.open(url, 'mixchat', params)
 
     this.props.onLaunchedStandalone(url)
@@ -875,14 +877,14 @@ export default class ChatPanel extends React.Component {
               </dl>
             </div>
           </div>
-          <div className="card-footer px-2 pb-2 border-0">
+          <div className="card-footer px-3 pb-3 border-0">
             {(!inputDisabled && (this.isVoiceInputExperience() && this.props.microphone && this.props.micVizWidth) ? (
               <AudioVisualizer 
                 audioDataSource={this.props.microphone}
-                width={this.props.micVizWidth}
-                height={45}
+                width={this.props.micVizWidth-15}
+                height={50}
                 color={brandVizColor}
-                barWidthFactor={1.65} />
+                barWidthFactor={1.35} />
               ) : ''
             )}
             <form className="form" onSubmit={
@@ -932,7 +934,7 @@ export default class ChatPanel extends React.Component {
                     }}>
                     <FontAwesomeIcon spin={this.props.isProcessingInput} 
                       icon={this.props.isProcessingInput ? faCircleNotch 
-                          : (this.props.isListening ? faMicrophoneSlash : faMicrophone)}/>
+                          : (this.props.isListening ? faMicrophone : faMicrophone)}/>
                   </button>): ''
                 }
               </div>

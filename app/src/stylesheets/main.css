@@ -94,6 +94,9 @@ main .tab-content {
   bottom: 0;
   right: 0;
 }
+.container.standalone {
+  background: var(--chat-background-color);
+}
 .chat-panel.chat-panel-minimized {
   height: 56px;
 }

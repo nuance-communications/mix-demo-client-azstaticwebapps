@@ -788,6 +788,11 @@ export class BaseClass extends React.Component {
           useDLM: tgt.checked
         })
         break
+      case 'continueSession':
+        this.setState({
+          continueSession: tgt.checked
+        })
+        break
       default:
         break
     }
