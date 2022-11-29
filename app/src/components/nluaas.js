@@ -523,6 +523,7 @@ export default class NLUaaS extends BaseClass {
             }
           </Tab>
           <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+          <Tab eventKey="logging" title={`Log Events`}></Tab>
         </Tabs>
       </div>
     )

@@ -214,6 +214,7 @@ export default class Profile extends BaseClass {
           <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
           <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
           <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+          <Tab eventKey="logging" title={`Log Events`}></Tab>
         </Tabs>
       </div>
     )

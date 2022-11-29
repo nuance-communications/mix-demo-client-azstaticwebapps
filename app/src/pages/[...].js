@@ -14,6 +14,7 @@ import DLGaaS from "../components/dlgaas"
 import NLUaaS from "../components/nluaas"
 import TTSaaS from "../components/ttsaas"
 import ASRaaS from "../components/asraas"
+import LogEvents from "../components/logging"
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
         <TTSaaS path="/app/tts"/>
         <NLUaaS path="/app/nlu"/>
         <DLGaaS path="/app/dlg"/>
+        <LogEvents path="/app/logging"/>
         <Profile path="/app"/>
       </Router>
     </Layout>

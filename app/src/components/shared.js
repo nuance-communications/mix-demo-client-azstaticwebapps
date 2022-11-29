@@ -327,6 +327,9 @@ const EXPERIENCE_TYPES = {
 }
 
 export const SIMULATED_EXPERIENCES = (experienceType) => {
+  if(!experienceType){
+    return false
+  }
   return EXPERIENCE_TYPES[experienceType]
 }
 
@@ -554,7 +557,7 @@ export class BaseClass extends React.Component {
   }
 
   async destroyConsumer(){
-    if(this.state.logConsumerName){
+    if(!this.state.logConsumerName){
       console.log("No log consumer to delete.")
       return null
     }
@@ -588,7 +591,9 @@ export class BaseClass extends React.Component {
           const lastEvent = logEvents[logEvents.length-1].value.data.events[0].name
           if(lastEvent === 'application-ended'){
             console.log("Will stop capturing logs.")
-            this.stopCapturingLogs()
+            if(this.shouldLimitRecordsToSession()){
+              this.stopCapturingLogs()
+            }
             return
           }
         }
@@ -611,8 +616,12 @@ export class BaseClass extends React.Component {
     }
   }
 
+  shouldLimitRecordsToSession(){
+    return true
+  }
+
   async fetchRecords(){
-    if(!this.state.sessionId){
+    if(this.shouldLimitRecordsToSession() && !this.state.sessionId){
       return
     }
     const { response, error } = await this.getRecords(this.state.sessionId);
@@ -639,6 +648,11 @@ export class BaseClass extends React.Component {
               console.log('Failed to destroy consumer, stopping log capture.')
               this.stopCapturingLogs()
             }
+          }
+        } else if (!this.shouldLimitRecordsToSession()){
+          let r = await this.destroyConsumer()
+          if(!r.error){
+            // this.startCapturingLogs() // Restart
           }
         } else {
           console.log("No session active. Destroying consumer.")
@@ -705,6 +719,11 @@ export class BaseClass extends React.Component {
   onChangeSelectInput(evt) {
     const tgt = evt.target
     switch(tgt.name){
+      case 'filterSessionId':
+        this.setState({
+          filterSessionId: tgt.value
+        })
+        break
       case 'simulateExperience':
         this.setState({
           simulateExperience: tgt.value
@@ -884,6 +903,8 @@ export class BaseClass extends React.Component {
       navigate(`/app/tts/${window.location.search}`)
     } else if (key === 'asraas'){
       navigate(`/app/asr/${window.location.search}`)
+    } else if (key === 'logging'){
+      navigate(`/app/logging/${window.location.search}`)
     }
   }
 }

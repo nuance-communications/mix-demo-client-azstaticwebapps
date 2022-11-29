@@ -231,18 +231,23 @@ td .badge.text-primary {
   color: #333 !important;
 }
 
+.logging td .badge.text-success,
+.logging td .badge.text-danger 
 .dlgaas td .badge.text-success,
 .dlgaas td .badge.text-danger {
   color: white !important;
 }
+.logging td .badge.bg-success,
 .dlgaas td .badge.bg-success {
   background-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;
 }
+.logging td .badge.bg-light.text-success,
 .dlgaas td .badge.bg-light.text-success {
   background-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;
 }
+.logging td .badge.border-success,
 .dlgaas td .badge.border-success {
   border-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;
