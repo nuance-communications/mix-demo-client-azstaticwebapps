@@ -146,13 +146,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
                 'all': rawResponses
               }}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={9}
               displayArrayKey={false}
               // theme={'grayscale'}
@@ -178,13 +178,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
               key={'nii-json-' + logEvents.length}
               src={logEvents}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={5}
               displayArrayKey={false}
             />
@@ -199,13 +199,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
               key={'event-json-' + apiEvents.length}
               src={apiEvents}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={5}
               displayArrayKey={false}
             />

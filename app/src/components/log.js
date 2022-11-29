@@ -372,7 +372,7 @@ export class LogEventsTable extends React.Component {
     if(!interpretation){
       return ''
     }
-    return (<ReactJson name="interpretation" src={interpretation}/>)
+    return (<ReactJson name="interpretation" src={interpretation} displayDataTypes={false} displayObjectSize={false}/>)
   }
 
   renderNiiEvent(niiEvent){
@@ -393,11 +393,11 @@ export class LogEventsTable extends React.Component {
         break
       case 'session-start':
         ret = (<div>
-          <span className="badge bg-dark text-white text-start">project={val.project.name} (id={val.project.id})</span>
+          <span className="badge bg-dark text-white text-start">project={val.project.name} (id={val.project.id}); config tag={val.project.contextTag}</span>
           <br/><span className="badge bg-dark text-white text-start">dlg_version={val.version.dlg}  nlu={JSON.stringify(val.version.nlu)}  asr={JSON.stringify(val.version.asr)}</span>
           <br/><span className="badge bg-dark text-white text-start">organization={val.project.namespace}, deployed={moment(val.project.deployed).fromNow()} ({val.project.deployed})</span>
-          {/*<br/><span className="badge bg-dark text-white text-start">channel={val.selector.channel} language={val.selector.language}</span>*/}
-          </div>)
+          <br/><span className="badge bg-dark text-white text-start">user={val.user.userGlobalID} systemID={val.user.systemID} tz={val.user.timezone}</span>
+        </div>)
         break
       case 'session-stopped':
         ret = (<span className="badge bg-danger text-white text-start">done.</span>)
@@ -415,9 +415,9 @@ export class LogEventsTable extends React.Component {
           {val.timeout ? (<br/>) : ''}
           {val.timeout ? (<span className="badge bg-light text-dark text-start">timeout: connect={val.timeout.connect}, request={val.timeout.request}</span>) : ''}
           {val.data ? (<br/>) : ''}
-          {val.data ? (<span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} /></span>) : ''}
+          {val.data ? (<span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} displayDataTypes={false} displayObjectSize={false}/></span>) : ''}
           {val.endpoint ? (<br/>) : ''}
-          {val.endpoint ? (<span className="badge bg-light text-dark text-start"><ReactJson name="endpoint" className="overflow-hidden text-break" src={val.endpoint} collapsed={2} /></span>) : ''}
+          {val.endpoint ? (<span className="badge bg-light text-dark text-start"><ReactJson name="endpoint" className="overflow-hidden text-break" src={val.endpoint} collapsed={2} displayDataTypes={false} displayObjectSize={false}/></span>) : ''}
           </div>)
         break
       case 'data-received':
@@ -425,7 +425,7 @@ export class LogEventsTable extends React.Component {
           <span className="badge bg-light text-dark text-start">id={val.id}, returnCode={val.returnCode}, returnMessage={val.returnMessage}</span>
           {val.duration ? (<br/>) : ''}
           {val.duration ? (<span className="badge bg-light text-dark text-start">duration={val.duration}</span>) : ''}
-          <br/><span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} /></span>
+          <br/><span className="badge bg-light text-dark text-start"><ReactJson name="data" className="overflow-hidden text-break" src={val.data} collapsed={2} displayDataTypes={false} displayObjectSize={false}/></span>
           </div>)
         break
       case 'message':
@@ -510,7 +510,7 @@ export class LogEventsTable extends React.Component {
         ret = (<span className="badge bg-light text-dark text-start text-wrap"><strong>returnCode={val.returnCode}</strong><br/>returnMessage={val.returnMessage}<br/><pre className="">data={JSON.stringify(val.data, null, 2)}</pre></span>)
         break
       case 'reporting-vars':
-        ret = (<span className="badge bg-light text-dark text-start"><ReactJson src={val} collapsed={3} /></span>)
+        ret = (<span className="badge bg-light text-dark text-start"><ReactJson src={val} collapsed={3} displayDataTypes={false} displayObjectSize={false} /></span>)
         break 
       default:
         ret = (<span className="badge bg-light text-dark text-start">{JSON.stringify(val)}</span>)
@@ -539,12 +539,13 @@ export class LogEventsTable extends React.Component {
         if(this.state.filterTypes.indexOf(niiEvt.name) > -1){
           return
         }
-        let ts = moment(evt.value.timestamp).format('HH:mm:ss.SSS')
-        let badgeBg = this.getBadgeClz(niiEvt.name)
+        const ts = moment(evt.value.timestamp).format('HH:mm:ss.SSS')
+        const date = niiEvt.name === 'session-start' ? moment(evt.value.timestamp).fromNow() : null
+        const badgeBg = this.getBadgeClz(niiEvt.name)
         ret[listMethod](
           <tr key={'event-'+idx} className={['session-start','session-stopped'].indexOf(niiEvt.name) >-1 ? 'bg-dark' : ''}>
             <td><span className={`badge ` + badgeBg}>{evt.value.data.seqid}</span></td>
-            <td><span className={`badge ` + badgeBg}>{ts}</span></td>
+            <td><span className={`badge ` + badgeBg}>{date?(<small>{date}</small>):('')}{date?(<br/>):''}{ts}</span></td>
             <td><span className={`badge ` + badgeBg}>{niiEvt.name}</span></td>
             <td className="text-start">{this.renderNiiEvent(niiEvt)}</td>
           </tr>
