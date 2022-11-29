@@ -10,7 +10,7 @@ import React from "react"
 import { navigate } from "gatsby"
 import axios from "axios"
 
-export const VERSION = '2.0.0'
+export const VERSION = '2.1.0'
 export const ROOT_URL = process.env.NODE_ENV === 'production' ? '' : 'https://localhost:7071'
 export const ASR_SERVICE_URL = process.env.ASR_SERVICE_URL || "https://asr.api.nuance.com"
 export const DLG_SERVICE_URL = process.env.DLG_SERVICE_URL || "https://dlg.api.nuance.com"
