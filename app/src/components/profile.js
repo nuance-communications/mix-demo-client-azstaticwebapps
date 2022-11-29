@@ -51,7 +51,7 @@ function ProfileView({
 
   return (
     <main className="px-1 py-1 mt-3 col-md-8 offset-md-2 vh-100 min-vh-100">
-      <div className="text-center alert border-1 text-muted mb-2 ">
+      <div className="text-center alert border-1 pt-0 pb-0 mb-1 text-muted">
         Set up your configuration, and save it for a URL you can bookmark and share.
       </div>
       <Form className="h-75 min-vh-75 overflow-auto px-3" 
@@ -59,7 +59,7 @@ function ProfileView({
           evt.preventDefault()
           save()
         }}>
-        <h6 className='text-muted mt-4'>Client Configuration</h6>
+        <h6 className='text-muted mt-4'>Mix Application Client Credentials</h6>
         <Form.Group className="form-floating">
           <Form.Control name="clientId" type="text" value={clientId} placeholder="Enter Client ID" onChange={onChangeTextInput}/>
           <Form.Label htmlFor="clientId">Client ID</Form.Label>
@@ -68,7 +68,7 @@ function ProfileView({
           <Form.Control name="clientSecret" type="password" value={clientSecret} placeholder="Enter Client Secret" onChange={onChangeTextInput} />
           <Form.Label>Client Secret <span className="text-danger">***</span></Form.Label>
         </Form.Group>
-        <h6 className='text-muted mt-4'>DLGaaS Tab Configuration</h6>
+        <h6 className='text-muted mt-4'>DLGaaS App Config and Service Initialization</h6>
         <Form.Group className="form-floating">
           <Form.Control 
             name="simulateExperience"
@@ -122,12 +122,12 @@ function ProfileView({
           <Form.Control name="sessionId" type="text" value={sessionId} placeholder="Enter DLG Session ID" onChange={onChangeTextInput} />
           <Form.Label>DLG Session ID <span className='text-muted'>(optional)</span></Form.Label>
         </Form.Group>
-        <h6 className='text-muted mt-4'>ASRaaS Tab Configuration</h6>
+        <h6 className='text-muted mt-4'>ASRaaS App Config</h6>
         <Form.Group className="form-floating">
           <Form.Control name="asrModelUrn" type="text" value={asrModelUrn} placeholder="Enter ASR DLM URN" onChange={onChangeTextInput} />
           <Form.Label>ASR DLM URN</Form.Label>
         </Form.Group>
-        <h6 className='text-muted mt-4'>NLUaaS Tab Configuration</h6>
+        <h6 className='text-muted mt-4'>NLUaaS App Config</h6>
         <Form.Group className="form-floating">
           <Form.Control name="nluModelUrn" type="text" value={nluModelUrn} placeholder="Enter NLU URN" onChange={onChangeTextInput} />
           <Form.Label>NLU Model URN</Form.Label>
