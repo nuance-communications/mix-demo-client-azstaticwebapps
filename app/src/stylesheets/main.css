@@ -1,6 +1,7 @@
 :root {
   --brand-color: var(--skin-color);
   --brand-logo: var(--skin-logo);
+  --brand-logo-header: var(--skin-logo-header);
   --brand-logo-header-width: var(--skin-logo-header-width);
   --brand-logo-header-height: var(--skin-logo-header-height);
   --brand-logo-main-width: var(--skin-logo-main-width);
@@ -93,6 +94,9 @@ main .tab-content {
   bottom: 0;
   right: 0;
 }
+.container.standalone {
+  background: var(--chat-background-color);
+}
 .chat-panel.chat-panel-minimized {
   height: 56px;
 }
@@ -125,6 +129,7 @@ main .tab-content {
 .card-header-bg .chat-header-img {
   width: var(--brand-logo-header-width);
   height: var(--brand-logo-header-height);
+  content: var(--brand-logo-header);
   display: inline-block;
 }
 .card-body .chat-header-img {
@@ -231,18 +236,23 @@ td .badge.text-primary {
   color: #333 !important;
 }
 
+.logging td .badge.text-success,
+.logging td .badge.text-danger 
 .dlgaas td .badge.text-success,
 .dlgaas td .badge.text-danger {
   color: white !important;
 }
+.logging td .badge.bg-success,
 .dlgaas td .badge.bg-success {
   background-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;
 }
+.logging td .badge.bg-light.text-success,
 .dlgaas td .badge.bg-light.text-success {
   background-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;
 }
+.logging td .badge.border-success,
 .dlgaas td .badge.border-success {
   border-color: var(--brand-color) !important;
   color: var(--chat-user-message-text-color) !important;

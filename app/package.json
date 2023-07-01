@@ -1,6 +1,6 @@
 {
   "name": "mix-demo-client",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "Apache-2",
   "private": true,
   "description": "Sample demo client with a Python Az Func backend, and Gatsby+React frontend.",
@@ -17,11 +17,15 @@
     "speech recognition",
     "text to speech",
     "natural language understanding",
+    "dialog",
     "bots",
     "azure",
     "azure static web apps",
     "azure functions"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "develop": "gatsby develop",
     "start": "gatsby develop",

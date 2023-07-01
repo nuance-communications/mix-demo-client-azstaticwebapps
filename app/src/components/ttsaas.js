@@ -537,6 +537,7 @@ export default class TTSaaS extends BaseClass {
               this.getAuthHtml() 
             }
           </Tab>
+          <Tab eventKey="logging" title={`Log Events`}></Tab>
         </Tabs>
       </div>
     )

@@ -146,13 +146,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
                 'all': rawResponses
               }}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={9}
               displayArrayKey={false}
               // theme={'grayscale'}
@@ -178,13 +178,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
               key={'nii-json-' + logEvents.length}
               src={logEvents}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={5}
               displayArrayKey={false}
             />
@@ -199,13 +199,13 @@ function DlgTabs({simulateExperience, logEvents, apiEvents, rawResponses, classN
               key={'event-json-' + apiEvents.length}
               src={apiEvents}
               displayDataTypes={false}
-              iconStyle={'circle'}
+              displayObjectSize={false}
+              iconStyle={'square'}
               indentWidth={2}
               name={false}
               quotesOnKeys={false}
               groupArraysAfterLength={5}
               collapseStringsAfterLength={50}
-              displayObjectSize={true}
               collapsed={5}
               displayArrayKey={false}
             />
@@ -231,6 +231,7 @@ export default class DLGaaS extends BaseClass {
       modelUrn: 'urn:nuance-mix:tag:model/REPLACE_ME/mix.dialog',
       accessToken: null,
       sessionId: '',
+      continueSession: false,
       channel: 'default',
       language: 'en-US',
       sessionTimeout: 900,
@@ -319,21 +320,7 @@ export default class DLGaaS extends BaseClass {
   }
 
   init(){
-    // standalone init means init token,
-    // connect to dlgaas
-    // start any simulation needs
-    // and trigger a startRequest
-    if(this.isStandalone() 
-      && this.state.clientId && this.state.clientSecret){
-      this.initToken(this.getScope())
-        .then(() => {
-          console.info("DLG Client Ready.")
-          if(this.state.clientId 
-            && this.state.clientSecret){
-            return this.go()
-          }
-        })
-    }
+    
   }
 
   componentDidUpdate(){
@@ -1327,12 +1314,13 @@ export default class DLGaaS extends BaseClass {
     return (
       <div className="h-100">
         <div className="col-12 h-100 overflow-auto">
-          {/*<span className="badge bg-dark text-white mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>*/}
           {this.state.error ? (<div className="badge bg-warning text-dark text-left text-wrap mb-3 w-100"><strong>Oops....</strong>{`   `}{this.state.error}</div>) : '' }
-          <div className="row">
+          <div className="row overflow-auto">
             <div className={(this.isStandalone() ? `col-12` : `col-8 offset-md-2`) + ` bg-light rounded-0 px-4 py-1 pt-4`}>
-              <h3 className="fw-bold text-center w-100 mb-4 mt-3">Start a Bot Session</h3>
-              <div className="form-floating">
+              <h4 className="w-100">
+                Bots with Dialog as a Service
+              </h4>
+              <div className="form-floating h-100 overflow-auto">
                 <Form.Control 
                   name="simulateExperience"
                   as="select" 
@@ -1340,43 +1328,46 @@ export default class DLGaaS extends BaseClass {
                   value={this.state.simulateExperience} 
                   onChange={this.onChangeSelectInput.bind(this)}>
                   <optgroup label="Visual VA">
-                    <option value={'audioAndTextInTextOut'}>Visual VA: Voice &amp; Text Input with HTML Output</option>
-                    <option value={'visualVA'}>Visual VA: Text Input with HTML Output</option>
-                    <option value={'visualVAwithTts'}>Visual VA: Text Input with HTML &amp; Voice Output</option>
+                    <option value={'audioAndTextInTextOut'}>Voice &amp; Text Input with HTML Output</option>
+                    <option value={'visualVA'}>Text Input with HTML Output</option>
+                    <option value={'visualVAwithTts'}>Text Input with HTML &amp; Voice Output</option>
                   </optgroup>
                   <optgroup label="IVR">
-                    <option value={'ivrAudioInOut'}>IVR: Voice &amp; DTMF Input with Voice Output</option>
-                    <option value={'ivrAudioInTextOut'}>IVR: Voice &amp; DTMF Input with SSML Output</option>
-                    <option value={'ivrTextWithSSML'}>IVR: Text &amp; DTMF Input with SSML Output</option>
-                    <option value={'ivrTextWithTts'}>IVR: Text &amp; DTMF Input with Voice Output</option>
+                    <option value={'ivrAudioInOut'}>Voice &amp; DTMF Input with Voice Output</option>
+                    <option value={'ivrAudioInTextOut'}>Voice &amp; DTMF Input with SSML Output</option>
+                    <option value={'ivrTextWithSSML'}>Text &amp; DTMF Input with SSML Output</option>
+                    <option value={'ivrTextWithTts'}>Text &amp; DTMF Input with Voice Output</option>
                   </optgroup>
                   <optgroup label="IoT">
-                    <option value={'smartSpeaker'}>SmartSpeaker: Voice Input with Voice Output</option>
-                    <option value={'smartSpeakerWithScreen'}>SmartSpeaker: Voice &amp; Text Input with Voice &amp; HTML Output</option>
+                    <option value={'smartSpeaker'}>Voice Input with Voice Output</option>
+                    <option value={'smartSpeakerWithScreen'}>Voice &amp; Text Input with Voice &amp; HTML Output</option>
                   </optgroup>
                 </Form.Control>
                 <Form.Label>Simulate Experience</Form.Label>
               </div>
             </div>
 
-            <div className={(this.isStandalone() ? `col-12` : `col-3 offset-md-2`) + ` bg-light rounded-3 px-4 py-4`}>
+            <div className={(this.isStandalone() ? `col-12` : `col-3 offset-md-2`) + ` bg-light px-4 py-2 vh-75`}>
 
               <form className="form" onSubmit={(evt) => {this.go(); evt.preventDefault();}}>
-                <h4 className="w-100">Configuration</h4>
-                <p>
-                  See <a target="_blank" rel="noreferrer" href="https://docs.mix.nuance.com/languages/?src=demo#languages-and-voices">Languages and Voices</a>
-                </p>
+                <h5 className="w-100">
+                  Configuration
+                </h5>
                 <div className="form-floating">
                   <input type="text" className="form-control" name="modelUrn" value={this.state.modelUrn} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="modelUrn" className="form-label">App Model URN</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists && this.isStandalone()} type="text" className="form-control" name="channel" value={this.state.channel} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="channel" className="form-label">Channel</label>
                 </div>
                 <div className="form-floating">
-                  <input disabled={sessionIdExists} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
+                  <input disabled={sessionIdExists && this.isStandalone()} type="text" className="form-control" name="language" value={this.state.language} onChange={this.onChangeTextInput.bind(this)} />
                   <label htmlFor="language" className="form-label">Language</label>
+                </div>
+                <div className="form-floating">
+                  <input type="number" className="form-control" name="sessionTimeout" value={this.state.sessionTimeout} onChange={this.onChangeTextInput.bind(this)} />
+                  <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
                 </div>
                 {SIMULATED_EXPERIENCES(this.state.simulateExperience).playTTS ? (
                   <div className="form-floating">
@@ -1391,32 +1382,32 @@ export default class DLGaaS extends BaseClass {
                     <Form.Label>Fallback TTS Voice (default)</Form.Label>
                   </div>
                   ) : ''}
-                <div className="form-floating">
-                  <input type="number" className="form-control" name="sessionTimeout" value={this.state.sessionTimeout} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="sessionTimeout" className="form-label">Session Timeout (s)</label>
-                </div>
                 <br/>
-                <div className="form-floating">
+                <div class="form-floating input-group mb-3">
                   <input type="text" className="form-control" name="sessionId" value={this.state.sessionId} onChange={this.onChangeTextInput.bind(this)} />
-                  <label htmlFor="sessionId" className="form-label">Existing Session ID <span className='text-muted'>(optional)</span></label>
+                  <label htmlFor="sessionId" placeholder="d51d31eb-aaf3-4312-81d3-a7f09286ffe4" className="form-label">Session ID <span className='text-muted'>(optional)</span></label>
+                  <div class="input-group-text">
+                    <label className="form-check-label text-nowrap">
+                      <input type="checkbox" disabled={this.state.sessionId.length<1} className="form-check-input" name="continueSession" checked={this.state.continueSession} onChange={this.onChangeCheckboxInput.bind(this)} />
+                      &nbsp; <small>Resume</small>
+                    </label>
+                  </div>
                 </div>
                 <div className="form-group mt-3">
-                  <button className="btn btn-primary d-flex justify-content-center w-100 text-center" type="submit">
-                    {sessionIdExists ? 'Resume Session' : 'Start New Session'}
+                  <button className="btn btn-primary d-flex justify-content-center w-100 text-center mb-3" type="submit">
+                    {sessionIdExists && this.state.continueSession ? 'Resume Session' : 'Start New Session'}
                   </button>
                 </div>
               </form>
             </div>
-            <div className={(this.isStandalone() ? `col-12` : `col-5`) + ` bg-light rounded-3 px-4 py-4`}>
-                <div className="form-floating mb-4 mt-3">
-                  <h5 className="pt-5">
-                    Client Data
-                  </h5>
+            <div className={(this.isStandalone() ? `col-12` : `col-5`) + ` bg-light px-4 py-4`}>
+                <div className="form-floating">
                   <ReactJson
                     key={'json-clientData'}
                     src={this.state.clientData}
-                    displayDataTypes={true}
-                    displayObjectSize={true}
+                    displayDataTypes={false}
+                    displayObjectSize={false}
+                    iconStyle={`square`}
                     collapsed={false}
                     name={`clientData`}
                     theme={`grayscale:inverted`}
@@ -1427,21 +1418,11 @@ export default class DLGaaS extends BaseClass {
                   </ReactJson>
                 </div>
                 <div className="form-floating">
-                  <h5 className="mb-2">
-                    Start Data
-                  </h5>
-                  { navigator.geolocation ? (
-                      <div className="d-flex w-100 pb-3">
-                        <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
-                          { this.state.fetchingLocation ? 'Getting location...' : 'Add Client Location' }
-                        </button>
-                      </div>
-                    ) : ('') }
                   <ReactJson
                     key={'json-startData'}
                     src={this.state.startData}
-                    displayDataTypes={true}
-                    displayObjectSize={true}
+                    displayDataTypes={false}
+                    displayObjectSize={false}
                     collapsed={false}
                     name={`startData`}
                     theme={`grayscale:inverted`}
@@ -1451,6 +1432,13 @@ export default class DLGaaS extends BaseClass {
                     onDelete={(del) => { this.onEditData('start', 'delete', del); }}>
                   </ReactJson>
                 </div>
+                { navigator.geolocation ? (
+                  <div className="d-flex w-100 pb-3">
+                    <button disabled={this.state.fetchingLocation} className="btn btn-outline-primary btn-sm" onClick={this.addLocationToStartData.bind(this)}>
+                      { this.state.fetchingLocation ? 'Getting location...' : 'Add Client Location' }
+                    </button>
+                  </div>
+                ) : ('') }
             </div>
           </div>
         </div>
@@ -1473,25 +1461,25 @@ export default class DLGaaS extends BaseClass {
     return (
       <div className="col px-5 h-100">
         <div className="row">
-          <div className="col-8">
+          <div className="col-7">
             <div className="float-end mt-3">
-              <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
-              {` `}
-              <span className="badge bg-light text-dark mb-3">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
+              {/* <span className="badge bg-light text-dark mb-3">Token Expiry {moment(this.state.accessToken.expires_at*1000).fromNow()}</span>
+              {` `} */}
+              <span className="badge text-dark">Session ID: <strong id="dlgaas-session-id">{this.state.sessionId}</strong></span>
               {` `}
             </div>
             <h3 className="fw-bold mt-3">Converse and Troubleshoot</h3>
           </div>
-          <div className="col-4 text-end">
+          <div className="col-5 text-end">
             { this.state.isSessionActive && this.state.sessionId.length > 0 ? (
-                <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stop(); evt.preventDefault(); }}>Stop Session</button>
+                <button className="btn btn-danger btn-sm float-end mt-3" onClick={(evt) => {this.stop(); evt.preventDefault(); }}>Stop Session</button>
               ) : (
-                <button className="btn btn-warning float-end mt-3" onClick={(evt) => {this.restart(); evt.preventDefault(); }}>New Session</button>
+                <button className="btn btn-warning btn-sm float-end mt-3" onClick={(evt) => {this.restart(); evt.preventDefault(); }}>New Session</button>
               )
             }
             {` `}
             { this.state.logConsumerName ? (
-                <Button className="text-dark mt-3"
+                <Button className="text-dark btn-sm mt-3"
                   variant={`light`}
                   onClick={(evt) => {this.doFetchRecords(0); evt.preventDefault(); }}
                   disabled={this.state.fetchRecordsTimeout !== -1}>
@@ -1503,7 +1491,7 @@ export default class DLGaaS extends BaseClass {
                 </Button>
               ) : ('')}
             { this.state.logConsumerName && !this.state.isSessionActive ? (
-              <button className="btn btn-danger float-end mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
+              <button className="btn btn-danger btn-sm mt-3" onClick={(evt) => {this.stopCapturingLogs(); evt.preventDefault(); }}>Stop Auto Log Fetcher</button>
             ) : ('')}
           </div>
         </div>
@@ -1533,7 +1521,7 @@ export default class DLGaaS extends BaseClass {
               recognitionSettings={this.state.recognitionSettings}
               onToggleMicrophone={this.onToggleMicrophone.bind(this)}
               microphone={this.state.microphone}
-              micVizWidth={365}
+              micVizWidth={365-20}
               isListening={ProcessingState.IN_FLIGHT===this.state.processingState}
               isProcessingInput={ProcessingState.AWAITING_FINAL===this.state.processingState}
               onToggleMinMax={this.onToggleMinMax.bind(this)}/>
@@ -1543,9 +1531,19 @@ export default class DLGaaS extends BaseClass {
     )
   }
 
+  hasSession(){
+    return this.state.sessionId && 
+      (
+        this.state.isSessionActive || 
+        this.state.rawResponses.length
+      )
+  }
+
   render(){
-    let body = this.state.accessToken ? (
-        this.state.sessionId && (this.state.isSessionActive || this.state.rawResponses.length) ?
+    let hasToken = this.state.accessToken
+    let hasSession = this.hasSession()
+    let body = hasToken ? (
+        hasSession ?
         this.getBotSessionHtml() :
         this.getConfigureSessionHtml()) :
         this.getAuthHtml()
@@ -1561,6 +1559,7 @@ export default class DLGaaS extends BaseClass {
       <Tab eventKey="asraas" title={`ASRaaS`}></Tab>
       <Tab eventKey="nluaas" title={`NLUaaS`}></Tab>
       <Tab eventKey="ttsaas" title={`TTSaaS`}></Tab>
+      <Tab eventKey="logging" title={`Log Events`}></Tab>
     </Tabs>)
     if(this.isStandalone()){
       html = body
