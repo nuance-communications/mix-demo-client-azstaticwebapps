@@ -934,7 +934,7 @@ export default class ChatPanel extends React.Component {
                     }}>
                     <FontAwesomeIcon spin={this.props.isProcessingInput} 
                       icon={this.props.isProcessingInput ? faCircleNotch 
-                          : (this.props.isListening ? faMicrophone : faMicrophone)}/>
+                          : faMicrophone}/>
                   </button>): ''
                 }
               </div>
