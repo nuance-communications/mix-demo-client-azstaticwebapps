@@ -33,8 +33,8 @@ def prune_records(records, service='DLGaaS', for_session_id=None):
         if service == 'DLGaaS':
             v = record['value']
             d = v['data']
-            if d.get('sessionid') \
-                and d.get('sessionid') == for_session_id \
+            if (d.get('sessionid') \
+                and d.get('sessionid') == for_session_id) \
                 or not for_session_id:
                 ret.append(record)
         else:
